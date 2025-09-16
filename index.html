@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <!-- =========================
+       META BÁSICO / TÍTULO
+       ========================= -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JK CHOPP — Sistema Interno</title>
+
+  <!-- =========================
+       CSS EXTERNO (responsável por todo o layout/estilos)
+       ========================= -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body data-theme="dark"><!-- tema inicial (JS alterna depois) -->
+  <div class="app"><!-- wrapper geral -->
+
+    <!-- =========================
+         HEADER / TOPO
+         ========================= -->
+    <header>
+      <div class="wrap topbar">
+        <!-- ====== LADO ESQUERDO (hamburger + brand) ====== -->
+        <div class="left">
+          <!-- Botão hamburger à ESQUERDA -->
+          <button class="hamburger" id="btnMenu" title="Abrir menu">☰</button>
+
+          <!-- Branding -->
+          <div class="brand">
+            <div class="logo">JK</div>
+            <div class="title">
+              <h1>JK CHOPP • Sistema Interno</h1>
+              <small>Gestão de Cadastros, Produtos, Pedidos, Financeiro, Relatórios, Contratos e Agendamentos</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== LADO DIREITO (ações rápidas) ====== -->
+<div class="row top-actions">
+  <button class="btn" id="btnTheme" title="Alternar tema">🌓 Tema</button>
+  <button class="btn" id="btnExport" title="Exportar backup (JSON)">⬇️ Exportar</button>
+  <label class="btn" for="importFile" title="Importar backup (JSON)">⬆️ Importar</label>
+  <input id="importFile" type="file" accept="application/json" class="hidden">
+  <button class="btn" id="btnReset" title="Zerar base (local)">🗑️ Zerar</button>
+  <button class="btn" id="btnPerfil" title="Perfil do usuário">👤 Perfil</button>
+</div>
+
+      <!-- Barra de abas (preenchida pelo JS) -->
+      <div class="wrap">
+        <nav class="tabs" id="mainTabs"></nav>
+      </div>
+    </header>
+
+    <!-- =========================
+         CONTEÚDO
+         ========================= -->
+   <main class="wrap">
+  <section id="content"></section>
+</main>
+
+    <!-- =========================
+         RODAPÉ
+         ========================= -->
+    <footer class="wrap">
+      <div class="footer">
+        <span>v1.0 • Persistência localStorage • Ordenação • Busca • CRUD • Contrato automático p/ <span class="hl">Ponto Fixo</span></span>
+        <span>Feito com ❤️ para JK CHOPP</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- =========================
+       TEMPLATES (as telas do app)
+       ========================= -->
+
+  <!-- CLIENTES -->
+  <template id="tpl-clientes">
+    <div class="grid">
+      <aside class="card">
+        <h3>Cadastro de Cliente</h3>
+        <p class="muted">PF/PJ com máscara dinâmica (CPF/CNPJ), marcação de Ponto Fixo e endereço.</p>
+
+        <div class="stack">
+          <select id="cli_tipo">
+            <option value="PF">PF</option>
+            <option value="PJ">PJ</option>
+          </select>
+
+          <input class="input" id="cli_nome"     placeholder="Nome/Razão Social" />
+          <input class="input" id="cli_doc"      placeholder="CPF/CNPJ" />
+          <input class="input" id="cli_fantasia" placeholder="Fantasia (opcional)" />
+          <input class="input" id="cli_contato"  placeholder="Contato (tel/whatsapp)" />
+          <input class="input" id="cli_end"      placeholder="Endereço" />
+
+          <div class="flex">
+            <label class="pill"><input type="checkbox" id="cli_fixo"  /> Ponto Fixo</label>
+            <label class="pill"><input type="checkbox" id="cli_ativo" checked /> Ativo</label>
+            <label class="pill"><input type="checkbox" id="cli_delivery" /> Delivery</label>
+          </div>
+
+          <div class="flex">
+            <button class="btn success" id="btnSalvarCliente">💾 Salvar</button>
+            <button class="btn"          id="btnLimparCliente">🧹 Limpar</button>
+          </div>
+
+          <input type="hidden" id="cli_id" />
+          <small class="muted">Ao marcar <b>Ponto Fixo</b>, um contrato padrão poderá ser gerado em <em>Contratos</em>.</small>
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="toolbar">
+          <div class="row"><input class="input" id="buscaClientes" placeholder="Buscar clientes..." /></div>
+          <div class="row"><span class="muted" id="infoClientes"></span></div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="tblClientes">
+            <thead>
+              <tr>
+                <th data-k="nome">Nome</th>
+                <th data-k="tipo">Tipo</th>
+                <th data-k="doc">Documento</th>
+                <th data-k="contato">Contato</th>
+                <th data-k="fixo">Ponto Fixo</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </template>
+
+  <!-- PRODUTOS -->
+  <template id="tpl-produtos">
+    <div class="grid">
+      <aside class="card">
+        <h3>Cadastro de Produto</h3>
+        <p class="muted">Chopeiras, Barris, Cilindros CO₂ e demais itens.</p>
+
+        <div class="stack">
+          <select id="prd_tipo">
+            <option value="Chopeira">Chopeira</option>
+            <option value="Barril">Barril</option>
+            <option value="Cilindro CO2">Cilindro CO₂</option>
+            <option value="Outro">Outro</option>
+          </select>
+          <input class="input" id="prd_nome"   placeholder="Nome do Produto" />
+          <input class="input" id="prd_codigo" placeholder="Código Interno" />
+          <input class="input" id="prd_preco"  placeholder="Preço (R$)" inputmode="decimal" />
+          <label class="pill"><input type="checkbox" id="prd_estoque_ctrl" checked /> Controlar estoque</label>
+
+          <div class="flex">
+            <button class="btn success" id="btnSalvarProduto">💾 Salvar</button>
+            <button class="btn"          id="btnLimparProduto">🧹 Limpar</button>
+          </div>
+
+          <input type="hidden" id="prd_id" />
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="toolbar">
+          <input class="input" id="buscaProdutos" placeholder="Buscar produtos..." />
+          <span class="right muted" id="infoProdutos"></span>
+        </div>
+
+        <table id="tblProdutos">
+          <thead>
+            <tr>
+              <th data-k="nome">Nome</th>
+              <th data-k="tipo">Tipo</th>
+              <th data-k="codigo">Código</th>
+              <th data-k="preco">Preço</th>
+              <th data-k="estoque">Estoque</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </div>
+  </template>
+
+  <!-- PEDIDOS -->
+  <template id="tpl-pedidos">
+    <div class="card">
+      <div class="toolbar">
+        <div class="row">
+          <button class="btn success" id="btnNovoPedido">➕ Novo Pedido</button>
+          <select id="filtroStatus" class="input">
+            <option value="">Todos</option>
+            <option>Aberto</option>
+            <option>Em Atendimento</option>
+            <option>Concluído</option>
+            <option>Recebido</option>
+          </select>
+        </div>
+        <input class="input" id="buscaPedidos" placeholder="Buscar por cliente ou código..." />
+      </div>
+
+      <table id="tblPedidos">
+        <thead>
+          <tr>
+            <th data-k="codigo">#</th>
+            <th data-k="cliente">Cliente</th>
+            <th data-k="itens">Itens</th>
+            <th data-k="total">Total</th>
+            <th data-k="status">Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="empty hidden" id="vazioPedidos">Nenhum pedido por aqui...</div>
+    </div>
+  </template>
+
+  <!-- CONTRATOS -->
+  <template id="tpl-contratos">
+    <div class="card">
+      <div class="toolbar">
+        <button class="btn" id="btnGerarContratoSelecionado">📄 Gerar contrato do cliente (Ponto Fixo)</button>
+        <span class="muted">Use o modelo padrão embutido (você pode substituir quando enviar o seu).</span>
+      </div>
+
+      <table id="tblContratos">
+        <thead>
+          <tr>
+            <th data-k="cliente">Cliente</th>
+            <th data-k="status">Status</th>
+            <th data-k="data">Data</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </template>
+
+  <!-- FINANCEIRO -->
+  <template id="tpl-financeiro">
+    <div class="grid">
+      <aside class="card">
+        <h3>Título (Boleto/Nota)</h3>
+        <div class="stack">
+          <input class="input" id="fin_doc"     placeholder="Documento/NSU" />
+          <input class="input" id="fin_cliente" placeholder="Cliente" />
+          <input class="input" id="fin_valor"   placeholder="Valor (R$)" inputmode="decimal" />
+          <select id="fin_tipo" class="input">
+            <option>Receber</option>
+            <option>Pagar</option>
+          </select>
+          <input class="input" id="fin_venc" type="date" />
+
+          <div class="flex">
+            <button class="btn success" id="btnSalvarTitulo">💾 Salvar</button>
+            <button class="btn"          id="btnLimparTitulo">🧹 Limpar</button>
+          </div>
+
+          <input type="hidden" id="fin_id" />
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="toolbar">
+          <div class="row">
+            <select id="filtroTipoFin" class="input">
+              <option value="">Todos</option>
+              <option>Receber</option>
+              <option>Pagar</option>
+            </select>
+            <input class="input" id="buscaFinanceiro" placeholder="Buscar..." />
+          </div>
+          <div class="row">
+            <span class="pill">Saldo: <b id="finSaldo">R$ 0,00</b></span>
+          </div>
+        </div>
+
+        <table id="tblFinanceiro">
+          <thead>
+            <tr>
+              <th data-k="doc">Doc</th>
+              <th data-k="cliente">Cliente</th>
+              <th data-k="valor">Valor</th>
+              <th data-k="tipo">Tipo</th>
+              <th data-k="venc">Vencimento</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </div>
+  </template>
+
+  <!-- AGENDAMENTOS -->
+<template id="tpl-agendamentos">
+  <div class="stack agenda-grid">
+    <!-- CARD: Lista e cadastro (EM CIMA) -->
+    <section class="card">
+      <div class="toolbar">
+        <div class="row">
+          <input id="ag_titulo" class="input" placeholder="Título" />
+          <input id="ag_data"   class="input" type="date" />
+          <input id="ag_hora"   class="input" type="time" />
+          <button class="btn success" id="btnAddAgenda">➕ Adicionar</button>
+        </div>
+        <input id="buscaAgenda" class="input" placeholder="Buscar..." />
+      </div>
+
+      <table id="tblAgenda">
+        <thead>
+          <tr>
+            <th data-k="data">Data</th>
+            <th data-k="hora">Hora</th>
+            <th data-k="titulo">Título</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+<!-- CARD: Calendário (EMBAIXO E CENTRALIZADO) -->
+    <aside class="card calendar-wrap">
+      <h3>Calendário</h3>
+      <div class="cal-header">
+        <button class="btn ghost icon" id="calPrev" aria-label="Mês anterior">‹</button>
+        <div class="cal-title"><span id="calTitle">setembro de 2025</span></div>
+        <button class="btn ghost icon" id="calNext" aria-label="Próximo mês">›</button>
+        <button class="btn ghost pill" id="calToday">Hoje</button>
+      </div>
+
+      <div class="calendar" id="calendar">
+        <div class="cal-weekdays">
+          <span>Seg</span><span>Ter</span><span>Qua</span>
+          <span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+        </div>
+        <div class="cal-grid" id="calGrid"><!-- preenchido via JS --></div>
+      </div>
+    
+      <table id="tblAgenda">
+        <thead>
+          <tr>
+            <th data-k="data">Data</th>
+            <th data-k="hora">Hora</th>
+            <th data-k="titulo">Título</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+</template>
+
+  <!-- RELATÓRIOS -->
+  <template id="tpl-relatorios">
+    <div class="card">
+      <div class="toolbar">
+        <select id="rel_tipo" class="input">
+          <option value="clientes">Clientes</option>
+          <option value="produtos">Produtos</option>
+          <option value="pedidos">Pedidos</option>
+          <option value="financeiro">Financeiro</option>
+        </select>
+
+        <button class="btn" id="btnGerarRelatorio">📊 Gerar Relatório</button>
+        <button class="btn" id="btnCSV">🧾 Exportar CSV</button>
+      </div>
+
+      <div id="areaRelatorio" class="stack"></div>
+    </div>
+  </template>
+
+  <!-- =========================
+    DRAWER (MENU LATERAL) + BACKDROP
+    ========================= -->
+  <div id="backdrop" class="backdrop" aria-hidden="true"></div>
+  <aside id="menuDrawer" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <span class="drawer-title">JK CHOPP</span>
+      <button class="drawer-close" id="btnCloseMenu" title="Fechar">✕</button>
+    </div>
+    <nav id="menuList"></nav>
+  </aside>
+
+  <!-- =========================
+       JS EXTERNO
+       ========================= -->
+  <script src="script.js" defer></script>
+</body>
+</html>
