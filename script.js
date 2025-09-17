@@ -1,19 +1,54 @@
 /* ==========================================================================
-   JK CHOPP — SCRIPT.JS (com MENU + accordion)
+   JK CHOPP — SCRIPT.JS (COMPLETO, ORGANIZADO E COMENTADO)
+   SPA simples com Drawer/Accordion, templates leves via JS e estado local.
+   Seções:
+   00) Helpers
+   01) Estado/Persistência
+   02) Topbar (tema/backup/import/reset)
+   03) Navegação (Drawer + Accordion + Rotas)
+   04) Telas (Home, Clientes, Produtos, Pedidos, Financeiro, Contratos, Agenda)
+   05) Relatórios → Relatório de Repasse (sua tela integrada)
+   06) Placeholders + Roteador
+   07) Boot
    ========================================================================== */
 
 /* === 00) HELPERS ======================================================== */
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
 const fmt = {
   money: (v) => (Number(v || 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
   num:   (v) => (Number(v || 0)).toLocaleString("pt-BR"),
   date:  (v) => (v ? new Date(v).toLocaleDateString("pt-BR") : ""),
 };
 const uid = () => Math.random().toString(36).slice(2, 9);
-const parseBRL = (str) => Number(String(str ?? "").replace(/\./g, "").replace(",", ".") || 0);
 
-/* === 01) PERSISTÊNCIA / ESTADO ========================================= */
+/** Converte "1.234,56", "1234.56" ou "1234" → 1234.56 */
+function toNumber(v){
+  if (typeof v === "number") return isFinite(v) ? v : 0;
+  if (v == null) return 0;
+  const s0 = String(v).trim();
+  if (!s0) return 0;
+  const hasComma = s0.includes(","), hasDot = s0.includes(".");
+  let s = s0;
+  if (hasComma && hasDot){
+    const lc = s0.lastIndexOf(","), ld = s0.lastIndexOf(".");
+    s = (lc > ld) ? s0.replace(/\./g,"").replace(",",".") : s0.replace(/,/g,"");
+  } else if (hasComma){
+    s = s0.replace(",",".");
+  }
+  const n = parseFloat(s);
+  return isFinite(n) ? n : 0;
+}
+
+/** Converte "R$ 1.234,56" → 1234.56 */
+const parseBRL = (str) => Number(String(str ?? "").replace(/[^\d,.-]/g,"").replace(/\./g,"").replace(",", ".") || 0);
+
+/** HTML para botão de ação com ícone */
+const iconBtn = (act, id, title, emoji) =>
+  `<button class="icon-btn" data-act="${act}" data-id="${id}" title="${title}">${emoji}</button>`;
+
+/* === 01) ESTADO / PERSISTÊNCIA ========================================= */
 const DEF = {
   clientes:   [],
   produtos:   [],
@@ -22,44 +57,42 @@ const DEF = {
   financeiro: [],
   agenda:     [],
   perfil:     { nome: "", nascimento: "", setor: "", fotoB64: "" },
+
+  // Novo: estado do Relatório de Repasse (sua tela integrada)
+  repasse: {
+    header: { dataIni: "", dataFim: "", dataPagamento: "" },
+    split:  { percMarcos: 50, percJK: 50 },
+    clientes: [
+      // { id, cliente, marca, qtdLitros, custoPorLitro, qtdBarris, venda }
+    ],
+    despesas: [
+      // { id, descricao, valor, obs, partJK, partMarcos, pago }
+    ]
+  }
 };
-function load() { try { return JSON.parse(localStorage.getItem("jk_data")) || { ...DEF }; } catch { return { ...DEF }; } }
-function save() { localStorage.setItem("jk_data", JSON.stringify(DB)); }
-function reset() { localStorage.removeItem("jk_data"); DB = { ...DEF }; renderActive(); }
+
 let DB = load();
 
-/* === 01.1) MENU com subitens (accordion) =============================== */
-const MENU = [
-  { id: "home", label: "Início", icon: "🏠" },   // novo item Home
-  { id: "agendamentos", label: "Agenda", icon: "📅" },
+function load() {
+  try {
+    const obj = JSON.parse(localStorage.getItem("jk_data")) || { ...DEF };
+    // Garantir estrutura repasse mesmo em bases antigas
+    if (!obj.repasse) obj.repasse = JSON.parse(JSON.stringify(DEF.repasse));
+    if (!obj.repasse.header) obj.repasse.header = { ...DEF.repasse.header };
+    if (!obj.repasse.split)  obj.repasse.split  = { ...DEF.repasse.split };
+    if (!Array.isArray(obj.repasse.clientes)) obj.repasse.clientes = [];
+    if (!Array.isArray(obj.repasse.despesas)) obj.repasse.despesas = [];
+    return obj;
+  } catch { return { ...DEF }; }
+}
+function save() { localStorage.setItem("jk_data", JSON.stringify(DB)); }
+function reset() {
+  localStorage.removeItem("jk_data");
+  DB = { ...DEF };
+  renderActive();
+}
 
-  {
-    label: "Contatos", icon: "📞",
-    children: [
-      { id: "clientes_pf",   label: "Clientes Físicos",   icon: "👤" },
-      { id: "clientes_pj",   label: "Clientes Jurídicos", icon: "🏢" },
-      { id: "fornecedores",  label: "Fornecedores",       icon: "🛒" },
-      { id: "funcionarios",  label: "Funcionários",       icon: "🧑‍💼" },
-      { id: "grupos_preco",  label: "Grupos de Preço",    icon: "👥" },
-      { id: "interacoes",    label: "Interações",         icon: "💬" },
-      { id: "transportadoras", label: "Transportadoras",  icon: "🚚" },
-    ],
-  },
-
-  { id: "produtos",       label: "Equipamentos/Produtos", icon: "🧰" },
-  { id: "estoque",        label: "Estoque",               icon: "📦" },
-  { id: "financeiro_in",  label: "Entradas financeiras",  icon: "➕" },
-  { id: "financeiro_out", label: "Saídas financeiras",    icon: "➖" },
-  { id: "nfe_boletos",    label: "NF-e e Boletos",        icon: "🧾" },
-  { id: "relatorios",     label: "Relatórios",            icon: "📊" },
-  { id: "contratos",      label: "Contratos",             icon: "📄" },
-  { id: "ajuda",          label: "Central de ajuda",      icon: "❓" },
-];
-
-/* rota ativa */
-let ACTIVE = localStorage.getItem("jk_tab") || "home";
-
-/* === 02) TEMA + TOPO ==================================================== */
+/* === 02) TOPBAR (tema/backup/import/reset) ============================== */
 function toggleTheme() {
   const next = document.body.getAttribute("data-theme") === "light" ? "dark" : "light";
   document.body.setAttribute("data-theme", next);
@@ -69,52 +102,111 @@ function toggleTheme() {
   const t = localStorage.getItem("jk_theme") || "dark";
   document.body.setAttribute("data-theme", t);
 })();
+
 function doExport() {
   const blob = new Blob([JSON.stringify(DB, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement("a"), { href: url, download: "jkchopp_backup.json" });
-  a.click(); URL.revokeObjectURL(url);
+  a.click();
+  URL.revokeObjectURL(url);
 }
+
 function handleImport(ev) {
   const f = ev.target.files?.[0]; if (!f) return;
   const r = new FileReader();
   r.onload = () => {
-    try { DB = { ...DEF, ...JSON.parse(r.result) }; save(); renderActive(); ev.target.value=""; alert("Importação concluída ✅"); }
-    catch { alert("Arquivo inválido ❌"); }
+    try {
+      const incoming = JSON.parse(r.result);
+      // mesclar garantindo repasse
+      DB = { ...DEF, ...incoming };
+      if (!DB.repasse) DB.repasse = JSON.parse(JSON.stringify(DEF.repasse));
+      save();
+      ev.target.value = "";
+      renderActive();
+      alert("Importação concluída ✅");
+    } catch {
+      alert("Arquivo inválido ❌");
+    }
   };
   r.readAsText(f);
 }
+
 function bindTopbarActions() {
   $("#btnTheme")?.addEventListener("click", toggleTheme);
   $("#btnExport")?.addEventListener("click", doExport);
   $("#importFile")?.addEventListener("change", handleImport);
-  $("#btnReset")?.addEventListener("click", () => { if (confirm("Isto vai apagar os dados locais. Deseja continuar?")) reset(); });
+  $("#btnReset")?.addEventListener("click", () => {
+    if (confirm("Isto vai apagar os dados locais. Deseja continuar?")) reset();
+  });
+  $("#btnPerfil")?.addEventListener("click", () => {
+    alert("Perfil do usuário — em breve 😉");
+  });
 }
 
-/* === 03) NAVEGAÇÃO (Drawer/Menu) ======================================= */
+/* === 03) NAVEGAÇÃO (Drawer + Accordion + Rotas) ======================== */
+const MENU = [
+  { id: "home",           label: "Início",               icon: "🏠" },
+  { id: "agendamentos",   label: "Agenda",               icon: "📅" },
+
+  {
+    label: "Contatos", icon: "📞",
+    children: [
+      { id: "clientes_pf",     label: "Clientes Físicos",   icon: "👤" },
+      { id: "clientes_pj",     label: "Clientes Jurídicos", icon: "🏢" },
+      { id: "fornecedores",    label: "Fornecedores",       icon: "🛒" },
+      { id: "funcionarios",    label: "Funcionários",       icon: "🧑‍💼" },
+      { id: "grupos_preco",    label: "Grupos de Preço",    icon: "👥" },
+      { id: "interacoes",      label: "Interações",         icon: "💬" },
+      { id: "transportadoras", label: "Transportadoras",    icon: "🚚" },
+    ],
+  },
+
+  { id: "produtos",       label: "Equipamentos/Produtos", icon: "🧰" },
+  { id: "estoque",        label: "Estoque",               icon: "📦" },
+  { id: "financeiro",     label: "Financeiro",            icon: "💰" },
+  { id: "nfe_boletos",    label: "NF-e e Boletos",        icon: "🧾" },
+
+  {
+    label: "Relatórios", icon: "📊",
+    children: [
+      { id: "relatorios",   label: "Painel",               icon: "🗂️" },
+      { id: "rel_repasse",  label: "Relatório de Repasse", icon: "💸" },
+    ],
+  },
+
+  { id: "contratos",      label: "Contratos",             icon: "📄" },
+  { id: "ajuda",          label: "Central de ajuda",      icon: "❓" },
+];
+
+let ACTIVE = localStorage.getItem("jk_tab") || "home";
+
 const drawer   = $("#menuDrawer");
 const backdrop = $("#backdrop");
 const menuList = $("#menuList");
+
 function openMenu()  { drawer?.classList.add("open");  backdrop?.classList.add("open");  drawer?.setAttribute("aria-hidden","false"); }
 function closeMenu() { drawer?.classList.remove("open");backdrop?.classList.remove("open");drawer?.setAttribute("aria-hidden","true"); }
 function toggleMenu(){ drawer?.classList.contains("open") ? closeMenu() : openMenu(); }
 
-/* opcional: manter barra de abas visível; aqui não usamos mais TABS */
-function buildTabs(){ /* sem uso — mantendo para compatibilidade */ }
+function bindDrawerActions() {
+  $("#btnMenu")?.addEventListener("click", toggleMenu);
+  $("#btnCloseMenu")?.addEventListener("click", closeMenu);
+  backdrop?.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && drawer?.classList.contains("open")) closeMenu();
+  });
+}
 
-/* Menu com accordion */
 function buildMenu() {
   if (!menuList) return;
   menuList.innerHTML = "";
 
   MENU.forEach(group => {
     if (group.children?.length) {
-      // pai + caret
       const parent = document.createElement("div");
       parent.className = "menu-item menu-parent";
       parent.innerHTML = `<span>${group.icon || "📁"} ${group.label}</span><span class="caret">▶</span>`;
 
-      // contêiner de sub-itens
       const sub = document.createElement("div");
       sub.className = "submenu";
 
@@ -131,8 +223,9 @@ function buildMenu() {
       });
 
       parent.addEventListener("click", (ev) => {
-        if (ev.target.closest(".submenu-item")) return; // não colapsa ao clicar no filho
-        parent.classList.toggle("open"); sub.classList.toggle("open");
+        if (ev.target.closest(".submenu-item")) return;
+        parent.classList.toggle("open");
+        sub.classList.toggle("open");
       });
 
       menuList.appendChild(parent);
@@ -140,7 +233,6 @@ function buildMenu() {
       return;
     }
 
-    // item simples
     const single = document.createElement("button");
     single.className = "menu-item";
     single.textContent = `${group.icon || "•"} ${group.label}`;
@@ -154,40 +246,29 @@ function buildMenu() {
 
   highlightActiveMenu();
 }
-
 function highlightActiveMenu() {
   $$(".menu-item", menuList).forEach(e => e.classList.remove("active","open"));
   $$(".submenu", menuList).forEach(e => e.classList.remove("open"));
   $$(".submenu-item", menuList).forEach(e => e.classList.remove("active"));
 
-  // se é um subitem
   const child = $(`.submenu-item[data-id="${ACTIVE}"]`, menuList);
   if (child) {
     child.classList.add("active");
     const sub = child.closest(".submenu");
     const parent = sub?.previousElementSibling;
-    sub?.classList.add("open"); parent?.classList.add("open");
+    sub?.classList.add("open");
+    parent?.classList.add("open");
     return;
   }
-  // se é item simples
   $(`.menu-item[data-id="${ACTIVE}"]`, menuList)?.classList.add("active");
 }
 
-function bindDrawerActions() {
-  $("#btnMenu")?.addEventListener("click", toggleMenu);
-  $("#btnCloseMenu")?.addEventListener("click", closeMenu);
-  backdrop?.addEventListener("click", closeMenu);
-  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && drawer?.classList.contains("open")) closeMenu(); });
-}
-
 /* === 04) TELAS ========================================================== */
-
-/* ---- HOME (Dashboard) -------------------------------------------------- */
+/* ---- HOME -------------------------------------------------------------- */
 function renderHome() {
   const wrap = document.createElement("div");
   wrap.className = "grid-home";
 
-  // ====== CARDS DE PEDIDOS
   const abertos = DB.pedidos.filter(p => ["Aberto","Em Atendimento"].includes(p.status)).length;
   const concluidos = DB.pedidos.filter(p => p.status === "Concluído").length;
 
@@ -210,20 +291,17 @@ function renderHome() {
       <button class="btn" id="goPedidos">📋 Ver todos</button>
     </div>
   `;
-
   cardPedidos.querySelector("#goNovoPedido")?.addEventListener("click", () => {
-    // atalho: mesmo "novoPedido()" do módulo de pedidos
     const cliente = prompt("Cliente (nome)"); if (!cliente) return;
     const itens = prompt("Itens (ex.: Chopeira x1; Barril 50L x2)");
     const total = parseBRL(prompt("Total (R$)") ?? 0);
     DB.pedidos.unshift({ id: uid(), codigo: ("P" + Date.now()).slice(-6), cliente, itens, total, status: "Aberto" });
-    save(); renderActive();                 // atualiza painel
+    save(); renderActive();
   });
   cardPedidos.querySelector("#goPedidos")?.addEventListener("click", () => {
     ACTIVE = "pedidos"; localStorage.setItem("jk_tab", ACTIVE); renderActive();
   });
 
-  // ====== MINI-AGENDA (Cadastro + Próximos)
   const cardAgenda = document.createElement("section");
   cardAgenda.className = "card";
   cardAgenda.innerHTML = `
@@ -247,27 +325,22 @@ function renderHome() {
 
   function listMiniAgenda() {
     const tbody = cardAgenda.querySelector("#home_ag_tbody");
-    const rows = DB.agenda
-      .slice()
-      .sort((a,b) => (a.data+a.hora).localeCompare(b.data+b.hora))
-      .slice(0, 6); // mostra até 6 próximos
+    const rows = DB.agenda.slice().sort((a,b) => (a.data+a.hora).localeCompare(b.data+b.hora)).slice(0, 6);
     tbody.innerHTML = rows.map(a => `
       <tr>
         <td>${fmt.date(a.data)}</td>
         <td>${a.hora || "—"}</td>
         <td>${a.titulo}</td>
-        <td><button class="icon-btn danger-text" data-id="${a.id}" title="Excluir">🗑️</button></td>
+        <td>${iconBtn("del", a.id, "Excluir", "🗑️")}</td>
       </tr>
     `).join("") || `<tr><td colspan="4" class="empty">Sem agendamentos...</td></tr>`;
   }
-
   cardAgenda.addEventListener("click", (ev) => {
     const b = ev.target.closest("button.icon-btn"); if (!b) return;
     const id = b.dataset.id;
     DB.agenda = DB.agenda.filter(x => x.id !== id);
     save(); listMiniAgenda();
   });
-
   cardAgenda.querySelector("#homeAddAgenda")?.addEventListener("click", () => {
     const titulo = cardAgenda.querySelector("#home_ag_titulo").value.trim();
     const data   = cardAgenda.querySelector("#home_ag_data").value;
@@ -278,21 +351,17 @@ function renderHome() {
     cardAgenda.querySelector("#home_ag_titulo").value = "";
     listMiniAgenda();
   });
-
   cardAgenda.querySelector("#goAgenda")?.addEventListener("click", () => {
     ACTIVE = "agendamentos"; localStorage.setItem("jk_tab", ACTIVE); renderActive();
   });
 
   listMiniAgenda();
-
-  // ====== MONTAGEM DO GRID
   wrap.appendChild(cardPedidos);
   wrap.appendChild(cardAgenda);
   return wrap;
 }
 
 /* ---- CLIENTES ---------------------------------------------------------- */
-
 function renderClientes() {
   const tpl = document.importNode($("#tpl-clientes").content, true);
   const TB  = $("tbody", tpl);
@@ -303,9 +372,15 @@ function renderClientes() {
     const el = $("#cli_doc", tpl);
     let v = el.value.replace(/\D/g, "");
     if (tipo === "PF") {
-      v = v.padEnd(11,"").slice(0,11).replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_,a,b,c,d)=> d?`${a}.${b}.${c}-${d}`: c?`${a}.${b}.${c}`: b?`${a}.${b}`: a);
+      v = v.padEnd(11,"").slice(0,11).replace(
+        /(\d{3})(\d{3})(\d{3})(\d{0,2})/,
+        (_,a,b,c,d)=> d?`${a}.${b}.${c}-${d}`: c?`${a}.${b}.${c}`: b?`${a}.${b}`: a
+      );
     } else {
-      v = v.padEnd(14,"").slice(0,14).replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, (_,a,b,c,d,e)=> e?`${a}.${b}.${c}/${d}-${e}`: d?`${a}.${b}.${c}/${d}`: c?`${a}.${b}.${c}`: b?`${a}.${b}`: a);
+      v = v.padEnd(14,"").slice(0,14).replace(
+        /(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/,
+        (_,a,b,c,d,e)=> e?`${a}.${b}.${c}/${d}-${e}`: d?`${a}.${b}.${c}/${d}`: c?`${a}.${b}.${c}`: b?`${a}.${b}`: a
+      );
     }
     el.value = v;
   }
@@ -343,7 +418,10 @@ function renderClientes() {
 
   function ensureContrato(cli) {
     const exist = DB.contratos.find((c) => c.clienteId === cli.id);
-    if (!exist) { DB.contratos.push({ id: uid(), clienteId: cli.id, cliente: cli.nome, status: "Pendente", data: Date.now() }); save(); }
+    if (!exist) {
+      DB.contratos.push({ id: uid(), clienteId: cli.id, cliente: cli.nome, status: "Pendente", data: Date.now() });
+      save();
+    }
   }
 
   function list() {
@@ -358,8 +436,8 @@ function renderClientes() {
         <td>${c.contato || ""}</td>
         <td>${c.fixo ? '<span class="tag ok">Ponto Fixo</span>' : "—"}</td>
         <td>
-          <button class="icon-btn" data-act="edit" data-id="${c.id}" title="Editar">✏️</button>
-          <button class="icon-btn" data-act="del"  data-id="${c.id}" title="Excluir">🗑️</button>
+          ${iconBtn("edit", c.id, "Editar", "✏️")}
+          ${iconBtn("del",  c.id, "Excluir", "🗑️")}
         </td>
       </tr>
     `).join("") || `<tr><td colspan="6" class="empty">Sem clientes...</td></tr>`;
@@ -385,7 +463,6 @@ function renderClientes() {
     }
   });
 
-  // Auto-filtro quando vier de submenu PF/PJ
   if (ACTIVE === "clientes_pf" || ACTIVE === "clientes_pj") {
     $("#cli_tipo", tpl).value = ACTIVE === "clientes_pf" ? "PF" : "PJ";
   }
@@ -401,7 +478,8 @@ function renderProdutos() {
 
   function clear() {
     ["prd_id","prd_nome","prd_codigo","prd_preco"].forEach(id => $("#"+id, tpl).value="");
-    $("#prd_tipo", tpl).value = "Chopeira"; $("#prd_estoque_ctrl", tpl).checked = true;
+    $("#prd_tipo", tpl).value = "Chopeira";
+    $("#prd_estoque_ctrl", tpl).checked = true;
   }
   $("#btnLimparProduto", tpl).onclick = clear;
 
@@ -432,8 +510,8 @@ function renderProdutos() {
         <td>${p.nome}</td><td>${p.tipo}</td><td>${p.codigo || "—"}</td>
         <td>${fmt.money(p.preco)}</td><td>${p.ctrl ? p.estoque : '<span class="muted">N/C</span>'}</td>
         <td>
-          <button class="icon-btn" data-act="edit" data-id="${p.id}">✏️</button>
-          <button class="icon-btn" data-act="del"  data-id="${p.id}">🗑️</button>
+          ${iconBtn("edit", p.id, "Editar", "✏️")}
+          ${iconBtn("del",  p.id, "Excluir", "🗑️")}
         </td>
       </tr>
     `).join("") || `<tr><td colspan="6" class="empty">Sem produtos...</td></tr>`;
@@ -488,7 +566,7 @@ function renderPedidos() {
             ${["Aberto","Em Atendimento","Concluído","Recebido"].map(s=>`<option ${p.status===s?"selected":""}>${s}</option>`).join("")}
           </select>
         </td>
-        <td><button class="icon-btn" data-act="del" data-id="${p.id}">🗑️</button></td>
+        <td>${iconBtn("del", p.id, "Excluir", "🗑️")}</td>
       </tr>
     `).join("");
   }
@@ -505,69 +583,6 @@ function renderPedidos() {
   });
   $("#buscaPedidos", tpl).addEventListener("input", list);
   $("#filtroStatus", tpl).addEventListener("change", list);
-  list(); return tpl;
-}
-
-/* ---- CONTRATOS --------------------------------------------------------- */
-function renderContratos() {
-  const tpl = document.importNode($("#tpl-contratos").content, true);
-  const TB  = $("tbody", tpl);
-
-  function list() {
-    const rows = DB.clientes.filter(c=>c.fixo).map(c=>{
-      const k = DB.contratos.find(x=>x.clienteId===c.id) || { status:"Pendente", data: Date.now() };
-      return { id:k.id||uid(), clienteId:c.id, cliente:c.nome, status:k.status, data:k.data };
-    });
-    TB.innerHTML = rows.map(r=>`
-      <tr>
-        <td>${r.cliente}</td>
-        <td>${r.status==="Assinado" ? '<span class="tag ok">Assinado</span>' : '<span class="tag warn">Pendente</span>'}</td>
-        <td>${fmt.date(r.data)}</td>
-        <td>
-          <button class="icon-btn" data-act="gerar" data-id="${r.clienteId}" title="Gerar">📄</button>
-          <button class="icon-btn" data-act="ass"   data-id="${r.clienteId}" title="Marcar assinado">✅</button>
-        </td>
-      </tr>
-    `).join("") || `<tr><td colspan="4" class="empty">Sem clientes ponto fixo...</td></tr>`;
-  }
-
-  function contratoHTML(cli) {
-    return `<!DOCTYPE html><html lang="pt-br"><meta charset="utf-8"><title>Contrato - ${cli.nome}</title>
-      <style>body{font-family:Arial,Helvetica,sans-serif;line-height:1.5;margin:40px} h1{font-size:18px} .muted{color:#555}
-      .box{border:1px solid #ccc;padding:14px;border-radius:8px}</style>
-      <h1>Contrato de Comodato — JK CHOPP</h1>
-      <p><b>Contratante:</b> JK CHOPP • CNPJ 00.000.000/0000-00</p>
-      <p><b>Contratado:</b> ${cli.nome} (${cli.tipo}) — Doc: ${cli.doc}<br><span class="muted">Endereço: ${cli.end || "-"} • Contato: ${cli.contato || "-"}</span></p>
-      <div class="box">
-        <p>Este contrato estabelece o comodato de equipamentos (chopeira/barris/cilindros) para o ponto fixo do contratado, conforme disponibilidade e condições comerciais acordadas. Prazo indeterminado, podendo ser rescindido por qualquer parte com 30 dias de antecedência.</p>
-        <ul>
-          <li>Responsabilidade de guarda e conservação dos equipamentos;</li>
-          <li>Reposição por danos causados por mau uso;</li>
-          <li>Visitas técnicas mediante agendamento;</li>
-          <li>Valores e consumos conforme tabelas vigentes.</li>
-        </ul>
-      </div>
-      <p class="muted">Assinaturas digitais/eletrônicas podem ser anexadas a este documento.</p>
-      <p>Data: ${new Date().toLocaleDateString("pt-BR")}</p>
-      <p>__________________________<br>JK CHOPP</p>
-      <p>__________________________<br>${cli.nome}</p>`;
-  }
-
-  TB.addEventListener("click", (ev) => {
-    const b = ev.target.closest("button"); if (!b) return;
-    const id = b.dataset.id; const cli = DB.clientes.find(c=>c.id===id);
-    if (!cli) { alert("Cliente não encontrado."); return; }
-    if (b.dataset.act==="gerar") { const w = window.open("","_blank"); w.document.write(contratoHTML(cli)); w.document.close(); }
-    if (b.dataset.act==="ass")   { const k = DB.contratos.find(x=>x.clienteId===id); if (k) { k.status="Assinado"; k.data=Date.now(); save(); list(); } }
-  });
-
-  $("#btnGerarContratoSelecionado", tpl).onclick = () => {
-    const nome = prompt("Nome do cliente ponto fixo:");
-    const cli = DB.clientes.find(c => c.fixo && c.nome.toLowerCase() === String(nome||"").toLowerCase());
-    if (!cli) { alert("Cliente não localizado ou não é Ponto Fixo."); return; }
-    const w = window.open("","_blank"); w.document.write(contratoHTML(cli)); w.document.close();
-  };
-
   list(); return tpl;
 }
 
@@ -614,8 +629,8 @@ function renderFinanceiro() {
         <td>${x.doc}</td><td>${x.cliente || "—"}</td><td>${fmt.money(x.valor)}</td>
         <td>${x.tipo}</td><td>${x.venc ? fmt.date(x.venc) : "—"}</td>
         <td>
-          <button class="icon-btn" data-act="edit" data-id="${x.id}">✏️</button>
-          <button class="icon-btn" data-act="del"  data-id="${x.id}">🗑️</button>
+          ${iconBtn("edit", x.id, "Editar", "✏️")}
+          ${iconBtn("del",  x.id, "Excluir", "🗑️")}
         </td>
       </tr>
     `).join("") || `<tr><td colspan="6" class="empty">Sem títulos...</td></tr>`;
@@ -629,7 +644,9 @@ function renderFinanceiro() {
       $("#fin_id", tpl).value=x.id; $("#fin_doc", tpl).value=x.doc; $("#fin_cliente", tpl).value=x.cliente||"";
       $("#fin_valor", tpl).value=String(x.valor).replace(".", ","); $("#fin_tipo", tpl).value=x.tipo; $("#fin_venc", tpl).value=x.venc||"";
     }
-    if (b.dataset.act==="del" && confirm("Excluir título?")) { DB.financeiro = DB.financeiro.filter(y=>y.id!==id); save(); list(); }
+    if (b.dataset.act==="del" && confirm("Excluir título?")) {
+      DB.financeiro = DB.financeiro.filter(y=>y.id!==id); save(); list();
+    }
   });
 
   $("#buscaFinanceiro", tpl).addEventListener("input", list);
@@ -637,36 +654,96 @@ function renderFinanceiro() {
   list(); return tpl;
 }
 
-/* ---- AGENDAMENTOS + CALENDÁRIO ---------------------------------------- */
+/* ---- CONTRATOS --------------------------------------------------------- */
+function renderContratos() {
+  const tpl = document.importNode($("#tpl-contratos").content, true);
+  const TB  = $("tbody", tpl);
+
+  function list() {
+    const rows = DB.clientes.filter(c=>c.fixo).map(c=>{
+      const k = DB.contratos.find(x=>x.clienteId===c.id) || { status:"Pendente", data: Date.now() };
+      return { id:k.id||uid(), clienteId:c.id, cliente:c.nome, status:k.status, data:k.data };
+    });
+    TB.innerHTML = rows.map(r=>`
+      <tr>
+        <td>${r.cliente}</td>
+        <td>${r.status==="Assinado" ? '<span class="tag ok">Assinado</span>' : '<span class="tag warn">Pendente</span>'}</td>
+        <td>${fmt.date(r.data)}</td>
+        <td>
+          ${iconBtn("gerar", r.clienteId, "Gerar contrato", "📄")}
+          ${iconBtn("ass",   r.clienteId, "Marcar assinado", "✅")}
+        </td>
+      </tr>
+    `).join("") || `<tr><td colspan="4" class="empty">Sem clientes ponto fixo...</td></tr>`;
+  }
+
+  function contratoHTML(cli) {
+    return `<!DOCTYPE html><html lang="pt-br"><meta charset="utf-8"><title>Contrato - ${cli.nome}</title>
+      <style>body{font-family:Arial,Helvetica,sans-serif;line-height:1.5;margin:40px} h1{font-size:18px} .muted{color:#555}
+      .box{border:1px solid #ccc;padding:14px;border-radius:8px}</style>
+      <h1>Contrato de Comodato — JK CHOPP</h1>
+      <p><b>Contratante:</b> JK CHOPP • CNPJ 00.000.000/0000-00</p>
+      <p><b>Contratado:</b> ${cli.nome} (${cli.tipo}) — Doc: ${cli.doc}<br><span class="muted">Endereço: ${cli.end || "-"} • Contato: ${cli.contato || "-"}</span></p>
+      <div class="box">
+        <p>Este contrato estabelece o comodato de equipamentos (chopeira/barris/cilindros) para o ponto fixo do contratado, conforme disponibilidade e condições comerciais acordadas. Prazo indeterminado, podendo ser rescindido por qualquer parte com 30 dias de antecedência.</p>
+        <ul>
+          <li>Responsabilidade de guarda e conservação dos equipamentos;</li>
+          <li>Reposição por danos causados por mau uso;</li>
+          <li>Visitas técnicas mediante agendamento;</li>
+          <li>Valores e consumos conforme tabelas vigentes.</li>
+        </ul>
+      </div>
+      <p class="muted">Assinaturas digitais/eletrônicas podem ser anexadas a este documento.</p>
+      <p>Data: ${new Date().toLocaleDateString("pt-BR")}</p>
+      <p>__________________________<br>JK CHOPP</p>
+      <p>__________________________<br>${cli.nome}</p>`;
+  }
+
+  TB.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button"); if (!b) return;
+    const id = b.dataset.id; const cli = DB.clientes.find(c=>c.id===id);
+    if (!cli) { alert("Cliente não encontrado."); return; }
+    if (b.dataset.act==="gerar") {
+      const w = window.open("","_blank");
+      w.document.write(contratoHTML(cli)); w.document.close();
+    }
+    if (b.dataset.act==="ass") {
+      const k = DB.contratos.find(x=>x.clienteId===id);
+      if (k) { k.status="Assinado"; k.data=Date.now(); save(); list(); }
+    }
+  });
+
+  $("#btnGerarContratoSelecionado", tpl).onclick = () => {
+    const nome = prompt("Nome do cliente ponto fixo:");
+    const cli = DB.clientes.find(c => c.fixo && c.nome.toLowerCase() === String(nome||"").toLowerCase());
+    if (!cli) { alert("Cliente não localizado ou não é Ponto Fixo."); return; }
+    const w = window.open("","_blank"); w.document.write(contratoHTML(cli)); w.document.close();
+  };
+
+  list(); return tpl;
+}
+
+/* ---- AGENDA ------------------------------------------------------------ */
 function renderAgenda() {
   const tpl = document.importNode($("#tpl-agendamentos").content, true);
   const TB  = $("tbody", tpl);
 
-  // ===== Helpers de data
-  const toYMD = (d) => {
-    const z = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
-  };
-  const fromYMD = (s) => {
-    const [y,m,d] = (s||"").split("-").map(Number);
-    if (!y || !m || !d) return null;
-    return new Date(y, m-1, d);
-  };
+  const z2 = (n) => String(n).padStart(2, "0");
+  const toYMD = (d) => `${d.getFullYear()}-${z2(d.getMonth()+1)}-${z2(d.getDate())}`;
 
-// ===== Estado de mês exibido (começa no mês "hoje")
-let calRef = new Date();
-calRef.setDate(1);
+  let calRef = new Date(); calRef.setDate(1);
+  let selectedYMD = toYMD(new Date());
+  $("#ag_data", tpl).value = $("#ag_data", tpl).value || selectedYMD;
 
-// Seleção inicial: hoje (UMA vez)
-let selectedYMD = toYMD(new Date());
-$("#ag_data", tpl).value = $("#ag_data", tpl).value || selectedYMD;
-
-  // ===== CRUD já existente
   $("#btnAddAgenda", tpl).onclick = () => {
-    const a = { id: uid(), titulo: $("#ag_titulo", tpl).value.trim(), data: $("#ag_data", tpl).value, hora: $("#ag_hora", tpl).value };
+    const a = {
+      id: uid(),
+      titulo: $("#ag_titulo", tpl).value.trim(),
+      data: $("#ag_data", tpl).value,
+      hora: $("#ag_hora", tpl).value
+    };
     if (!a.titulo || !a.data) { alert("Informe título e data."); return; }
     DB.agenda.push(a); save(); list(); $("#ag_titulo", tpl).value = "";
-    // Atualiza pontos no calendário caso o dia adicionado esteja visível
     buildCalendar();
   };
 
@@ -678,7 +755,7 @@ $("#ag_data", tpl).value = $("#ag_data", tpl).value || selectedYMD;
     TB.innerHTML = rows.map(a=>`
       <tr>
         <td>${fmt.date(a.data)}</td><td>${a.hora || "—"}</td><td>${a.titulo}</td>
-        <td><button class="icon-btn" data-act="del" data-id="${a.id}">🗑️</button></td>
+        <td>${iconBtn("del", a.id, "Excluir", "🗑️")}</td>
       </tr>
     `).join("") || `<tr><td colspan="4" class="empty">Sem agendamentos...</td></tr>`;
   }
@@ -691,271 +768,614 @@ $("#ag_data", tpl).value = $("#ag_data", tpl).value || selectedYMD;
   });
   $("#buscaAgenda", tpl).addEventListener("input", list);
 
-  // ===== Calendário
   const elTitle = $("#calTitle", tpl);
   const elGrid  = $("#calGrid", tpl);
 
   function buildCalendar() {
-    // Título do mês (pt-BR)
-   elTitle.textContent = calRef.toLocaleDateString("pt-BR", { month:"long", year:"numeric" });
+    elTitle.textContent = calRef.toLocaleDateString("pt-BR", { month:"long", year:"numeric" });
 
-    // 1) Primeiro dia do mês e índice (0=Dom, 1=Seg,...)
     const first = new Date(calRef.getFullYear(), calRef.getMonth(), 1);
-    let start = new Date(first);
+    const dow = (first.getDay() + 6) % 7; // seg=0
+    const start = new Date(first); start.setDate(first.getDate() - dow);
 
-    // Queremos começar na **segunda-feira** da semana que contém o dia 1
-    const dow = (first.getDay() + 6) % 7;   // transforma: seg=0,... dom=6
-    start.setDate(first.getDate() - dow);   // volta para a segunda
-
-    // 2) Quantidade de células: 35 (5 semanas) ou 42 (6 semanas)
-    // Gera 42 e depois decide esconder a última linha se todos forem "fora"
     const cells = [];
     for (let i = 0; i < 42; i++) {
       const d = new Date(start); d.setDate(start.getDate() + i);
       cells.push(d);
     }
 
-    // 3) Render
     const month = calRef.getMonth();
     const todayYMD = toYMD(new Date());
-    // Mapa de contagem de agendamentos por dia
     const counts = DB.agenda.reduce((acc, a) => {
       if (!a.data) return acc;
       acc[a.data] = (acc[a.data] || 0) + 1;
       return acc;
     }, {});
+
     elGrid.innerHTML = cells.map(d => {
       const ymd = toYMD(d);
       const outside = d.getMonth() !== month ? "outside" : "";
-      const wknd     = [6,0].includes(d.getDay()) ? "wknd" : "";         // sábado/domingo
-const isToday  = ymd === todayYMD ? "today" : "";
-const selected = ymd === selectedYMD ? "selected" : "";
+      const wknd    = [6,0].includes(d.getDay()) ? "wknd" : "";
+      const isToday = ymd === todayYMD ? "today" : "";
+      const selected= ymd === selectedYMD ? "selected" : "";
       const dots = (counts[ymd] || 0);
       return `
-        <button class="cal-day ${outside} ${wknd} ${isToday} ${selected}" data-ymd="${ymd}" ...>
+        <button class="cal-day ${outside} ${wknd} ${isToday} ${selected}" data-ymd="${ymd}">
           <span class="dnum">${d.getDate()}</span>
           <div class="cal-dots">${dots ? Array.from({length: Math.min(dots, 4)}).map(()=>'<span class="cal-dot"></span>').join('') : ""}</div>
         </button>
       `;
     }).join("");
 
-    // 4) Se a última linha (células 35–41) for toda "fora", removemos visualmente
     const lastRow = Array.from(elGrid.children).slice(35, 42);
     const allOutside = lastRow.every(c => c.classList.contains("outside"));
     if (allOutside) lastRow.forEach(c => c.style.display = "none");
   }
 
-  // Navegação do calendário
   $("#calPrev",  tpl).onclick = () => { calRef.setMonth(calRef.getMonth() - 1); buildCalendar(); };
-$("#calNext",  tpl).onclick = () => { calRef.setMonth(calRef.getMonth() +  1); buildCalendar(); };
-$("#calToday", tpl).onclick = () => {
-  const now = new Date();
-  calRef = new Date(now.getFullYear(), now.getMonth(), 1);
-  buildCalendar();
-};
+  $("#calNext",  tpl).onclick = () => { calRef.setMonth(calRef.getMonth() + 1); buildCalendar(); };
+  $("#calToday", tpl).onclick = () => { const now = new Date(); calRef = new Date(now.getFullYear(), now.getMonth(), 1); buildCalendar(); };
 
-/// Clique em um dia => selecionar, preencher data, filtrar e redesenhar
-tpl.addEventListener("click", (ev) => {
-  const b = ev.target.closest(".cal-day"); if (!b) return;
-  const ymd = b.dataset.ymd;
+  tpl.addEventListener("click", (ev) => {
+    const b = ev.target.closest(".cal-day"); if (!b) return;
+    const ymd = b.dataset.ymd;
+    selectedYMD = ymd;
+    $("#ag_data", tpl).value = ymd;
+    $("#buscaAgenda", tpl).value = ymd.split("-").reverse().join("/");
+    $("#ag_titulo", tpl).focus();
+    buildCalendar();
+    list();
+  });
 
-  selectedYMD = ymd;
-  $("#ag_data", tpl).value = ymd;
-  $("#buscaAgenda", tpl).value = ymd.split("-").reverse().join("/");
-  $("#ag_titulo", tpl).focus();
-
-  buildCalendar();
-  list();
-});
-
-// exemplo de compromissos
-const compromissos = {
-  "2025-09-13": ["Reunião com cliente"],
-  "2025-09-18": ["Entrega projeto", "Aniversário João"],
-  "2025-09-25": ["Consulta médica"]
-};
-
-function renderCalendar(year, month) {
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const grid = document.querySelector(".cal-grid");
-  grid.innerHTML = "";
-
-  // calcula dia inicial (domingo=0)
-  const startDay = firstDay.getDay();
-  const totalDays = lastDay.getDate();
-
-  // células antes do mês
-  for (let i = 0; i < startDay; i++) {
-    const cell = document.createElement("div");
-    cell.className = "cal-day outside";
-    grid.appendChild(cell);
-  }
-
-  // dias do mês
-  for (let d = 1; d <= totalDays; d++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-    const cell = document.createElement("div");
-    cell.className = "cal-day";
-
-    // número do dia
-    const num = document.createElement("div");
-    num.className = "dnum";
-    num.textContent = d;
-    cell.appendChild(num);
-
-    // bolinhas se houver compromissos
-    if (compromissos[dateStr]) {
-      const dotsWrap = document.createElement("div");
-      dotsWrap.className = "cal-dots";
-      compromissos[dateStr].forEach(() => {
-        const dot = document.createElement("span");
-        dot.className = "cal-dot";
-        dotsWrap.appendChild(dot);
-      });
-      cell.appendChild(dotsWrap);
-    }
-
-    grid.appendChild(cell);
-  }
-}
-
-  // Primeira renderização
   buildCalendar();
   list();
   return tpl;
 }
 
-/* ---- RELATÓRIOS -------------------------------------------------------- */
 function renderRelatorios() {
-  const tpl  = document.importNode($("#tpl-relatorios").content, true);
-  const area = $("#areaRelatorio", tpl);
+  const tpl = document.importNode($("#tpl-relatorios").content, true);
 
-  function render(tipo) {
-    let html = "";
-    if (tipo === "clientes") {
-      html = `<h3>Clientes (${DB.clientes.length})</h3><ul>` +
-             DB.clientes.map(c => `<li>${c.nome} — ${c.tipo} ${c.doc} ${c.fixo ? '<span class="tag fix">Ponto Fixo</span>' : ''}</li>`).join("") + `</ul>`;
-    }
-    if (tipo === "produtos") {
-      html = `<h3>Produtos (${DB.produtos.length})</h3><ul>` +
-             DB.produtos.map(p => `<li>${p.nome} (${p.tipo}) — ${fmt.money(p.preco)}</li>`).join("") + `</ul>`;
-    }
-    if (tipo === "pedidos") {
-      html = `<h3>Pedidos (${DB.pedidos.length})</h3><ul>` +
-             DB.pedidos.map(p => `<li>#${p.codigo} — ${p.cliente} — ${p.status} — ${fmt.money(p.total || 0)}</li>`).join("") + `</ul>`;
-    }
-    if (tipo === "financeiro") {
-      const rec = DB.financeiro.filter(x=>x.tipo==="Receber").reduce((s,x)=>s+x.valor,0);
-      const pag = DB.financeiro.filter(x=>x.tipo==="Pagar").reduce((s,x)=>s+x.valor,0);
-      html = `<h3>Financeiro</h3>
-              <p>Receber: <b>${fmt.money(rec)}</b> • Pagar: <b>${fmt.money(pag)}</b> • Saldo: <b>${fmt.money(rec - pag)}</b></p>
-              <ul>` + DB.financeiro.map(x => `<li>${x.tipo} — ${x.doc} — ${x.cliente || "-"} — ${fmt.money(x.valor)} — ${x.venc ? fmt.date(x.venc) : "-"}</li>`).join("") + `</ul>`;
-    }
-    area.innerHTML = `<div class="card">${html}</div>`;
+  // (Opcional) ligações simples para os botões do template
+  $("#btnGerarRelatorio", tpl)?.addEventListener("click", () => {
+    alert("Gerador de relatório: em breve.");
+  });
+  $("#btnCSV", tpl)?.addEventListener("click", () => {
+    alert("Exportar CSV: em breve.");
+  });
+
+  return tpl;
+}
+
+/* === 05) RELATÓRIOS → RELATÓRIO DE REPASSE (SEM UI DE %) =============== */
+function renderRelRepasse() {
+  // Garante uma linha inicial em cada tabela para começar
+  if (!DB.repasse.clientes.length) DB.repasse.clientes.push({ id:uid(), cliente:"", marca:"", qtdLitros:30, custoPorLitro:0, qtdBarris:1, venda:0 });
+  if (!DB.repasse.despesas.length) DB.repasse.despesas.push({ id:uid(), descricao:"", valor:0, obs:"", partJK:0, partMarcos:0, pago:false });
+
+  const wrap = document.createElement("section");
+  wrap.className = "stack";
+
+  // — Cabeçalho
+  const head = document.createElement("div");
+  head.className = "card";
+  head.innerHTML = `
+    <div class="row space-between">
+      <h3>Relatório de Repasse</h3>
+      <div class="row">
+        <button class="btn" id="repPrint">⬇️ Baixar PDF</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="row">
+        <label class="pill">Data início
+          <input id="rep_dataIni" class="input" type="date">
+        </label>
+        <label class="pill">Data fim
+          <input id="rep_dataFim" class="input" type="date">
+        </label>
+        <label class="pill">Data pagamento
+          <input id="rep_dataPag" class="input" type="date">
+        </label>
+      </div>
+    </div>
+  `;
+  wrap.appendChild(head);
+
+  // — Vendas
+  const vendas = document.createElement("section");
+  vendas.className = "card";
+  vendas.innerHTML = `
+    <div class="row space-between">
+      <h4>Fechamento de Duas Semanas – Vendas</h4>
+      <button id="repAddCliente" class="btn">+ Adicionar linha</button>
+    </div>
+    <div class="table-wrap">
+      <table class="table-compact" id="repTblVendas">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Marca do Chopp</th>
+            <th class="right">Qtde (L)</th>
+            <th class="right">Custo p/L</th>
+            <th class="right">Qtde. Barris</th>
+            <th class="right">Custo</th>
+            <th class="right">Venda</th>
+            <th class="right">Parte Marcos</th>
+            <th class="right">Parte JK</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5"><b>Totais</b></td>
+            <td id="repTotCusto" class="right"><b>R$ 0,00</b></td>
+            <td id="repTotVenda" class="right"><b>R$ 0,00</b></td>
+            <td id="repTotM" class="right"><b>R$ 0,00</b></td>
+            <td id="repTotJ" class="right"><b>R$ 0,00</b></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
+  wrap.appendChild(vendas);
+
+  // — Despesas
+  const despesas = document.createElement("section");
+  despesas.className = "card";
+  despesas.innerHTML = `
+    <div class="row space-between">
+      <h4>Despesas</h4>
+      <button id="repAddDespesa" class="btn">+ Adicionar despesa</button>
+    </div>
+    <div class="table-wrap">
+      <table class="table-compact" id="repTblDespesas">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th class="right">Valor</th>
+            <th>Obs</th>
+            <th class="right">Part. JK</th>
+            <th class="right">Part. Marcos</th>
+            <th>Pago?</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td><b>Totais</b></td>
+            <td id="repTotDespVal" class="right"><b>R$ 0,00</b></td>
+            <td></td>
+            <td id="repTotDespJK" class="right"><b>R$ 0,00</b></td>
+            <td id="repTotDespM" class="right"><b>R$ 0,00</b></td>
+            <td></td><td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
+  wrap.appendChild(despesas);
+
+  // — Resultados
+  const resumo = document.createElement("section");
+  resumo.className = "card";
+  resumo.innerHTML = `
+    <h4>Cálculo</h4>
+    <div class="grid-3">
+      <div class="calc-box amber">
+        <div class="row space-between"><span>Parte Marcos</span><b id="resParteM">R$ 0,00</b></div>
+        <div class="row space-between"><span>− Despesas Marcos</span><b id="resDespM">R$ 0,00</b></div>
+        <hr>
+        <div class="row space-between big"><span>Total a pagar Marcos</span><b id="resTotalM">R$ 0,00</b></div>
+      </div>
+      <div class="calc-box sky">
+        <div class="row space-between"><span>Parte JK</span><b id="resParteJ">R$ 0,00</b></div>
+        <div class="row space-between"><span>− Despesas JK</span><b id="resDespJ">R$ 0,00</b></div>
+        <hr>
+        <div class="row space-between big"><span>Saldo JK</span><b id="resSaldoJ">R$ 0,00</b></div>
+      </div>
+      <div class="calc-box green">
+        <div class="row space-between"><span>Vendas</span><b id="resVendas">R$ 0,00</b></div>
+        <div class="row space-between"><span>Custos</span><b id="resCustos">R$ 0,00</b></div>
+        <div class="row space-between"><span>Despesas</span><b id="resDespesas">R$ 0,00</b></div>
+        <hr>
+        <div class="row space-between big"><span>Lucro bruto</span><b id="resLucro">R$ 0,00</b></div>
+      </div>
+    </div>
+  `;
+  wrap.appendChild(resumo);
+
+  // — Referências de DOM (sem percM/percJ)
+  const H = {
+    ini: $("#rep_dataIni", head),
+    fim: $("#rep_dataFim", head),
+    pag: $("#rep_dataPag", head),
+  };
+  const TBL = {
+    vendasTbody: $("#repTblVendas tbody", vendas),
+    totCusto:    $("#repTotCusto", vendas),
+    totVenda:    $("#repTotVenda", vendas),
+    totM:        $("#repTotM", vendas),
+    totJ:        $("#repTotJ", vendas),
+    despesasTbody: $("#repTblDespesas tbody", despesas),
+    totDespVal:    $("#repTotDespVal", despesas),
+    totDespJK:     $("#repTotDespJK", despesas),
+    totDespM:      $("#repTotDespM", despesas),
+  };
+  const OUT = {
+    parteM: $("#resParteM", resumo),
+    despM:  $("#resDespM", resumo),
+    totalM: $("#resTotalM", resumo),
+    parteJ: $("#resParteJ", resumo),
+    despJ:  $("#resDespJ", resumo),
+    saldoJ: $("#resSaldoJ", resumo),
+    vendas: $("#resVendas", resumo),
+    custos: $("#resCustos", resumo),
+    despesas: $("#resDespesas", resumo),
+    lucro:  $("#resLucro", resumo),
+  };
+
+  const ST = DB.repasse;
+  // Header inicial
+  H.ini.value = ST.header.dataIni || "";
+  H.fim.value = ST.header.dataFim || "";
+  H.pag.value = ST.header.dataPagamento || "";
+
+  // — Renderizações
+  function renderVendas(){
+    // split fixo pelo estado (padrão 50/50 — sem UI)
+    const pM = (toNumber(ST.split.percMarcos)/100) || 0.5;
+    const pJ = (toNumber(ST.split.percJK)/100)     || 0.5;
+
+    const rows = ST.clientes.map(r=>{
+      const litros = Math.max(0, toNumber(r.qtdLitros));
+      const barris = Math.max(1, toNumber(r.qtdBarris) || 1);
+      const cpl    = Math.max(0, toNumber(r.custoPorLitro));
+      const venda  = Math.max(0, toNumber(r.venda));
+      const custo  = cpl * litros * barris;
+      const lucro  = venda - custo;
+
+      return `
+        <tr data-id="${r.id}">
+          <td><input class="input" data-field="cliente" value="${r.cliente||""}" placeholder="Nome do cliente"></td>
+          <td><input class="input" data-field="marca"   value="${r.marca||""}"   placeholder="Marca do chopp"></td>
+          <td class="right"><input class="input right" data-field="qtdLitros"     type="number" step="0.01" value="${r.qtdLitros||0}"></td>
+          <td class="right"><input class="input right" data-field="custoPorLitro" type="number" step="0.01" value="${r.custoPorLitro||0}"></td>
+          <td class="right"><input class="input right" data-field="qtdBarris"     type="number" step="1"    value="${r.qtdBarris||1}"></td>
+          <td class="right">${fmt.money(custo)}</td>
+          <td class="right"><input class="input right" data-field="venda" type="number" step="0.01" value="${r.venda||0}"></td>
+          <td class="right"><span>${fmt.money(lucro*pM)}</span></td>
+          <td class="right"><span>${fmt.money(lucro*pJ)}</span></td>
+          <td>${iconBtn("del", r.id, "Remover", "🗑️")}</td>
+        </tr>`;
+    }).join("");
+    TBL.vendasTbody.innerHTML = rows || `<tr><td colspan="10" class="empty">Sem linhas...</td></tr>`;
   }
 
-  function toCSV() {
-    const tipo = $("#rel_tipo", tpl).value;
-    const rows = [];
-    if (tipo === "clientes") {
-      rows.push(["Nome","Tipo","Documento","Contato","Ponto Fixo"]);
-      DB.clientes.forEach(c => rows.push([c.nome,c.tipo,c.doc,c.contato||"",c.fixo?"Sim":"Não"]));
-    } else if (tipo === "produtos") {
-      rows.push(["Nome","Tipo","Código","Preço","Estoque"]);
-      DB.produtos.forEach(p => rows.push([p.nome,p.tipo,p.codigo||"",p.preco,p.ctrl?p.estoque:"NC"]));
-    } else if (tipo === "pedidos") {
-      rows.push(["#","Cliente","Itens","Total","Status"]);
-      DB.pedidos.forEach(p => rows.push([p.codigo,p.cliente,p.itens||"",p.total||0,p.status]));
-    } else if (tipo === "financeiro") {
-      rows.push(["Doc","Cliente","Valor","Tipo","Vencimento"]);
-      DB.financeiro.forEach(x => rows.push([x.doc,x.cliente||"",x.valor,x.tipo,x.venc||""]));
-    }
-    const csv = rows.map(r => r.map(v => '"' + String(v).replaceAll('"','""') + '"').join(";")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url  = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement("a"), { href: url, download: `relatorio_${tipo}.csv` });
-    a.click(); URL.revokeObjectURL(url);
+  function renderDespesas(){
+    const rows = ST.despesas.map(d=>`
+      <tr data-id="${d.id}">
+        <td><input class="input" data-field="descricao" value="${d.descricao||""}" placeholder="Ex.: Combustível da semana"></td>
+        <td class="right"><input class="input right" data-field="valor" type="number" step="0.01" value="${d.valor||0}"></td>
+        <td><input class="input" data-field="obs" value="${d.obs||""}" placeholder="Observações"></td>
+        <td class="right"><input class="input right" data-field="partJK" type="number" step="0.01" value="${d.partJK||0}"></td>
+        <td class="right"><input class="input right" data-field="partMarcos" type="number" step="0.01" value="${d.partMarcos||0}"></td>
+        <td class="center"><input type="checkbox" data-field="pago" ${d.pago?"checked":""}></td>
+        <td>${iconBtn("del", d.id, "Remover", "🗑️")}</td>
+      </tr>
+    `).join("");
+    TBL.despesasTbody.innerHTML = rows || `<tr><td colspan="7" class="empty">Sem despesas...</td></tr>`;
   }
 
-  $("#btnGerarRelatorio", tpl).onclick = () => render($("#rel_tipo", tpl).value);
-  $("#btnCSV", tpl).onclick = toCSV;
-  render("clientes"); return tpl;
-}
+  function renderTotais(){
+    const pM=(toNumber(ST.split.percMarcos)/100)||0.5;
+    const pJ=(toNumber(ST.split.percJK)/100)||0.5;
 
-/* === 05) PERFIL ========================================================= */
-function bindProfile() {
-  $("#btnPerfil")?.addEventListener("click", async () => {
-    const nome = prompt("Seu nome completo:", DB.perfil.nome || "")?.trim() || DB.perfil.nome;
-    const nasc = prompt("Data de nascimento (AAAA-MM-DD):", DB.perfil.nascimento || "")?.trim() || DB.perfil.nascimento;
-    const setor= prompt("Setor (ex.: Comercial, Eventos, Delivery):", DB.perfil.setor || "")?.trim() || DB.perfil.setor;
-    let fotoB64 = DB.perfil.fotoB64 || "";
-    const querFoto = confirm("Deseja selecionar/atualizar uma foto de perfil agora?");
-    if (querFoto) { try { fotoB64 = await pickImageAsBase64(); } catch {} }
-    DB.perfil = { nome: nome||"", nascimento: nasc||"", setor: setor||"", fotoB64: fotoB64||"" };
-    save(); alert("Perfil atualizado ✅");
-  });
-}
-function pickImageAsBase64() {
-  return new Promise((resolve, reject) => {
-    const input = Object.assign(document.createElement("input"), { type: "file", accept: "image/*" });
-    input.onchange = () => {
-      const file = input.files?.[0]; if (!file) return reject();
-      const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file);
-    };
-    input.click();
-  });
-}
+    let totCusto=0, totVenda=0, totM=0, totJ=0;
+    ST.clientes.forEach(r=>{
+      const litros = Math.max(0,toNumber(r.qtdLitros));
+      const barris = Math.max(1,toNumber(r.qtdBarris) || 1);
+      const cpl    = Math.max(0,toNumber(r.custoPorLitro));
+      const venda  = Math.max(0,toNumber(r.venda));
+      const custo  = cpl * litros * barris;
+      const lucro  = venda - custo;
+      totCusto += custo; totVenda += venda;
+      totM += lucro * pM; totJ += lucro * pJ;
+    });
 
-/* === 06) ROTEAMENTO + BOOT ============================================= */
-function renderComingSoon(titulo) {
-  const wrap = document.createElement("div");
-  wrap.className = "card";
-  wrap.innerHTML = `<h3>${titulo}</h3><p class="muted">Em breve…</p>`;
+    let totDespVal=0, totDespJK=0, totDespM=0;
+    ST.despesas.forEach(d=>{
+      const v = Math.max(0,toNumber(d.valor));
+      const pj= Math.max(0,toNumber(d.partJK));
+      const pm= Math.max(0,toNumber(d.partMarcos));
+      totDespVal += v; totDespJK += pj; totDespM += pm;
+    });
+
+    // Tabelas
+    TBL.totCusto.textContent = fmt.money(totCusto);
+    TBL.totVenda.textContent = fmt.money(totVenda);
+    TBL.totM.textContent     = fmt.money(totM);
+    TBL.totJ.textContent     = fmt.money(totJ);
+    TBL.totDespVal.textContent = fmt.money(totDespVal);
+    TBL.totDespJK.textContent  = fmt.money(totDespJK);
+    TBL.totDespM.textContent   = fmt.money(totDespM);
+
+    // Painéis finais
+    OUT.parteM.textContent = fmt.money(totM);
+    OUT.despM.textContent  = fmt.money(totDespM);
+    OUT.totalM.textContent = fmt.money(totM - totDespM);
+
+    OUT.parteJ.textContent = fmt.money(totJ);
+    OUT.despJ.textContent  = fmt.money(totDespJK);
+    OUT.saldoJ.textContent = fmt.money(totJ - totDespJK);
+
+    OUT.vendas.textContent   = fmt.money(totVenda);
+    OUT.custos.textContent   = fmt.money(totCusto);
+    OUT.despesas.textContent = fmt.money(totDespVal);
+    OUT.lucro.textContent    = fmt.money(totVenda - totCusto - totDespVal);
+  }
+
+  // — Eventos
+  $("#repAddCliente", vendas).addEventListener("click", () => {
+    ST.clientes.push({ id:uid(), cliente:"", marca:"", qtdLitros:30, custoPorLitro:0, qtdBarris:1, venda:0 });
+    save(); renderVendas(); renderTotais();
+  });
+  $("#repAddDespesa", despesas).addEventListener("click", () => {
+    ST.despesas.push({ id:uid(), descricao:"", valor:0, obs:"", partJK:0, partMarcos:0, pago:false });
+    save(); renderDespesas(); renderTotais();
+  });
+
+  // Edição inline — vendas
+  $("#repTblVendas tbody", vendas).addEventListener("input", (e)=>{
+    const tr = e.target.closest("tr[data-id]"); if (!tr) return;
+    const id = tr.getAttribute("data-id");
+    const f  = e.target.getAttribute("data-field");
+    const row = ST.clientes.find(x=>x.id===id); if (!row || !f) return;
+
+    row[f] = e.target.value;
+
+    const litros = Math.max(0,toNumber(row.qtdLitros));
+    const barris = Math.max(1,toNumber(row.qtdBarris) || 1);
+    const cpl    = Math.max(0,toNumber(row.custoPorLitro));
+    const venda  = Math.max(0,toNumber(row.venda));
+    const custo  = cpl * litros * barris;
+    const lucro  = venda - custo;
+    const pM=(toNumber(ST.split.percMarcos)/100)||0.5;
+    const pJ=(toNumber(ST.split.percJK)/100)||0.5;
+    const tds = tr.querySelectorAll("td");
+    if (tds[5]) tds[5].textContent = fmt.money(custo);
+    if (tds[7]?.querySelector("span")) tds[7].querySelector("span").textContent = fmt.money(lucro*pM);
+    if (tds[8]?.querySelector("span")) tds[8].querySelector("span").textContent = fmt.money(lucro*pJ);
+
+    save(); renderTotais();
+  });
+  $("#repTblVendas tbody", vendas).addEventListener("click", (e)=>{
+    const b = e.target.closest("button[data-act='del']"); if (!b) return;
+    const id = b.dataset.id;
+    ST.clientes = ST.clientes.filter(x=>x.id!==id);
+    save(); renderVendas(); renderTotais();
+  });
+
+  // Edição inline — despesas
+  $("#repTblDespesas tbody", despesas).addEventListener("input", (e)=>{
+    const tr = e.target.closest("tr[data-id]"); if (!tr) return;
+    const id = tr.getAttribute("data-id");
+    const f  = e.target.getAttribute("data-field");
+    const row = ST.despesas.find(x=>x.id===id); if (!row || !f) return;
+
+    if (f === "pago") row.pago = !!e.target.checked; else row[f] = e.target.value;
+
+    if (f === "valor"){
+      const v  = toNumber(row.valor);
+      const pj = v * ((toNumber(ST.split.percJK)||50)/100);
+      const pm = v - pj;
+      row.partJK = pj; row.partMarcos = pm;
+      tr.querySelector('[data-field="partJK"]').value = pj.toFixed(2);
+      tr.querySelector('[data-field="partMarcos"]').value = pm.toFixed(2);
+    } else if (f === "partJK"){
+      const v  = toNumber(row.valor);
+      const pj = toNumber(row.partJK);
+      row.partMarcos = v - pj;
+      tr.querySelector('[data-field="partMarcos"]').value = row.partMarcos.toFixed(2);
+    } else if (f === "partMarcos"){
+      const v  = toNumber(row.valor);
+      const pm = toNumber(row.partMarcos);
+      row.partJK = v - pm;
+      tr.querySelector('[data-field="partJK"]').value = row.partJK.toFixed(2);
+    }
+
+    save(); renderTotais();
+  });
+  $("#repTblDespesas tbody", despesas).addEventListener("click", (e)=>{
+    const b = e.target.closest("button[data-act='del']"); if (!b) return;
+    const id = b.dataset.id;
+    ST.despesas = ST.despesas.filter(x=>x.id!==id);
+    save(); renderDespesas(); renderTotais();
+  });
+
+  // Datas do cabeçalho
+  H.ini.addEventListener("input", e=>{ ST.header.dataIni = e.target.value || ""; save(); });
+  H.fim.addEventListener("input", e=>{ ST.header.dataFim = e.target.value || ""; save(); });
+  H.pag.addEventListener("input", e=>{ ST.header.dataPagamento = e.target.value || ""; save(); });
+
+  // PDF/Impressão
+  $("#repPrint", head).addEventListener("click", () => {
+    const html = (function buildPrintHTML(ST){
+      let totC=0, totV=0, totM=0, totJ=0;
+      const pM=(toNumber(ST.split.percMarcos)/100)||0.5;
+      const pJ=(toNumber(ST.split.percJK)/100)||0.5;
+
+      ST.clientes.forEach(r=>{
+        const litros=Math.max(0,toNumber(r.qtdLitros));
+        const barris=Math.max(1,toNumber(r.qtdBarris)||1);
+        const cpl=Math.max(0,toNumber(r.custoPorLitro));
+        const venda=Math.max(0,toNumber(r.venda));
+        const custo=cpl*litros*barris;
+        const lucro=venda-custo;
+        totC+=custo; totV+=venda; totM+=lucro*pM; totJ+=lucro*pJ;
+      });
+
+      let tDesp=0, tJK=0, tM=0;
+      ST.despesas.forEach(d=>{ const v=toNumber(d.valor); const pj=toNumber(d.partJK); const pm=toNumber(d.partMarcos);
+        tDesp+=v; tJK+=pj; tM+=pm; });
+
+      const saldoM = totM - tM;
+      const saldoJ = totJ - tJK;
+      const lucroB = totV - totC - tDesp;
+
+      const rowsV = ST.clientes.map(r=>{
+        const litros=Math.max(0,toNumber(r.qtdLitros));
+        const barris=Math.max(1,toNumber(r.qtdBarris)||1);
+        const cpl=Math.max(0,toNumber(r.custoPorLitro));
+        const venda=Math.max(0,toNumber(r.venda));
+        const custo=cpl*litros*barris;
+        const lucro=venda-custo;
+        return `
+          <tr>
+            <td>${r.cliente||""}</td><td>${r.marca||""}</td>
+            <td class="r">${litros.toFixed(2)}</td><td class="r">${fmt.money(cpl)}</td><td class="r">${barris}</td>
+            <td class="r">${fmt.money(custo)}</td><td class="r">${fmt.money(venda)}</td>
+            <td class="r">${fmt.money(lucro*pM)}</td><td class="r">${fmt.money(lucro*pJ)}</td>
+          </tr>`;
+      }).join("");
+
+      const rowsD = ST.despesas.map(d=>`
+        <tr>
+          <td>${d.descricao||""}</td>
+          <td class="r">${fmt.money(toNumber(d.valor))}</td>
+          <td>${d.obs||""}</td>
+          <td class="r">${fmt.money(toNumber(d.partJK))}</td>
+          <td class="r">${fmt.money(toNumber(d.partMarcos))}</td>
+          <td>${d.pago?"Sim":"Não"}</td>
+        </tr>
+      `).join("");
+
+      return `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório de Repasse</title>
+<style>
+  @page { size: A4; margin: 12mm; }
+  body { font: 13px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial; color:#111; margin:0; padding:16px; }
+  h1{ font-size:18px; margin:0 0 8px; } h2{ font-size:16px; margin:16px 0 8px; }
+  table{ border-collapse:collapse; width:100%; } th,td{ padding:6px 8px; border:1px solid #ddd; vertical-align:middle; }
+  thead{ background:#f3f4f6; } tfoot{ background:#f3f4f6; }
+  .r{ text-align:right; } .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; } .box{ border:1px solid #ddd; border-radius:8px; padding:10px; }
+  .row{ display:flex; justify-content:space-between; } .muted{ color:#555; font-size:12px; }
+</style></head>
+<body>
+  <header class="row" style="align-items:center;">
+    <h1>RELATÓRIO DE REPASSE</h1>
+  </header>
+
+  <section class="row" style="gap:8px; margin-top:6px;">
+    <div class="box"><div class="muted">Data início</div><b>${ST.header.dataIni||"-"}</b></div>
+    <div class="box"><div class="muted">Data fim</div><b>${ST.header.dataFim||"-"}</b></div>
+    <div class="box"><div class="muted">Data pagamento</div><b>${ST.header.dataPagamento||"-"}</b></div>
+  </section>
+
+  <h2>Fechamento de Duas Semanas – Vendas</h2>
+  <table>
+    <thead>
+      <tr><th>Cliente</th><th>Marca do Chopp</th><th class="r">Qtde (L)</th><th class="r">Custo p/L</th><th class="r">Qtde. Barris</th><th class="r">Custo</th><th class="r">Venda</th><th class="r">Parte Marcos</th><th class="r">Parte JK</th></tr>
+    </thead>
+    <tbody>${rowsV}</tbody>
+    <tfoot><tr><td colspan="5"><b>Totais</b></td><td class="r"><b>${fmt.money(totC)}</b></td><td class="r"><b>${fmt.money(totV)}</b></td><td class="r"><b>${fmt.money(totM)}</b></td><td class="r"><b>${fmt.money(totJ)}</b></td></tr></tfoot>
+  </table>
+
+  <h2>Despesas</h2>
+  <table>
+    <thead>
+      <tr><th>Descrição</th><th class="r">Valor</th><th>Obs</th><th class="r">Part. JK</th><th class="r">Part. Marcos</th><th>Pago?</th></tr>
+    </thead>
+    <tbody>${rowsD}</tbody>
+    <tfoot><tr><td><b>Totais</b></td><td class="r"><b>${fmt.money(tDesp)}</b></td><td></td><td class="r"><b>${fmt.money(tJK)}</b></td><td class="r"><b>${fmt.money(tM)}</b></td><td></td></tr></tfoot>
+  </table>
+
+  <h2>Cálculo</h2>
+  <div class="grid">
+    <div class="box"><div class="row"><span>Parte Marcos</span><b>${fmt.money(totM)}</b></div>
+      <div class="row"><span>− Despesas Marcos</span><b>${fmt.money(tM)}</b></div>
+      <hr><div class="row"><span>Total a pagar Marcos</span><b>${fmt.money(saldoM)}</b></div>
+    </div>
+    <div class="box"><div class="row"><span>Parte JK</span><b>${fmt.money(totJ)}</b></div>
+      <div class="row"><span>− Despesas JK</span><b>${fmt.money(tJK)}</b></div>
+      <hr><div class="row"><span>Saldo JK</span><b>${fmt.money(saldoJ)}</b></div>
+    </div>
+    <div class="box"><div class="row"><span>Vendas</span><b>${fmt.money(totV)}</b></div>
+      <div class="row"><span>Custos</span><b>${fmt.money(totC)}</b></div>
+      <div class="row"><span>Despesas</span><b>${fmt.money(tDesp)}</b></div>
+      <hr><div class="row"><span>Lucro bruto</span><b>${fmt.money(lucroB)}</b></div>
+    </div>
+  </div>
+</body></html>`;
+    }) (ST);
+
+    const w = window.open("", "_blank");
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+  });
+
+  // Datas → persistência
+  H.ini.addEventListener("input", e=>{ ST.header.dataIni = e.target.value || ""; save(); });
+  H.fim.addEventListener("input", e=>{ ST.header.dataFim = e.target.value || ""; save(); });
+  H.pag.addEventListener("input", e=>{ ST.header.dataPagamento = e.target.value || ""; save(); });
+
+  // Render inicial
+  renderVendas();
+  renderDespesas();
+  renderTotais();
   return wrap;
 }
-// ROTAS — manter tudo dentro do objeto
-const ROUTES = {
-  // telas principais
-  home:         renderHome,
-  clientes:     renderClientes,
-  produtos:     renderProdutos,
-  pedidos:      renderPedidos,
-  contratos:    renderContratos,
-  financeiro:   renderFinanceiro,
-  agendamentos: renderAgenda,
-  relatorios:   renderRelatorios,
 
-  // subitens do menu "Contatos"
-  clientes_pf:  renderClientes,   // mapeia para a mesma tela de clientes
-  clientes_pj:  renderClientes,
-
-  // seções “Em breve…”
-  fornecedores:     () => renderComingSoon("Fornecedores"),
-  funcionarios:     () => renderComingSoon("Funcionários"),
-  grupos_preco:     () => renderComingSoon("Grupos de Preço"),
-  interacoes:       () => renderComingSoon("Interações"),
-  transportadoras:  () => renderComingSoon("Transportadoras"),
-  estoque:          () => renderComingSoon("Estoque"),
-  financeiro_in:    () => renderComingSoon("Entradas financeiras"),
-  financeiro_out:   () => renderComingSoon("Saídas financeiras"),
-  nfe_boletos:      () => renderComingSoon("NF-e e Boletos"),
-  ajuda:            () => renderComingSoon("Central de ajuda"),
-};
+/* === 06) PLACEHOLDERS + ROTEADOR ======================================= */
+function renderStub(titulo = "Em construção") {
+  const el = document.createElement("section");
+  el.className = "card";
+  el.innerHTML = `<h3>${titulo}</h3><p class="muted">Esta área ainda não foi implementada.</p>`;
+  return el;
+}
 
 function renderActive() {
-  highlightActiveMenu();
-  const c = $("#content"); if (!c) return; c.innerHTML = "";
-  const fn = ROUTES[ACTIVE] || ROUTES.home;
-  c.appendChild(fn());
+  const content = $("#content");
+  if (!content) return;
+  content.innerHTML = "";
+
+  let view;
+  switch (ACTIVE) {
+    case "home":            view = renderHome();            break;
+    case "clientes_pf":
+    case "clientes_pj":     view = renderClientes();        break;
+    case "produtos":        view = renderProdutos();        break;
+    case "pedidos":         view = renderPedidos();         break;
+    case "financeiro":
+    case "financeiro_in":
+    case "financeiro_out":  view = renderFinanceiro();      break;
+    case "contratos":       view = renderContratos();       break;
+    case "agendamentos":    view = renderAgenda();          break;
+    case "rel_repasse":     view = renderRelRepasse();      break;
+
+    case "fornecedores":    view = renderStub("Fornecedores");        break;
+    case "funcionarios":    view = renderStub("Funcionários");        break;
+    case "grupos_preco":    view = renderStub("Grupos de Preço");     break;
+    case "interacoes":      view = renderStub("Interações");          break;
+    case "transportadoras": view = renderStub("Transportadoras");     break;
+    case "estoque":         view = renderStub("Estoque");             break;
+    case "nfe_boletos":     view = renderStub("NF-e e Boletos");      break;
+    case "ajuda":           view = renderStub("Central de Ajuda");    break;
+    case "relatorios":      view = renderRelatorios();      break;
+
+    default:                view = renderStub("Página não encontrada");
+  }
+
+  if (view) content.appendChild(view);
 }
 
-function init() {
+/* === 07) BOOT =========================================================== */
+document.addEventListener("DOMContentLoaded", () => {
   bindTopbarActions();
-  buildTabs();      // opcional
-  buildMenu();      // novo MENU com accordion
   bindDrawerActions();
-  bindProfile();
+  buildMenu();
   renderActive();
-}
-document.addEventListener("DOMContentLoaded", init);
+});
