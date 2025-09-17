@@ -1200,127 +1200,168 @@ function renderRelRepasse() {
   H.fim.addEventListener("input", e=>{ ST.header.dataFim = e.target.value || ""; save(); });
   H.pag.addEventListener("input", e=>{ ST.header.dataPagamento = e.target.value || ""; save(); });
 
-  // PDF/Impressão
+  // ================= PDF / IMPRESSÃO =================
   $("#repPrint", head).addEventListener("click", () => {
-    const html = (function buildPrintHTML(ST){
-      let totC=0, totV=0, totM=0, totJ=0;
-      const pM=(toNumber(ST.split.percMarcos)/100)||0.5;
-      const pJ=(toNumber(ST.split.percJK)/100)||0.5;
+    const pM = (toNumber(ST.split.percMarcos) / 100) || 0.5;
+    const pJ = (toNumber(ST.split.percJK)     / 100) || 0.5;
 
-      ST.clientes.forEach(r=>{
-        const litros=Math.max(0,toNumber(r.qtdLitros));
-        const barris=Math.max(1,toNumber(r.qtdBarris)||1);
-        const cpl=Math.max(0,toNumber(r.custoPorLitro));
-        const venda=Math.max(0,toNumber(r.venda));
-        const custo=cpl*litros*barris;
-        const lucro=venda-custo;
-        totC+=custo; totV+=venda; totM+=lucro*pM; totJ+=lucro*pJ;
-      });
+    let totC=0, totV=0, totM=0, totJ=0;
+    const rowsV = ST.clientes.map(r=>{
+      const litros=Math.max(0,toNumber(r.qtdLitros));
+      const barris=Math.max(1,toNumber(r.qtdBarris)||1);
+      const cpl=Math.max(0,toNumber(r.custoPorLitro));
+      const venda=Math.max(0,toNumber(r.venda));
+      const custo=cpl*litros*barris;
+      const lucro=venda-custo;
+      totC+=custo; totV+=venda; totM+=lucro*pM; totJ+=lucro*pJ;
+      return `
+        <tr>
+          <td>${r.cliente||""}</td><td>${r.marca||""}</td>
+          <td class="r">${litros.toFixed(2)}</td><td class="r">${fmt.money(cpl)}</td><td class="r">${barris}</td>
+          <td class="r">${fmt.money(custo)}</td><td class="r">${fmt.money(venda)}</td>
+          <td class="r">${fmt.money(lucro*pM)}</td><td class="r">${fmt.money(lucro*pJ)}</td>
+        </tr>`;
+    }).join("");
 
-      let tDesp=0, tJK=0, tM=0;
-      ST.despesas.forEach(d=>{ const v=toNumber(d.valor); const pj=toNumber(d.partJK); const pm=toNumber(d.partMarcos);
-        tDesp+=v; tJK+=pj; tM+=pm; });
-
-      const saldoM = totM - tM;
-      const saldoJ = totJ - tJK;
-      const lucroB = totV - totC - tDesp;
-
-      const rowsV = ST.clientes.map(r=>{
-        const litros=Math.max(0,toNumber(r.qtdLitros));
-        const barris=Math.max(1,toNumber(r.qtdBarris)||1);
-        const cpl=Math.max(0,toNumber(r.custoPorLitro));
-        const venda=Math.max(0,toNumber(r.venda));
-        const custo=cpl*litros*barris;
-        const lucro=venda-custo;
-        return `
-          <tr>
-            <td>${r.cliente||""}</td><td>${r.marca||""}</td>
-            <td class="r">${litros.toFixed(2)}</td><td class="r">${fmt.money(cpl)}</td><td class="r">${barris}</td>
-            <td class="r">${fmt.money(custo)}</td><td class="r">${fmt.money(venda)}</td>
-            <td class="r">${fmt.money(lucro*pM)}</td><td class="r">${fmt.money(lucro*pJ)}</td>
-          </tr>`;
-      }).join("");
-
-      const rowsD = ST.despesas.map(d=>`
+    let tDesp=0, tJK=0, tM=0;
+    const rowsD = ST.despesas.map(d=>{
+      const v=toNumber(d.valor); const pj=toNumber(d.partJK); const pm=toNumber(d.partMarcos);
+      tDesp+=v; tJK+=pj; tM+=pm;
+      return `
         <tr>
           <td>${d.descricao||""}</td>
-          <td class="r">${fmt.money(toNumber(d.valor))}</td>
+          <td class="r">${fmt.money(v)}</td>
           <td>${d.obs||""}</td>
-          <td class="r">${fmt.money(toNumber(d.partJK))}</td>
-          <td class="r">${fmt.money(toNumber(d.partMarcos))}</td>
+          <td class="r">${fmt.money(pj)}</td>
+          <td class="r">${fmt.money(pm)}</td>
           <td>${d.pago?"Sim":"Não"}</td>
-        </tr>
-      `).join("");
+        </tr>`;
+    }).join("");
 
-      return `<!DOCTYPE html>
+    const saldoM = totM - tM;
+    const saldoJ = totJ - tJK;
+    const lucroB = totV - totC - tDesp;
+
+    const html = `<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório de Repasse</title>
 <style>
+  :root { --tb:#f3f4f6; }
   @page { size: A4; margin: 12mm; }
-  body { font: 13px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial; color:#111; margin:0; padding:16px; }
+  body { font: 13px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial; color:#111; margin:0; }
+  #print-toolbar {
+    position: sticky; top: 0; background: #fff; border-bottom: 1px solid #ddd;
+    display: flex; gap: 8px; justify-content: flex-end; padding: 10px 12px; z-index: 10;
+  }
+  #print-toolbar button {
+    border: 1px solid #ccc; background:#fff; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  }
+  #print-toolbar button:hover { border-color:#999; }
+  main { padding: 16px; }
   h1{ font-size:18px; margin:0 0 8px; } h2{ font-size:16px; margin:16px 0 8px; }
   table{ border-collapse:collapse; width:100%; } th,td{ padding:6px 8px; border:1px solid #ddd; vertical-align:middle; }
-  thead{ background:#f3f4f6; } tfoot{ background:#f3f4f6; }
+  thead{ background:var(--tb); } tfoot{ background:var(--tb); }
   .r{ text-align:right; } .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; } .box{ border:1px solid #ddd; border-radius:8px; padding:10px; }
   .row{ display:flex; justify-content:space-between; } .muted{ color:#555; font-size:12px; }
-</style></head>
+  @media print { #print-toolbar { display:none !important; } main{ padding:0; } }
+</style>
+</head>
 <body>
-  <header class="row" style="align-items:center;">
-    <h1>RELATÓRIO DE REPASSE</h1>
-  </header>
-
-  <section class="row" style="gap:8px; margin-top:6px;">
-    <div class="box"><div class="muted">Data início</div><b>${ST.header.dataIni||"-"}</b></div>
-    <div class="box"><div class="muted">Data fim</div><b>${ST.header.dataFim||"-"}</b></div>
-    <div class="box"><div class="muted">Data pagamento</div><b>${ST.header.dataPagamento||"-"}</b></div>
-  </section>
-
-  <h2>Fechamento de Duas Semanas – Vendas</h2>
-  <table>
-    <thead>
-      <tr><th>Cliente</th><th>Marca do Chopp</th><th class="r">Qtde (L)</th><th class="r">Custo p/L</th><th class="r">Qtde. Barris</th><th class="r">Custo</th><th class="r">Venda</th><th class="r">Parte Marcos</th><th class="r">Parte JK</th></tr>
-    </thead>
-    <tbody>${rowsV}</tbody>
-    <tfoot><tr><td colspan="5"><b>Totais</b></td><td class="r"><b>${fmt.money(totC)}</b></td><td class="r"><b>${fmt.money(totV)}</b></td><td class="r"><b>${fmt.money(totM)}</b></td><td class="r"><b>${fmt.money(totJ)}</b></td></tr></tfoot>
-  </table>
-
-  <h2>Despesas</h2>
-  <table>
-    <thead>
-      <tr><th>Descrição</th><th class="r">Valor</th><th>Obs</th><th class="r">Part. JK</th><th class="r">Part. Marcos</th><th>Pago?</th></tr>
-    </thead>
-    <tbody>${rowsD}</tbody>
-    <tfoot><tr><td><b>Totais</b></td><td class="r"><b>${fmt.money(tDesp)}</b></td><td></td><td class="r"><b>${fmt.money(tJK)}</b></td><td class="r"><b>${fmt.money(tM)}</b></td><td></td></tr></tfoot>
-  </table>
-
-  <h2>Cálculo</h2>
-  <div class="grid">
-    <div class="box"><div class="row"><span>Parte Marcos</span><b>${fmt.money(totM)}</b></div>
-      <div class="row"><span>− Despesas Marcos</span><b>${fmt.money(tM)}</b></div>
-      <hr><div class="row"><span>Total a pagar Marcos</span><b>${fmt.money(saldoM)}</b></div>
-    </div>
-    <div class="box"><div class="row"><span>Parte JK</span><b>${fmt.money(totJ)}</b></div>
-      <div class="row"><span>− Despesas JK</span><b>${fmt.money(tJK)}</b></div>
-      <hr><div class="row"><span>Saldo JK</span><b>${fmt.money(saldoJ)}</b></div>
-    </div>
-    <div class="box"><div class="row"><span>Vendas</span><b>${fmt.money(totV)}</b></div>
-      <div class="row"><span>Custos</span><b>${fmt.money(totC)}</b></div>
-      <div class="row"><span>Despesas</span><b>${fmt.money(tDesp)}</b></div>
-      <hr><div class="row"><span>Lucro bruto</span><b>${fmt.money(lucroB)}</b></div>
-    </div>
+  <div id="print-toolbar">
+    <button id="btnSave">Salvar como PDF</button>
+    <button id="btnClose">Fechar</button>
   </div>
+  <main>
+    <header class="row" style="align-items:center;">
+      <h1>RELATÓRIO DE REPASSE</h1>
+    </header>
+
+    <section class="row" style="gap:8px; margin-top:6px;">
+      <div class="box"><div class="muted">Data início</div><b>${ST.header.dataIni||"-"}</b></div>
+      <div class="box"><div class="muted">Data fim</div><b>${ST.header.dataFim||"-"}</b></div>
+      <div class="box"><div class="muted">Data pagamento</div><b>${ST.header.dataPagamento||"-"}</b></div>
+    </section>
+
+    <h2>Fechamento de Duas Semanas – Vendas</h2>
+    <table>
+      <thead>
+        <tr><th>Cliente</th><th>Marca do Chopp</th><th class="r">Qtde (L)</th><th class="r">Custo p/L</th><th class="r">Qtde. Barris</th><th class="r">Custo</th><th class="r">Venda</th><th class="r">Parte Marcos</th><th class="r">Parte JK</th></tr>
+      </thead>
+      <tbody>${rowsV}</tbody>
+      <tfoot><tr><td colspan="5"><b>Totais</b></td><td class="r"><b>${fmt.money(totC)}</b></td><td class="r"><b>${fmt.money(totV)}</b></td><td class="r"><b>${fmt.money(totM)}</b></td><td class="r"><b>${fmt.money(totJ)}</b></td></tr></tfoot>
+    </table>
+
+    <h2>Despesas</h2>
+    <table>
+      <thead>
+        <tr><th>Descrição</th><th class="r">Valor</th><th>Obs</th><th class="r">Part. JK</th><th class="r">Part. Marcos</th><th>Pago?</th></tr>
+      </thead>
+      <tbody>${rowsD}</tbody>
+      <tfoot><tr><td><b>Totais</b></td><td class="r"><b>${fmt.money(tDesp)}</b></td><td></td><td class="r"><b>${fmt.money(tJK)}</b></td><td class="r"><b>${fmt.money(tM)}</b></td><td></td></tr></tfoot>
+    </table>
+
+    <h2>Cálculo</h2>
+    <div class="grid">
+      <div class="box"><div class="row"><span>Parte Marcos</span><b>${fmt.money(totM)}</b></div>
+        <div class="row"><span>− Despesas Marcos</span><b>${fmt.money(tM)}</b></div>
+        <hr><div class="row"><span>Total a pagar Marcos</span><b>${fmt.money(saldoM)}</b></div>
+      </div>
+      <div class="box"><div class="row"><span>Parte JK</span><b>${fmt.money(totJ)}</b></div>
+        <div class="row"><span>− Despesas JK</span><b>${fmt.money(tJK)}</b></div>
+        <hr><div class="row"><span>Saldo JK</span><b>${fmt.money(saldoJ)}</b></div>
+      </div>
+      <div class="box"><div class="row"><span>Vendas</span><b>${fmt.money(totV)}</b></div>
+        <div class="row"><span>Custos</span><b>${fmt.money(totC)}</b></div>
+        <div class="row"><span>Despesas</span><b>${fmt.money(tDesp)}</b></div>
+        <hr><div class="row"><span>Lucro bruto</span><b>${fmt.money(lucroB)}</b></div>
+      </div>
+    </div>
+  </main>
+  <script>
+    document.getElementById("btnSave").addEventListener("click", () => window.print());
+    document.getElementById("btnClose").addEventListener("click", () => window.close());
+  </script>
 </body></html>`;
-    }) (ST);
 
-    const w = window.open("", "_blank");
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-  });
+    // === imprimir via IFRAME invisível (sem pop-up) ===
+const iframe = document.createElement("iframe");
+iframe.style.position = "fixed";
+iframe.style.right = "0";
+iframe.style.bottom = "0";
+iframe.style.width = "0";
+iframe.style.height = "0";
+iframe.style.border = "0";
+iframe.style.visibility = "hidden";
+document.body.appendChild(iframe);
 
-  // Datas → persistência
-  H.ini.addEventListener("input", e=>{ ST.header.dataIni = e.target.value || ""; save(); });
-  H.fim.addEventListener("input", e=>{ ST.header.dataFim = e.target.value || ""; save(); });
-  H.pag.addEventListener("input", e=>{ ST.header.dataPagamento = e.target.value || ""; save(); });
+// quando o conteúdo carregar, chama o print e remove o iframe
+iframe.onload = () => {
+  try {
+    iframe.contentWindow.focus();
+    // pequeno delay ajuda Safari/Firefox a renderizar as tabelas antes do print
+    setTimeout(() => {
+      iframe.contentWindow.print();
+      // remove depois de disparar o diálogo
+      setTimeout(() => iframe.remove(), 500);
+    }, 50);
+  } catch (e) {
+    console.error(e);
+    alert("Não foi possível preparar a impressão.");
+    iframe.remove();
+  }
+};
+
+// navegadores modernos: srcdoc; fallback para antigos escreve via document.write
+if ("srcdoc" in iframe) {
+  iframe.srcdoc = html;
+} else {
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+}
+
+}); // <-- FECHA o addEventListener corretamente
+  // =============== PDF / IMPRESSÃO — FIM ===============
 
   // Render inicial
   renderVendas();
@@ -1364,7 +1405,7 @@ function renderActive() {
     case "estoque":         view = renderStub("Estoque");             break;
     case "nfe_boletos":     view = renderStub("NF-e e Boletos");      break;
     case "ajuda":           view = renderStub("Central de Ajuda");    break;
-    case "relatorios":      view = renderRelatorios();      break;
+    case "relatorios":      view = renderRelatorios();                break;
 
     default:                view = renderStub("Página não encontrada");
   }
