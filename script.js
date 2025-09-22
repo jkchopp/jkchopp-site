@@ -967,21 +967,21 @@ function renderRelRepasse() {
       <div class="calc-box amber">
         <div class="row space-between"><span>Parte Marcos</span><b id="resParteM">R$ 0,00</b></div>
         <div class="row space-between"><span>− Despesas Marcos</span><b id="resDespM">R$ 0,00</b></div>
-        <hr>
         <div class="row space-between big"><span>Total a pagar Marcos</span><b id="resTotalM">R$ 0,00</b></div>
+        <hr>
       </div>
       <div class="calc-box sky">
         <div class="row space-between"><span>Parte JK</span><b id="resParteJ">R$ 0,00</b></div>
         <div class="row space-between"><span>− Despesas JK</span><b id="resDespJ">R$ 0,00</b></div>
-        <hr>
         <div class="row space-between big"><span>Saldo JK</span><b id="resSaldoJ">R$ 0,00</b></div>
+        <hr>
       </div>
       <div class="calc-box green">
         <div class="row space-between"><span>Vendas</span><b id="resVendas">R$ 0,00</b></div>
         <div class="row space-between"><span>Custos</span><b id="resCustos">R$ 0,00</b></div>
         <div class="row space-between"><span>Despesas</span><b id="resDespesas">R$ 0,00</b></div>
         <hr>
-        <div class="row space-between big"><span>Lucro bruto</span><b id="resLucro">R$ 0,00</b></div>
+        <div class="row space-between big"><span>Lucro Líquido</span><b id="resLucro">R$ 0,00</b></div>
       </div>
     </div>
   `;
@@ -1312,7 +1312,7 @@ function renderRelRepasse() {
       <div class="box"><div class="row"><span>Vendas</span><b>${fmt.money(totV)}</b></div>
         <div class="row"><span>Custos</span><b>${fmt.money(totC)}</b></div>
         <div class="row"><span>Despesas</span><b>${fmt.money(tDesp)}</b></div>
-        <hr><div class="row"><span>Lucro bruto</span><b>${fmt.money(lucroB)}</b></div>
+        <hr><div class="row"><span>Lucro Líquido</span><b>${fmt.money(lucroB)}</b></div>
       </div>
     </div>
   </main>
