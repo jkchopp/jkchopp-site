@@ -395,6 +395,26 @@
   <!-- =========================
        JS EXTERNO
        ========================= -->
+       <!-- No final do body, antes do script.js -->
+<script src="auth.js"></script>
+<script src="script.js"></script>
   <script src="script.js" defer></script>
+  <!-- Modal de Login -->
+<div id="loginModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🔐 Login - JK CHOPP</h3>
+            <button class="modal-close" id="closeLogin">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="stack">
+                <input type="text" id="loginUser" class="input" placeholder="Usuário" value="admin">
+                <input type="password" id="loginPass" class="input" placeholder="Senha" value="jk#adm25">
+                <button class="btn primary" id="btnLogin">Entrar</button>
+                <small class="muted">Use: JK CHOPP</small>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

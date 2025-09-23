@@ -11,7 +11,75 @@
    06) Placeholders + Roteador
    07) Boot
    ========================================================================== */
+// No início do arquivo, após as declarações
+function checkAuth() {
+    if (!authSystem.checkAuth()) {
+        showLoginModal();
+        return false;
+    }
+    return true;
+}
 
+function showLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function hideLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Modifique o boot sequence
+document.addEventListener('DOMContentLoaded', () => {
+    // Verificar autenticação primeiro
+    if (!checkAuth()) {
+        // Bind eventos do modal de login
+        document.getElementById('btnLogin')?.addEventListener('click', () => {
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+            
+            if (authSystem.login(user, pass)) {
+                hideLoginModal();
+                initializeApp();
+            } else {
+                alert('Usuário ou senha inválidos!');
+            }
+        });
+        
+        document.getElementById('closeLogin')?.addEventListener('click', hideLoginModal);
+        return;
+    }
+    
+    initializeApp();
+});
+
+function initializeApp() {
+    bindTopbarActions();
+    bindDrawerActions();
+    buildMenu();
+    renderActive();
+    
+    // Adicionar botão de logout no topbar
+    addLogoutButton();
+}
+
+function addLogoutButton() {
+    const topActions = document.querySelector('.top-actions');
+    if (topActions && !document.getElementById('btnLogout')) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'btn danger';
+        logoutBtn.id = 'btnLogout';
+        logoutBtn.innerHTML = '🚪 Sair';
+        logoutBtn.title = 'Logout';
+        logoutBtn.onclick = () => {
+            if (confirm('Deseja sair do sistema?')) {
+                authSystem.logout();
+            }
+        };
+        topActions.appendChild(logoutBtn);
+    }
+}
 /* === 00) HELPERS ======================================================== */
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -1200,52 +1268,51 @@ function renderRelRepasse() {
   H.fim.addEventListener("input", e=>{ ST.header.dataFim = e.target.value || ""; save(); });
   H.pag.addEventListener("input", e=>{ ST.header.dataPagamento = e.target.value || ""; save(); });
 
-  // ================= PDF / IMPRESSÃO =================
-  $("#repPrint", head).addEventListener("click", () => {
-    const pM = (toNumber(ST.split.percMarcos) / 100) || 0.5;
-    const pJ = (toNumber(ST.split.percJK)     / 100) || 0.5;
+// ================= PDF / IMPRESSÃO =================
+$("#repPrint", head).addEventListener("click", () => {
+  const pM = (toNumber(ST.split.percMarcos) / 100) || 0.5;
+  const pJ = (toNumber(ST.split.percJK)     / 100) || 0.5;
 
-    let totC=0, totV=0, totM=0, totJ=0;
-    const rowsV = ST.clientes.map(r=>{
-      const litros=Math.max(0,toNumber(r.qtdLitros));
-      const barris=Math.max(1,toNumber(r.qtdBarris)||1);
-      const cpl=Math.max(0,toNumber(r.custoPorLitro));
-      const venda=Math.max(0,toNumber(r.venda));
-      const custo=cpl*litros*barris;
-      const lucro=venda-custo;
-      totC+=custo; totV+=venda; totM+=lucro*pM; totJ+=lucro*pJ;
-      return `
-        <tr>
-          <td>${r.cliente||""}</td><td>${r.marca||""}</td>
-          <td class="r">${litros.toFixed(2)}</td><td class="r">${fmt.money(cpl)}</td><td class="r">${barris}</td>
-          <td class="r">${fmt.money(custo)}</td><td class="r">${fmt.money(venda)}</td>
-          <td class="r">${fmt.money(lucro*pM)}</td><td class="r">${fmt.money(lucro*pJ)}</td>
-        </tr>`;
-    }).join("");
+  let totC=0, totV=0, totM=0, totJ=0;
+  const rowsV = ST.clientes.map(r=>{
+    const litros=Math.max(0,toNumber(r.qtdLitros));
+    const barris=Math.max(1,toNumber(r.qtdBarris)||1);
+    const cpl=Math.max(0,toNumber(r.custoPorLitro));
+    const venda=Math.max(0,toNumber(r.venda));
+    const custo=cpl*litros*barris;
+    const lucro=venda-custo;
+    totC+=custo; totV+=venda; totM+=lucro*pM; totJ+=lucro*pJ;
+    return `
+      <tr>
+        <td>${r.cliente||""}</td><td>${r.marca||""}</td>
+        <td class="r">${litros.toFixed(2)}</td><td class="r">${fmt.money(cpl)}</td><td class="r">${barris}</td>
+        <td class="r">${fmt.money(custo)}</td><td class="r">${fmt.money(venda)}</td>
+        <td class="r">${fmt.money(lucro*pM)}</td><td class="r">${fmt.money(lucro*pJ)}</td>
+      </tr>`;
+  }).join("");
 
-    let tDesp=0, tJK=0, tM=0;
-    const rowsD = ST.despesas.map(d=>{
-      const v=toNumber(d.valor); const pj=toNumber(d.partJK); const pm=toNumber(d.partMarcos);
-      tDesp+=v; tJK+=pj; tM+=pm;
-      return `
-        <tr>
-          <td>${d.descricao||""}</td>
-          <td class="r">${fmt.money(v)}</td>
-          <td>${d.obs||""}</td>
-          <td class="r">${fmt.money(pj)}</td>
-          <td class="r">${fmt.money(pm)}</td>
-          <td>${d.pago?"Sim":"Não"}</td>
-        </tr>`;
-    }).join("");
+  let tDesp=0, tJK=0, tM=0;
+  const rowsD = ST.despesas.map(d=>{
+    const v=toNumber(d.valor); const pj=toNumber(d.partJK); const pm=toNumber(d.partMarcos);
+    tDesp+=v; tJK+=pj; tM+=pm;
+    return `
+      <tr>
+        <td>${d.descricao||""}</td>
+        <td class="r">${fmt.money(v)}</td>
+        <td>${d.obs||""}</td>
+        <td class="r">${fmt.money(pj)}</td>
+        <td class="r">${fmt.money(pm)}</td>
+        <td>${d.pago?"Sim":"Não"}</td>
+      </tr>`;
+  }).join("");
 
-    const saldoM = totM - tM;
-    const saldoJ = totJ - tJK;
-    const lucroB = totV - totC - tDesp;
+  const saldoM = totM - tM;
+  const saldoJ = totJ - tJK;
+  const lucroB = totV - totC - tDesp;
 
-    const html = `<!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório de Repasse</title>
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório de Repasse - JK CHOPP</title>
 <style>
-  :root { --tb:#f3f4f6; }
   @page { size: A4; margin: 12mm; }
   body { font: 13px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial; color:#111; margin:0; }
   #print-toolbar {
@@ -1257,110 +1324,282 @@ function renderRelRepasse() {
   }
   #print-toolbar button:hover { border-color:#999; }
   main { padding: 16px; }
-  h1{ font-size:18px; margin:0 0 8px; } h2{ font-size:16px; margin:16px 0 8px; }
-  table{ border-collapse:collapse; width:100%; } th,td{ padding:6px 8px; border:1px solid #ddd; vertical-align:middle; }
-  thead{ background:var(--tb); } tfoot{ background:var(--tb); }
-  .r{ text-align:right; } .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; } .box{ border:1px solid #ddd; border-radius:8px; padding:10px; }
-  .row{ display:flex; justify-content:space-between; } .muted{ color:#555; font-size:12px; }
-  @media print { #print-toolbar { display:none !important; } main{ padding:0; } }
+  
+  /* Cabeçalho da empresa */
+  .empresa-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f59e0b;
+  }
+  .logo-empresa {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    object-fit: contain;
+    border: 2px solid #f59e0b;
+    padding: 4px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .empresa-info h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #f59e0b;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  .empresa-info .cnpj {
+    color: #666;
+    font-size: 14px;
+    margin: 4px 0;
+    font-weight: 600;
+  }
+  .empresa-info .doc-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-top: 8px;
+  }
+  
+  /* Período */
+  .periodo {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .periodo-box {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    background: #fafafa;
+  }
+  .periodo-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .periodo-value {
+    font-weight: 700;
+    color: #333;
+    font-size: 14px;
+  }
+  
+  /* Tabelas */
+  table{ border-collapse:collapse; width:100%; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  th,td{ padding:10px 12px; border:1px solid #ddd; vertical-align:middle; }
+  thead{ background:#f8f9fa; font-weight:600; color: #333; }
+  tfoot{ background:#f8f9fa; font-weight:600; }
+  .r{ text-align:right; }
+  
+  /* Cálculos */
+  .calculos-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 20px;
+    margin: 30px 0;
+  }
+  .calc-box { 
+    border: 1px solid #e0e0e0; 
+    border-radius: 10px; 
+    padding: 18px;
+    background: #fafafa;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .calc-box.amber { border-left: 4px solid #f59e0b; }
+  .calc-box.sky { border-left: 4px solid #60a5fa; }
+  .calc-box.green { border-left: 4px solid #22c55e; }
+  
+  .row{ display:flex; justify-content:space-between; margin: 10px 0; align-items: center; }
+  .big { font-size: 15px; font-weight: 700; margin-top: 14px; color: #222; }
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 14px 0; }
+  
+  .muted{ color:#666; font-size:12px; }
+  
+  h2 {
+    color: #333;
+    border-bottom: 1px solid #f59e0b;
+    padding-bottom: 8px;
+    margin: 25px 0 15px 0;
+    font-size: 18px;
+  }
+  
+  @media print { 
+    #print-toolbar { display:none !important; } 
+    main{ padding:0; }
+    .calculos-grid { break-inside: avoid; }
+    table { break-inside: avoid; }
+    .empresa-header { break-inside: avoid; }
+  }
 </style>
 </head>
 <body>
   <div id="print-toolbar">
-    <button id="btnSave">Salvar como PDF</button>
-    <button id="btnClose">Fechar</button>
+    <button id="btnSave" onclick="window.print()">🖨️ Imprimir/Salvar como PDF</button>
+    <button id="btnClose" onclick="window.close()">✕ Fechar</button>
   </div>
   <main>
-    <header class="row" style="align-items:center;">
-      <h1>RELATÓRIO DE REPASSE</h1>
-    </header>
-
-    <section class="row" style="gap:8px; margin-top:6px;">
-      <div class="box"><div class="muted">Data início</div><b>${ST.header.dataIni||"-"}</b></div>
-      <div class="box"><div class="muted">Data fim</div><b>${ST.header.dataFim||"-"}</b></div>
-      <div class="box"><div class="muted">Data pagamento</div><b>${ST.header.dataPagamento||"-"}</b></div>
-    </section>
-
-    <h2>Fechamento de Duas Semanas – Vendas</h2>
-    <table>
-      <thead>
-        <tr><th>Cliente</th><th>Marca do Chopp</th><th class="r">Qtde (L)</th><th class="r">Custo p/L</th><th class="r">Qtde. Barris</th><th class="r">Custo</th><th class="r">Venda</th><th class="r">Parte Marcos</th><th class="r">Parte JK</th></tr>
-      </thead>
-      <tbody>${rowsV}</tbody>
-      <tfoot><tr><td colspan="5"><b>Totais</b></td><td class="r"><b>${fmt.money(totC)}</b></td><td class="r"><b>${fmt.money(totV)}</b></td><td class="r"><b>${fmt.money(totM)}</b></td><td class="r"><b>${fmt.money(totJ)}</b></td></tr></tfoot>
-    </table>
-
-    <h2>Despesas</h2>
-    <table>
-      <thead>
-        <tr><th>Descrição</th><th class="r">Valor</th><th>Obs</th><th class="r">Part. JK</th><th class="r">Part. Marcos</th><th>Pago?</th></tr>
-      </thead>
-      <tbody>${rowsD}</tbody>
-      <tfoot><tr><td><b>Totais</b></td><td class="r"><b>${fmt.money(tDesp)}</b></td><td></td><td class="r"><b>${fmt.money(tJK)}</b></td><td class="r"><b>${fmt.money(tM)}</b></td><td></td></tr></tfoot>
-    </table>
-
-    <h2>Cálculo</h2>
-    <div class="grid">
-      <div class="box"><div class="row"><span>Parte Marcos</span><b>${fmt.money(totM)}</b></div>
-        <div class="row"><span>− Despesas Marcos</span><b>${fmt.money(tM)}</b></div>
-        <hr><div class="row"><span>Total a pagar Marcos</span><b>${fmt.money(saldoM)}</b></div>
-      </div>
-      <div class="box"><div class="row"><span>Parte JK</span><b>${fmt.money(totJ)}</b></div>
-        <div class="row"><span>− Despesas JK</span><b>${fmt.money(tJK)}</b></div>
-        <hr><div class="row"><span>Saldo JK</span><b>${fmt.money(saldoJ)}</b></div>
-      </div>
-      <div class="box"><div class="row"><span>Vendas</span><b>${fmt.money(totV)}</b></div>
-        <div class="row"><span>Custos</span><b>${fmt.money(totC)}</b></div>
-        <div class="row"><span>Despesas</span><b>${fmt.money(tDesp)}</b></div>
-        <hr><div class="row"><span>Lucro Líquido</span><b>${fmt.money(lucroB)}</b></div>
+    <!-- Cabeçalho da empresa -->
+    <div class="empresa-header">
+      <img src="logojk.png" alt="JK CHOPP" class="logo-empresa">
+      <div class="empresa-info">
+        <h1>JK CHOPP</h1>
+        <div class="cnpj">CNPJ: 60.856.264/0001-73</div>
+        <div class="muted">Especialistas em Chopp</div>
+        <div class="doc-title">RELATÓRIO DE REPASSE FINANCEIRO</div>
       </div>
     </div>
+
+    <!-- Período -->
+    <div class="periodo">
+      <div class="periodo-box">
+        <div class="periodo-label">Período Inicial</div>
+        <div class="periodo-value">${ST.header.dataIni || "Não informado"}</div>
+      </div>
+      <div class="periodo-box">
+        <div class="periodo-label">Período Final</div>
+        <div class="periodo-value">${ST.header.dataFim || "Não informado"}</div>
+      </div>
+      <div class="periodo-box">
+        <div class="periodo-label">Data de Pagamento</div>
+        <div class="periodo-value">${ST.header.dataPagamento || "Não agendada"}</div>
+      </div>
+    </div>
+
+    <!-- Vendas -->
+    <h2>📊 Fechamento de Vendas - Período de Duas Semanas</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Marca do Chopp</th>
+          <th class="r">Quantidade (L)</th>
+          <th class="r">Custo por Litro</th>
+          <th class="r">Qtde. Barris</th>
+          <th class="r">Custo Total</th>
+          <th class="r">Valor de Venda</th>
+          <th class="r">Parte Marcos</th>
+          <th class="r">Parte JK</th>
+        </tr>
+      </thead>
+      <tbody>${rowsV}</tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5"><b>TOTAIS</b></td>
+          <td class="r"><b>${fmt.money(totC)}</b></td>
+          <td class="r"><b>${fmt.money(totV)}</b></td>
+          <td class="r"><b>${fmt.money(totM)}</b></td>
+          <td class="r"><b>${fmt.money(totJ)}</b></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Despesas -->
+    <h2>💸 Despesas do Período</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th class="r">Valor Total</th>
+          <th>Observações</th>
+          <th class="r">Parte JK</th>
+          <th class="r">Parte Marcos</th>
+          <th>Pago?</th>
+        </tr>
+      </thead>
+      <tbody>${rowsD}</tbody>
+      <tfoot>
+        <tr>
+          <td><b>TOTAIS</b></td>
+          <td class="r"><b>${fmt.money(tDesp)}</b></td>
+          <td></td>
+          <td class="r"><b>${fmt.money(tJK)}</b></td>
+          <td class="r"><b>${fmt.money(tM)}</b></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Cálculos -->
+    <h2>🧮 Resumo Financeiro - Rateio 50/50</h2>
+    <div class="calculos-grid">
+      <div class="calc-box amber">
+        <h3 style="margin:0 0 12px 0; color: #f59e0b;">💼 Marcos</h3>
+        <div class="row"><span>Parte das Vendas</span><b>${fmt.money(totM)}</b></div>
+        <div class="row"><span>− Despesas</span><b>${fmt.money(tM)}</b></div>
+        <hr>
+        <div class="row big"><span>Total a Receber</span><b style="color: #f59e0b;">${fmt.money(saldoM)}</b></div>
+      </div>
+      
+      <div class="calc-box sky">
+        <h3 style="margin:0 0 12px 0; color: #60a5fa;">🏢 JK CHOPP</h3>
+        <div class="row"><span>Parte das Vendas</span><b>${fmt.money(totJ)}</b></div>
+        <div class="row"><span>− Despesas</span><b>${fmt.money(tJK)}</b></div>
+        <hr>
+        <div class="row big"><span>Saldo Final</span><b style="color: #60a5fa;">${fmt.money(saldoJ)}</b></div>
+      </div>
+      
+      <div class="calc-box green">
+        <h3 style="margin:0 0 12px 0; color: #22c55e;">📈 Resultado Geral</h3>
+        <div class="row"><span>Vendas Brutas</span><b>${fmt.money(totV)}</b></div>
+        <div class="row"><span>− Custos</span><b>${fmt.money(totC)}</b></div>
+        <div class="row"><span>− Despesas</span><b>${fmt.money(tDesp)}</b></div>
+        <hr>
+        <div class="row big"><span>Lucro Líquido</span><b style="color: #22c55e;">${fmt.money(lucroB)}</b></div>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #f59e0b; text-align: center; color: #666; font-size: 12px;">
+      <div style="margin-bottom: 8px; font-weight: 600;">Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
+      <div>JK CHOPP • CNPJ 60.856.264/0001-73 • Sistema Interno de Gestão</div>
+      <div class="muted" style="margin-top: 4px;">Este documento é confidencial e de uso interno</div>
+    </div>
   </main>
-  <script>
-    document.getElementById("btnSave").addEventListener("click", () => window.print());
-    document.getElementById("btnClose").addEventListener("click", () => window.close());
-  </script>
 </body></html>`;
 
-    // === imprimir via IFRAME invisível (sem pop-up) ===
-const iframe = document.createElement("iframe");
-iframe.style.position = "fixed";
-iframe.style.right = "0";
-iframe.style.bottom = "0";
-iframe.style.width = "0";
-iframe.style.height = "0";
-iframe.style.border = "0";
-iframe.style.visibility = "hidden";
-document.body.appendChild(iframe);
+    // === imprimir via IFRAME invisível ===
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.style.visibility = "hidden";
+    document.body.appendChild(iframe);
 
-// quando o conteúdo carregar, chama o print e remove o iframe
-iframe.onload = () => {
-  try {
-    iframe.contentWindow.focus();
-    // pequeno delay ajuda Safari/Firefox a renderizar as tabelas antes do print
-    setTimeout(() => {
-      iframe.contentWindow.print();
-      // remove depois de disparar o diálogo
-      setTimeout(() => iframe.remove(), 500);
-    }, 50);
-  } catch (e) {
-    console.error(e);
-    alert("Não foi possível preparar a impressão.");
-    iframe.remove();
-  }
-};
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow.focus();
+        setTimeout(() => {
+          iframe.contentWindow.print();
+          setTimeout(() => iframe.remove(), 500);
+        }, 50);
+      } catch (e) {
+        console.error(e);
+        alert("Não foi possível preparar a impressão.");
+        iframe.remove();
+      }
+    };
 
-// navegadores modernos: srcdoc; fallback para antigos escreve via document.write
-if ("srcdoc" in iframe) {
-  iframe.srcdoc = html;
-} else {
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(html);
-  doc.close();
-}
-
-}); // <-- FECHA o addEventListener corretamente
+    if ("srcdoc" in iframe) {
+      iframe.srcdoc = html;
+    } else {
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+    }
+});
+// <-- FECHA o addEventListener corretamente
   // =============== PDF / IMPRESSÃO — FIM ===============
 
   // Render inicial
@@ -1379,41 +1618,52 @@ function renderStub(titulo = "Em construção") {
 }
 
 function renderActive() {
-  const content = $("#content");
-  if (!content) return;
-  content.innerHTML = "";
+    if (!authSystem.isAuthenticated) return;
+    
+    // Verificar permissões para áreas restritas
+    if (ACTIVE === 'financeiro' && !authSystem.hasPermission('admin')) {
+        alert('Acesso restrito à administração!');
+        ACTIVE = 'home';
+        localStorage.setItem('jk_tab', ACTIVE);
+    }
+    
+    const content = $("#content");
+    if (!content) return;
+    content.innerHTML = "";
+    
+    let view;
+    
+    switch (ACTIVE) {
+        case "home":            view = renderHome();            break;
+        case "clientes_pf":
+        case "clientes_pj":     view = renderClientes();        break;
+        case "produtos":        view = renderProdutos();        break;
+        case "pedidos":         view = renderPedidos();         break;
+        case "financeiro":
+        case "financeiro_in":
+        case "financeiro_out":  view = renderFinanceiro();      break;
+        case "contratos":       view = renderContratos();       break;
+        case "agendamentos":    view = renderAgenda();          break;
+        case "rel_repasse":     view = renderRelRepasse();      break;
 
-  let view;
-  switch (ACTIVE) {
-    case "home":            view = renderHome();            break;
-    case "clientes_pf":
-    case "clientes_pj":     view = renderClientes();        break;
-    case "produtos":        view = renderProdutos();        break;
-    case "pedidos":         view = renderPedidos();         break;
-    case "financeiro":
-    case "financeiro_in":
-    case "financeiro_out":  view = renderFinanceiro();      break;
-    case "contratos":       view = renderContratos();       break;
-    case "agendamentos":    view = renderAgenda();          break;
-    case "rel_repasse":     view = renderRelRepasse();      break;
+        case "fornecedores":    view = renderStub("Fornecedores");        break;
+        case "funcionarios":    view = renderStub("Funcionários");        break;
+        case "grupos_preco":    view = renderStub("Grupos de Preço");     break;
+        case "interacoes":      view = renderStub("Interações");          break;
+        case "transportadoras": view = renderStub("Transportadoras");     break;
+        case "estoque":         view = renderStub("Estoque");             break;
+        case "nfe_boletos":     view = renderStub("NF-e e Boletos");      break;
+        case "ajuda":           view = renderStub("Central de Ajuda");    break;
+        case "relatorios":      view = renderRelatorios();                break;
 
-    case "fornecedores":    view = renderStub("Fornecedores");        break;
-    case "funcionarios":    view = renderStub("Funcionários");        break;
-    case "grupos_preco":    view = renderStub("Grupos de Preço");     break;
-    case "interacoes":      view = renderStub("Interações");          break;
-    case "transportadoras": view = renderStub("Transportadoras");     break;
-    case "estoque":         view = renderStub("Estoque");             break;
-    case "nfe_boletos":     view = renderStub("NF-e e Boletos");      break;
-    case "ajuda":           view = renderStub("Central de Ajuda");    break;
-    case "relatorios":      view = renderRelatorios();                break;
+        default:                view = renderStub("Página não encontrada");
+    }
 
-    default:                view = renderStub("Página não encontrada");
-  }
-
-  if (view) content.appendChild(view);
+    if (view) content.appendChild(view);
 }
 
 /* === 07) BOOT =========================================================== */
+// ... código posterior mantido ...*/
 document.addEventListener("DOMContentLoaded", () => {
   bindTopbarActions();
   bindDrawerActions();
