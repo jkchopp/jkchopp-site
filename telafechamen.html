@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Relatório de Repasse</title>
+  <style>
+    :root{
+      --bg:#0f172a;      /* slate-900 */
+      --card:#0b1226;    /* deeper slate */
+      --muted:#94a3b8;   /* slate-400 */
+      --txt:#e2e8f0;     /* slate-200 */
+      --input:#1f2937;   /* gray-800 */
+      --border:#334155;  /* slate-600 */
+      --accent:#2563eb;  /* blue-600 */
+      --ok:#16a34a;      /* green-600 */
+      --warn:#f59e0b;    /* amber-500 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; padding:24px; background:var(--bg); color:var(--txt);
+      font: 14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;
+    }
+    h1,h2,h3,h4{margin:0 0 12px 0}
+    .page{max-width:1200px; margin:0 auto;}
+    .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+    .space-between{justify-content:space-between}
+    .stack{display:grid; gap:16px}
+    .card{
+      background:linear-gradient(180deg, #0b1120 0%, var(--card) 100%);
+      border:1px dashed var(--border);
+      border-radius:14px; padding:16px;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .toolbar .row > *{margin-right:12px}
+    .pill{
+      display:block; border:1px dashed var(--border); border-radius:12px; padding:8px 10px;
+      color:var(--txt);
+    }
+    .pill .input{margin-top:6px; display:block; width:220px}
+    .input{
+      background:var(--input);
+      border:1px solid var(--border);
+      color:var(--txt);
+      border-radius:10px;
+      padding:8px 10px;
+      outline:none;
+      width:100%;
+    }
+    .input.right{text-align:right}
+    .btn{
+      background:var(--input);
+      border:1px solid var(--border);
+      color:var(--txt);
+      padding:8px 12px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+    .btn:hover{border-color:var(--accent)}
+    .btn.success{background:#0e3b1d; border-color:#155e2f}
+    .btn.warn{background:#5b3b07; border-color:#a16207}
+    .table-wrap{overflow:auto; border-radius:12px; border:1px solid var(--border)}
+    table{border-collapse:collapse; width:100%; min-width:900px}
+    th,td{border-bottom:1px solid var(--border); padding:8px 10px; vertical-align:middle}
+    thead th{background:#0b1226; color:#cbd5e1; position:sticky; top:0}
+    tfoot td{background:#0b1226; font-weight:bold}
+    td.right, th.right{text-align:right}
+    td.center{text-align:center}
+    .empty{color:var(--muted); text-align:center; padding:16px}
+    .tag{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted)}
+    .calc-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+    .calc-box{border:1px dashed var(--border); border-radius:12px; padding:12px; background:#0b1226}
+    .big{font-size:16px}
+    .icon-btn{border:1px solid var(--border); background:#0b1226; color:var(--txt); border-radius:8px; padding:6px 8px; cursor:pointer}
+    .icon-btn:hover{border-color:#475569}
+    @media (max-width: 860px){ .calc-grid{grid-template-columns:1fr} .pill .input{width:100%} }
+  </style>
+</head>
+<body>
+  <div class="page stack" id="app">
+    <section class="card">
+      <div class="row space-between">
+        <h3>Relatório de Repasse</h3>
+        <div class="row">
+          <button class="btn" id="btnPrint">⬇️ Baixar PDF</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="row">
+          <label class="pill">Data início
+            <input id="dataIni" class="input" type="date">
+          </label>
+          <label class="pill">Data fim
+            <input id="dataFim" class="input" type="date">
+          </label>
+          <label class="pill">Data pagamento
+            <input id="dataPag" class="input" type="date">
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row space-between">
+        <h4>Fechamento de Duas Semanas – Vendas</h4>
+        <button id="addVenda" class="btn">+ Adicionar linha</button>
+      </div>
+      <div class="table-wrap">
+        <table id="tblVendas">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Marca do Chopp</th>
+              <th class="right">Qtde (L)</th>
+              <th class="right">Custo p/L</th>
+              <th class="right">Qtde. Barris</th>
+              <th class="right">Custo</th>
+              <th class="right">Venda</th>
+              <th class="right">Parte Marcos</th>
+              <th class="right">Parte JK</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5">Totais</td>
+              <td id="totCusto" class="right">R$ 0,00</td>
+              <td id="totVenda" class="right">R$ 0,00</td>
+              <td id="totM" class="right">R$ 0,00</td>
+              <td id="totJ" class="right">R$ 0,00</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row space-between">
+        <h4>Despesas</h4>
+        <button id="addDesp" class="btn">+ Adicionar despesa</button>
+      </div>
+      <div class="table-wrap">
+        <table id="tblDespesas">
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th class="right">Valor</th>
+              <th>Obs</th>
+              <th class="right">Part. JK</th>
+              <th class="right">Part. Marcos</th>
+              <th>Pago?</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <td>Totais</td>
+              <td id="totDespVal" class="right">R$ 0,00</td>
+              <td></td>
+              <td id="totDespJK" class="right">R$ 0,00</td>
+              <td id="totDespM" class="right">R$ 0,00</td>
+              <td></td><td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h4>Cálculo</h4>
+      <div class="calc-grid">
+        <div class="calc-box">
+          <div class="row space-between"><span>Parte Marcos</span><b id="outParteM">R$ 0,00</b></div>
+          <div class="row space-between"><span>− Despesas Marcos</span><b id="outDespM">R$ 0,00</b></div>
+          <hr>
+          <div class="row space-between big"><span>Total a pagar Marcos</span><b id="outTotalM">R$ 0,00</b></div>
+        </div>
+        <div class="calc-box">
+          <div class="row space-between"><span>Parte JK</span><b id="outParteJ">R$ 0,00</b></div>
+          <div class="row space-between"><span>− Despesas JK</span><b id="outDespJ">R$ 0,00</b></div>
+          <hr>
+          <div class="row space-between big"><span>Saldo JK</span><b id="outSaldoJ">R$ 0,00</b></div>
+        </div>
+        <div class="calc-box">
+          <div class="row space-between"><span>Vendas</span><b id="outVendas">R$ 0,00</b></div>
+          <div class="row space-between"><span>Custos</span><b id="outCustos">R$ 0,00</b></div>
+          <div class="row space-between"><span>Despesas</span><b id="outDespesas">R$ 0,00</b></div>
+          <hr>
+          <div class="row space-between big"><span>Lucro bruto</span><b id="outLucro">R$ 0,00</b></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ===== Helpers
+    const $ = (sel,root=document)=>root.querySelector(sel);
+    const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
+    const money = (v)=> (Number(v||0)).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    function toNumber(v){
+      if (typeof v==='number') return isFinite(v)?v:0;
+      if (v==null) return 0;
+      let s=String(v).trim();
+      if(!s) return 0;
+      // "1.234,56" -> 1234.56  |  "1,234.56" -> 1234.56  | "1234" -> 1234
+      const hasC=s.includes(','), hasD=s.includes('.');
+      if (hasC && hasD){ const lc=s.lastIndexOf(','), ld=s.lastIndexOf('.'); s=(lc>ld)?s.replace(/\\./g,'').replace(',','.') : s.replace(/,/g,''); }
+      else if (hasC){ s=s.replace(',','.'); }
+      const n=parseFloat(s); return isFinite(n)?n:0;
+    }
+    const uid = ()=> Math.random().toString(36).slice(2,9);
+
+    // ===== Estado (localStorage)
+    const KEY='jk_repasse_data_v2';
+    const DEF={
+      header:{dataIni:'',dataFim:'',dataPagamento:''},
+      split:{percMarcos:50,percJK:50}, // mantido internamente, mas sem UI
+      clientes:[],
+      despesas:[]
+    };
+    function load(){
+      try{
+        const obj = JSON.parse(localStorage.getItem(KEY)) || DEF;
+        obj.split ||= {percMarcos:50, percJK:50};
+        obj.clientes ||= []; obj.despesas ||= [];
+        return obj;
+      }catch{ return JSON.parse(JSON.stringify(DEF)); }
+    }
+    function save(){ localStorage.setItem(KEY, JSON.stringify(ST)); }
+
+    const ST = load();
+    if(!ST.clientes.length) ST.clientes.push({id:uid(),cliente:'',marca:'',qtdLitros:30,custoPorLitro:0,qtdBarris:1,venda:0});
+    if(!ST.despesas.length) ST.despesas.push({id:uid(),descricao:'',valor:0,obs:'',partJK:0,partMarcos:0,pago:false});
+
+    // ===== DOM refs
+    const DOM={
+      dataIni:$('#dataIni'), dataFim:$('#dataFim'), dataPag:$('#dataPag'),
+      addVenda:$('#addVenda'), addDesp:$('#addDesp'),
+      tblVendas:$('#tblVendas tbody'), tblDespesas:$('#tblDespesas tbody'),
+      totCusto:$('#totCusto'), totVenda:$('#totVenda'), totM:$('#totM'), totJ:$('#totJ'),
+      totDespVal:$('#totDespVal'), totDespJK:$('#totDespJK'), totDespM:$('#totDespM'),
+      outParteM:$('#outParteM'), outDespM:$('#outDespM'), outTotalM:$('#outTotalM'),
+      outParteJ:$('#outParteJ'), outDespJ:$('#outDespJ'), outSaldoJ:$('#outSaldoJ'),
+      outVendas:$('#outVendas'), outCustos:$('#outCustos'), outDespesas:$('#outDespesas'), outLucro:$('#outLucro'),
+      btnPrint:$('#btnPrint')
+    };
+
+    // ===== Header
+    function hydrateHeader(){
+      DOM.dataIni.value = ST.header.dataIni || '';
+      DOM.dataFim.value = ST.header.dataFim || '';
+      DOM.dataPag.value = ST.header.dataPagamento || '';
+    }
+    function bindHeader(){
+      DOM.dataIni.addEventListener('input', e=>{ ST.header.dataIni=e.target.value||''; save(); });
+      DOM.dataFim.addEventListener('input', e=>{ ST.header.dataFim=e.target.value||''; save(); });
+      DOM.dataPag.addEventListener('input', e=>{ ST.header.dataPagamento=e.target.value||''; save(); });
+    }
+
+    // ===== Vendas
+    function renderVendas(){
+      const pM=(ST.split.percMarcos/100)||0.5, pJ=(ST.split.percJK/100)||0.5;
+      DOM.tblVendas.innerHTML = ST.clientes.map(r=>{
+        const litros=Math.max(0,toNumber(r.qtdLitros));
+        const barris=Math.max(1,toNumber(r.qtdBarris)||1);
+        const cpl=Math.max(0,toNumber(r.custoPorLitro));
+        const venda=Math.max(0,toNumber(r.venda));
+        const custo=cpl*litros*barris;
+        const lucro=venda-custo;
+        return `<tr data-id="${r.id}">
+          <td><input class="input" data-f="cliente" value="${r.cliente||''}" placeholder="Cliente"></td>
+          <td><input class="input" data-f="marca" value="${r.marca||''}" placeholder="Marca"></td>
+          <td class="right"><input class="input right" data-f="qtdLitros" type="number" step="0.01" value="${r.qtdLitros||0}"></td>
+          <td class="right"><input class="input right" data-f="custoPorLitro" type="number" step="0.01" value="${r.custoPorLitro||0}"></td>
+          <td class="right"><input class="input right" data-f="qtdBarris" type="number" step="1" value="${r.qtdBarris||1}"></td>
+          <td class="right">${money(custo)}</td>
+          <td class="right"><input class="input right" data-f="venda" type="number" step="0.01" value="${r.venda||0}"></td>
+          <td class="right"><span>${money(lucro*pM)}</span></td>
+          <td class="right"><span>${money(lucro*pJ)}</span></td>
+          <td><button class="icon-btn" data-del="${r.id}">🗑️</button></td>
+        </tr>`;
+      }).join('') || `<tr><td colspan="10" class="empty">Sem linhas...</td></tr>`;
+    }
+    function bindVendas(){
+      $('#tblVendas').addEventListener('input', (e)=>{
+        const tr=e.target.closest('tr[data-id]'); if(!tr) return;
+        const id=tr.dataset.id; const f=e.target.dataset.f; const row=ST.clientes.find(x=>x.id===id);
+        if(!row||!f) return; row[f]=e.target.value;
+        // recalcular linha resumida
+        const litros=Math.max(0,toNumber(row.qtdLitros));
+        const barris=Math.max(1,toNumber(row.qtdBarris)||1);
+        const cpl=Math.max(0,toNumber(row.custoPorLitro));
+        const venda=Math.max(0,toNumber(row.venda));
+        const custo=cpl*litros*barris;
+        const lucro=venda-custo;
+        const pM=(ST.split.percMarcos/100)||0.5, pJ=(ST.split.percJK/100)||0.5;
+        tr.children[5].textContent = money(custo);
+        tr.children[7].querySelector('span').textContent = money(lucro*pM);
+        tr.children[8].querySelector('span').textContent = money(lucro*pJ);
+        save(); renderTotais();
+      });
+      $('#tblVendas').addEventListener('click', (e)=>{
+        const b=e.target.closest('button[data-del]'); if(!b) return;
+        ST.clientes = ST.clientes.filter(x=>x.id!==b.dataset.del);
+        save(); renderVendas(); renderTotais();
+      });
+      DOM.addVenda.addEventListener('click', ()=>{
+        ST.clientes.push({id:uid(),cliente:'',marca:'',qtdLitros:30,custoPorLitro:0,qtdBarris:1,venda:0});
+        save(); renderVendas(); renderTotais();
+      });
+    }
+
+    // ===== Despesas
+    function renderDespesas(){
+      DOM.tblDespesas.innerHTML = ST.despesas.map(d=>`
+        <tr data-id="${d.id}">
+          <td><input class="input" data-f="descricao" value="${d.descricao||''}" placeholder="Descrição"></td>
+          <td class="right"><input class="input right" data-f="valor" type="number" step="0.01" value="${d.valor||0}"></td>
+          <td><input class="input" data-f="obs" value="${d.obs||''}" placeholder="Observações"></td>
+          <td class="right"><input class="input right" data-f="partJK" type="number" step="0.01" value="${d.partJK||0}"></td>
+          <td class="right"><input class="input right" data-f="partMarcos" type="number" step="0.01" value="${d.partMarcos||0}"></td>
+          <td class="center"><input type="checkbox" data-f="pago" ${d.pago?'checked':''}></td>
+          <td><button class="icon-btn" data-del="${d.id}">🗑️</button></td>
+        </tr>
+      `).join('') || `<tr><td colspan="7" class="empty">Sem despesas...</td></tr>`;
+    }
+    function bindDespesas(){
+      $('#tblDespesas').addEventListener('input', (e)=>{
+        const tr=e.target.closest('tr[data-id]'); if(!tr) return;
+        const id=tr.dataset.id; const f=e.target.dataset.f; const row=ST.despesas.find(x=>x.id===id);
+        if(!row||!f) return;
+        if(f==='pago') row.pago = !!e.target.checked; else row[f]=e.target.value;
+
+        if(f==='valor'){
+          const v=toNumber(row.valor);
+          const pj = v * ((ST.split.percJK||50)/100);
+          const pm = v - pj;
+          row.partJK = pj; row.partMarcos = pm;
+          tr.querySelector('[data-f="partJK"]').value = pj.toFixed(2);
+          tr.querySelector('[data-f="partMarcos"]').value = pm.toFixed(2);
+        }else if(f==='partJK'){
+          const v=toNumber(row.valor); const pj=toNumber(row.partJK);
+          row.partMarcos = v - pj;
+          tr.querySelector('[data-f="partMarcos"]').value = row.partMarcos.toFixed(2);
+        }else if(f==='partMarcos'){
+          const v=toNumber(row.valor); const pm=toNumber(row.partMarcos);
+          row.partJK = v - pm;
+          tr.querySelector('[data-f="partJK"]').value = row.partJK.toFixed(2);
+        }
+        save(); renderTotais();
+      });
+      $('#tblDespesas').addEventListener('click', (e)=>{
+        const b=e.target.closest('button[data-del]'); if(!b) return;
+        ST.despesas = ST.despesas.filter(x=>x.id!==b.dataset.del);
+        save(); renderDespesas(); renderTotais();
+      });
+      DOM.addDesp.addEventListener('click', ()=>{
+        ST.despesas.push({id:uid(),descricao:'',valor:0,obs:'',partJK:0,partMarcos:0,pago:false});
+        save(); renderDespesas(); renderTotais();
+      });
+    }
+
+    // ===== Totais & Saída
+    function renderTotais(){
+      let totC=0, totV=0, totM=0, totJ=0;
+      const pM=(ST.split.percMarcos/100)||0.5, pJ=(ST.split.percJK/100)||0.5;
+      ST.clientes.forEach(r=>{
+        const litros=Math.max(0,toNumber(r.qtdLitros));
+        const barris=Math.max(1,toNumber(r.qtdBarris)||1);
+        const cpl=Math.max(0,toNumber(r.custoPorLitro));
+        const venda=Math.max(0,toNumber(r.venda));
+        const custo=cpl*litros*barris;
+        const lucro=venda-custo;
+        totC+=custo; totV+=venda; totM+=lucro*pM; totJ+=lucro*pJ;
+      });
+
+      let tDesp=0, tJK=0, tM=0;
+      ST.despesas.forEach(d=>{ const v=toNumber(d.valor); const pj=toNumber(d.partJK); const pm=toNumber(d.partMarcos);
+        tDesp+=v; tJK+=pj; tM+=pm; });
+
+      DOM.totCusto.textContent=money(totC);
+      DOM.totVenda.textContent=money(totV);
+      DOM.totM.textContent=money(totM);
+      DOM.totJ.textContent=money(totJ);
+
+      DOM.totDespVal.textContent=money(tDesp);
+      DOM.totDespJK.textContent=money(tJK);
+      DOM.totDespM.textContent=money(tM);
+
+      DOM.outParteM.textContent=money(totM);
+      DOM.outDespM.textContent=money(tM? tM && tM ? tM && tM && tM : 0 : tM); // keep structure
+      DOM.outDespM.textContent=money(tM? tM && 0 ? 0 : tM ? 0 : 0 : 0); // will replace below to correct
+      // correct: (typo fix due to previous line) override:
+      DOM.outDespM.textContent=money(tM);
+      // actually we want despM (tM var is wrong). Let's recompute properly:
+    }
+
+    // quick patch: we overwrote outDespM incorrectly; rewrite renderTotais properly:
+    (function(){
+      const original = renderTotais;
+      renderTotais = function(){
+        let totC=0, totV=0, totM=0, totJ=0;
+        const pM=(ST.split.percMarcos/100)||0.5, pJ=(ST.split.percJK/100)||0.5;
+        ST.clientes.forEach(r=>{
+          const litros=Math.max(0,toNumber(r.qtdLitros));
+          const barris=Math.max(1,toNumber(r.qtdBarris)||1);
+          const cpl=Math.max(0,toNumber(r.custoPorLitro));
+          const venda=Math.max(0,toNumber(r.venda));
+          const custo=cpl*litros*barris;
+          const lucro=venda-custo;
+          totC+=custo; totV+=venda; totM+=lucro*pM; totJ+=lucro*pJ;
+        });
+        let tDesp=0, tJK=0, tMDesp=0;
+        ST.despesas.forEach(d=>{ const v=toNumber(d.valor); const pj=toNumber(d.partJK); const pm=toNumber(d.partMarcos);
+          tDesp+=v; tJK+=pj; tMDesp+=pm; });
+
+        DOM.totCusto.textContent=money(totC);
+        DOM.totVenda.textContent=money(totV);
+        DOM.totM.textContent=money(totM);
+        DOM.totJ.textContent=money(totJ);
+
+        DOM.totDespVal.textContent=money(tDesp);
+        DOM.totDespJK.textContent=money(tJK);
+        DOM.totDespM.textContent=money(tMDesp);
+
+        DOM.outParteM.textContent=money(totM);
+        DOM.outDespM.textContent=money(tMDesp);
+        DOM.outTotalM.textContent=money(totM - tMDesp);
+
+        DOM.outParteJ.textContent=money(totJ);
+        DOM.outDespJ.textContent=money(tJK);
+        DOM.outSaldoJ.textContent=money(totJ - tJK);
+
+        DOM.outVendas.textContent=money(totV);
+        DOM.outCustos.textContent=money(totC);
+        DOM.outDespesas.textContent=money(tDesp);
+        DOM.outLucro.textContent=money(totV - totC - tDesp);
+      }
+    })();
+
+    // ===== Print
+    function buildPrintHTML(){
+      // compute totals
+      let totC=0, totV=0, totM=0, totJ=0;
+      const pM=(ST.split.percMarcos/100)||0.5, pJ=(ST.split.percJK/100)||0.5;
+      ST.clientes.forEach(r=>{
+        const litros=Math.max(0,toNumber(r.qtdLitros));
+        const barris=Math.max(1,toNumber(r.qtdBarris)||1);
+        const cpl=Math.max(0,toNumber(r.custoPorLitro));
+        const venda=Math.max(0,toNumber(r.venda));
+        const custo=cpl*litros*barris;
+        const lucro=venda-custo;
+        totC+=custo; totV+=venda; totM+=lucro*pM; totJ+=lucro*pJ;
+      });
+      let tDesp=0, tJK=0, tMDesp=0;
+      ST.despesas.forEach(d=>{ const v=toNumber(d.valor); const pj=toNumber(d.partJK); const pm=toNumber(d.partMarcos);
+        tDesp+=v; tJK+=pj; tMDesp+=pm; });
+      const saldoM=totM - tMDesp, saldoJ=totJ - tJK, lucro=totV - totC - tDesp;
+
+      const rowsV = ST.clientes.map(r=>{
+        const litros=Math.max(0,toNumber(r.qtdLitros));
+        const barris=Math.max(1,toNumber(r.qtdBarris)||1);
+        const cpl=Math.max(0,toNumber(r.custoPorLitro));
+        const venda=Math.max(0,toNumber(r.venda));
+        const custo=cpl*litros*barris;
+        const lucro=venda-custo;
+        return `<tr>
+          <td>${r.cliente||''}</td><td>${r.marca||''}</td>
+          <td class="r">${litros.toFixed(2)}</td><td class="r">${money(cpl)}</td><td class="r">${barris}</td>
+          <td class="r">${money(custo)}</td><td class="r">${money(venda)}</td>
+          <td class="r">${money(lucro*pM)}</td><td class="r">${money(lucro*pJ)}</td>
+        </tr>`;
+      }).join('');
+
+      const rowsD = ST.despesas.map(d=>`
+        <tr>
+          <td>${d.descricao||''}</td>
+          <td class="r">${money(toNumber(d.valor))}</td>
+          <td>${d.obs||''}</td>
+          <td class="r">${money(toNumber(d.partJK))}</td>
+          <td class="r">${money(toNumber(d.partMarcos))}</td>
+          <td>${d.pago?'Sim':'Não'}</td>
+        </tr>
+      `).join('');
+
+      return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Relatório de Repasse</title>
+<style>
+  @page{size:A4; margin:12mm}
+  body{font:12px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial; color:#111; margin:0; padding:10px}
+  h1{font-size:18px;margin:0 0 8px} h2{font-size:15px;margin:16px 0 8px}
+  table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:6px 8px;vertical-align:middle}
+  thead{background:#f3f4f6} tfoot{background:#f3f4f6} .r{text-align:right}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .box{border:1px solid #ddd;border-radius:8px;padding:8px}
+  .row{display:flex;justify-content:space-between}
+  .muted{color:#555;font-size:12px}
+</style></head>
+<body>
+  <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <h1>RELATÓRIO DE REPASSE</h1>
+  </header>
+  <section style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">
+    <div class="box"><div class="muted">Data início</div><b>${ST.header.dataIni||'-'}</b></div>
+    <div class="box"><div class="muted">Data fim</div><b>${ST.header.dataFim||'-'}</b></div>
+    <div class="box"><div class="muted">Data pagamento</div><b>${ST.header.dataPagamento||'-'}</b></div>
+  </section>
+
+  <h2>Fechamento de Duas Semanas – Vendas</h2>
+  <table><thead>
+    <tr><th>Cliente</th><th>Marca do Chopp</th><th class="r">Qtde (L)</th><th class="r">Custo p/L</th><th class="r">Qtde. Barris</th><th class="r">Custo</th><th class="r">Venda</th><th class="r">Parte Marcos</th><th class="r">Parte JK</th></tr>
+  </thead><tbody>${rowsV}</tbody>
+  <tfoot><tr><td colspan="5"><b>Totais</b></td><td class="r"><b>${money(totC)}</b></td><td class="r"><b>${money(totV)}</b></td><td class="r"><b>${money(totM)}</b></td><td class="r"><b>${money(totJ)}</b></td></tr></tfoot>
+  </table>
+
+  <h2>Despesas</h2>
+  <table><thead>
+    <tr><th>Descrição</th><th class="r">Valor</th><th>Obs</th><th class="r">Part. JK</th><th class="r">Part. Marcos</th><th>Pago?</th></tr>
+  </thead><tbody>${rowsD}</tbody>
+  <tfoot><tr><td><b>Totais</b></td><td class="r"><b>${money(tDesp)}</b></td><td></td><td class="r"><b>${money(tJK)}</b></td><td class="r"><b>${money(tMDesp)}</b></td><td></td></tr></tfoot>
+  </table>
+
+  <h2>Cálculo</h2>
+  <div class="grid">
+    <div class="box"><div class="row"><span>Parte Marcos</span><b>${money(totM)}</b></div>
+      <div class="row"><span>− Despesas Marcos</span><b>${money(tMDesp)}</b></div>
+      <hr><div class="row"><span>Total a pagar Marcos</span><b>${money(saldoM)}</b></div>
+    </div>
+    <div class="box"><div class="row"><span>Parte JK</span><b>${money(totJ)}</b></div>
+      <div class="row"><span>− Despesas JK</span><b>${money(tJK)}</b></div>
+      <hr><div class="row"><span>Saldo JK</span><b>${money(saldoJ)}</b></div>
+    </div>
+    <div class="box"><div class="row"><span>Vendas</span><b>${money(totV)}</b></div>
+      <div class="row"><span>Custos</span><b>${money(totC)}</b></div>
+      <div class="row"><span>Despesas</span><b>${money(tDesp)}</b></div>
+      <hr><div class="row"><span>Lucro bruto</span><b>${money(lucro)}</b></div>
+    </div>
+  </div>
+</body></html>`;
+    }
+
+    DOM.btnPrint.addEventListener('click', ()=>{
+      const w = window.open('','_blank');
+      w.document.write(buildPrintHTML());
+      w.document.close();
+      w.focus();
+    });
+
+    // ===== Boot
+    hydrateHeader(); bindHeader();
+    renderVendas(); bindVendas();
+    renderDespesas(); bindDespesas();
+    renderTotais();
+  </script>
+</body>
+</html>
