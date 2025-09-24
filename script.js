@@ -1376,227 +1376,265 @@ function gerarPDF() {
             <head>
                 <title>Relatório de Repasse - JK CHOPP</title>
                 <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-                    
-                    body { 
-                        font-family: 'Inter', Arial, sans-serif; 
-                        color: #1e293b; 
-                        background: #ffffff; 
-                        margin: 0; 
-                        padding: 30px;
-                        font-size: 12px;
-                        line-height: 1.4;
-                    }
-                    
-                    .header { 
-                        display: flex;
-                        align-items: center;
-                        gap: 20px;
-                        margin-bottom: 30px; 
-                        padding-bottom: 20px;
-                        border-bottom: 3px solid #f59e0b;
-                    }
-                    
-                    .logo-container {
-    width: 90px;
-    height: 90px;
-    border-radius: 12px;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #f59e0b;
-    padding: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.logo-container img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-                    .empresa-info {
-                        flex: 1;
-                    }
-                    
-                    .empresa-info h1 {
-                        margin: 0;
-                        font-size: 24px;
-                        font-weight: 800;
-                        color: #1e293b;
-                        letter-spacing: -0.5px;
-                    }
-                    
-                    .empresa-info .cnpj {
-                        color: #64748b;
-                        font-size: 14px;
-                        font-weight: 600;
-                        margin: 4px 0;
-                    }
-                    
-                    .empresa-info .doc-title {
-                        font-size: 18px;
-                        font-weight: 700;
-                        color: #f59e0b;
-                        margin-top: 8px;
-                    }
-                    
-                    .periodo-grid { 
-                        display: grid; 
-                        grid-template-columns: repeat(3, 1fr); 
-                        gap: 20px; 
-                        margin: 25px 0;
-                        background: #f8fafc;
-                        padding: 20px;
-                        border-radius: 10px;
-                        border: 1px solid #e2e8f0;
-                    }
-                    
-                    .periodo-item { 
-                        text-align: center; 
-                    }
-                    
-                    .periodo-label { 
-                        font-size: 11px;
-                        color: #64748b;
-                        font-weight: 600;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                        margin-bottom: 6px;
-                    }
-                    
-                    .periodo-value { 
-                        font-weight: 700;
-                        color: #1e293b;
-                        font-size: 14px;
-                    }
-                    
-                    table { 
-                        width: 100%; 
-                        border-collapse: collapse; 
-                        margin: 20px 0;
-                        font-size: 10px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    }
-                    
-                    th, td { 
-                        border: 1px solid #e2e8f0; 
-                        padding: 10px 8px; 
-                        text-align: left;
-                    }
-                    
-                    th { 
-                        background: #f1f5f9; 
-                        font-weight: 600;
-                        color: #475569;
-                    }
-                    
-                    .text-right { text-align: right; }
-                    .text-center { text-align: center; }
-                    .positive { color: #059669; font-weight: 600; }
-                    .negative { color: #dc2626; font-weight: 600; }
-                    
-                    .section-title {
-                        background: linear-gradient(135deg, #f59e0b, #d97706);
-                        color: white;
-                        padding: 12px 16px;
-                        margin: 25px 0 15px 0;
-                        border-radius: 8px;
-                        font-weight: 700;
-                        font-size: 14px;
-                    }
-                    
-                    .calc-grid { 
-                        display: grid; 
-                        grid-template-columns: repeat(3, 1fr); 
-                        gap: 15px; 
-                        margin: 30px 0;
-                    }
-                    
-                    .calc-card { 
-                        border: 1px solid #e2e8f0; 
-                        padding: 20px; 
-                        border-radius: 10px;
-                        background: #f8fafc;
-                    }
-                    
-                    .calc-card.amber { 
-                        border-left: 4px solid #f59e0b;
-                        background: #fffbeb;
-                    }
-                    
-                    .calc-card.sky { 
-                        border-left: 4px solid #60a5fa;
-                        background: #eff6ff;
-                    }
-                    
-                    .calc-card.green { 
-                        border-left: 4px solid #22c55e;
-                        background: #f0fdf4;
-                    }
-                    
-                    .calc-card h4 { 
-                        margin: 0 0 15px 0;
-                        font-size: 13px;
-                        font-weight: 700;
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                    }
-                    
-                    .calc-line { 
-                        display: flex; 
-                        justify-content: space-between; 
-                        margin: 8px 0;
-                        padding-bottom: 8px;
-                        border-bottom: 1px solid #e2e8f0;
-                    }
-                    
-                    .calc-total { 
-                        font-size: 13px;
-                        font-weight: 800;
-                        margin-top: 10px;
-                        padding-top: 10px;
-                        border-top: 2px solid #cbd5e1;
-                    }
-                    
-                    .footer { 
-                        margin-top: 40px;
-                        padding-top: 20px;
-                        border-top: 2px solid #f59e0b;
-                        text-align: center;
-                        color: #64748b;
-                        font-size: 10px;
-                    }
-                    
-                    .assinaturas {
-                        display: grid;
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 30px;
-                        margin-top: 40px;
-                        padding-top: 20px;
-                        border-top: 1px dashed #cbd5e1;
-                    }
-                    
-                    .assinatura {
-                        text-align: center;
-                    }
-                    
-                    .linha-assinatura {
-                        border-top: 1px solid #94a3b8;
-                        margin-top: 40px;
-                        padding-top: 5px;
-                        color: #64748b;
-                        font-size: 10px;
-                    }
-                    
-                    @media print {
-                        body { margin: 0; padding: 15px; }
-                        .section-title { break-inside: avoid; }
-                        table { break-inside: avoid; }
-                        .calc-grid { break-inside: avoid; }
-                    }
-                </style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body { 
+        font-family: 'Inter', Arial, sans-serif; 
+        color: #1e293b; 
+        background: #ffffff; 
+        margin: 0; 
+        padding: 20px;
+        font-size: 10px;
+        line-height: 1.3;
+    }
+    
+    .header { 
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px; 
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f59e0b;
+        page-break-after: avoid;
+    }
+    
+    .logo-container {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #f59e0b;
+        padding: 5px;
+        flex-shrink: 0;
+    }
+    
+    .logo-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    
+    .empresa-info {
+        flex: 1;
+    }
+    
+    .empresa-info h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+    
+    .empresa-info .cnpj {
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 600;
+        margin: 2px 0;
+    }
+    
+    .empresa-info .doc-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #f59e0b;
+        margin-top: 4px;
+    }
+    
+    .periodo-grid { 
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 10px; 
+        margin: 15px 0;
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        page-break-after: avoid;
+    }
+    
+    .periodo-item { 
+        text-align: center; 
+    }
+    
+    .periodo-label { 
+        font-size: 9px;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 4px;
+    }
+    
+    .periodo-value { 
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 10px;
+    }
+    
+    .section-title {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 8px 10px;
+        margin: 15px 0 8px 0;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 10px;
+        page-break-after: avoid;
+    }
+    
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin: 10px 0;
+        font-size: 8px;
+        page-break-inside: avoid;
+    }
+    
+    th, td { 
+        border: 1px solid #e2e8f0; 
+        padding: 6px 4px; 
+        text-align: left;
+        line-height: 1.2;
+    }
+    
+    th { 
+        background: #f1f5f9; 
+        font-weight: 600;
+        color: #475569;
+        font-size: 8px;
+    }
+    
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .positive { color: #059669; font-weight: 600; }
+    .negative { color: #dc2626; font-weight: 600; }
+    
+    .calc-grid { 
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 8px; 
+        margin: 15px 0;
+        page-break-inside: avoid;
+    }
+    
+    .calc-card { 
+        border: 1px solid #e2e8f0; 
+        padding: 12px; 
+        border-radius: 6px;
+        background: #f8fafc;
+        page-break-inside: avoid;
+    }
+    
+    .calc-card.amber { 
+        border-left: 3px solid #f59e0b;
+        background: #fffbeb;
+    }
+    
+    .calc-card.sky { 
+        border-left: 3px solid #60a5fa;
+        background: #eff6ff;
+    }
+    
+    .calc-card.green { 
+        border-left: 3px solid #22c55e;
+        background: #f0fdf4;
+    }
+    
+    .calc-card h4 { 
+        margin: 0 0 8px 0;
+        font-size: 9px;
+        font-weight: 700;
+    }
+    
+    .calc-line { 
+        display: flex; 
+        justify-content: space-between; 
+        margin: 4px 0;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 8px;
+    }
+    
+    .calc-total { 
+        font-size: 9px;
+        font-weight: 800;
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px solid #cbd5e1;
+    }
+    
+    .assinaturas {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px dashed #cbd5e1;
+        page-break-inside: avoid;
+    }
+    
+    .assinatura {
+        text-align: center;
+    }
+    
+    .linha-assinatura {
+        border-top: 1px solid #94a3b8;
+        margin-top: 25px;
+        padding-top: 3px;
+        color: #64748b;
+        font-size: 8px;
+    }
+    
+    .footer { 
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #f59e0b;
+        text-align: center;
+        color: #64748b;
+        font-size: 8px;
+        page-break-before: avoid;
+    }
+    
+    /* Controles de quebra de página */
+    @media print {
+        body { 
+            margin: 10px; 
+            padding: 10px;
+            font-size: 9px;
+        }
+        
+        .header, .periodo-grid, .section-title {
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+        
+        table {
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+        
+        tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        thead { display: table-header-group; }
+        tfoot { display: table-footer-group; }
+        
+        .calc-grid {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        /* Evitar quebras dentro de cards importantes */
+        .calc-card {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    }
+</style>
             </head>
             <body>
                 <!-- Cabeçalho com Logo e Informações da Empresa -->
@@ -1665,6 +1703,18 @@ function gerarPDF() {
                                 </tr>
                             `;
                         }).join('')}
+
+                        // Na parte das vendas, adicione controles de quebra
+<tbody>
+    ${ST.clientes.map((r, index) => {
+        // ... código existente ...
+        return `
+            <tr${index % 25 === 0 && index > 0 ? ' style="page-break-before: always;"' : ''}>
+                <!-- conteúdo da linha -->
+            </tr>
+        `;
+    }).join('')}
+</tbody>
                     </tbody>
                     <tfoot>
                         <tr style="background: #f1f5f9;">

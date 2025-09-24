@@ -1559,3 +1559,18 @@ tr:hover    { background: #ffffff0a; }
     font-size: 20px;
   }
 }
+
+.break-before {
+    page-break-before: always;
+    break-before: page;
+}
+
+.break-after {
+    page-break-after: always;
+    break-after: page;
+}
+
+.no-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
