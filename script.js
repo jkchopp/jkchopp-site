@@ -1357,7 +1357,7 @@ function truncateText(text, maxLength) {
 }
 
   // — Função para gerar PDF do relatório
-function gerarPDF() {
+  function gerarPDF() {
     const printWindow = window.open('', '_blank');
     const pM = (toNumber(ST.split.percMarcos)/100) || 0.5;
     const pJ = (toNumber(ST.split.percJK)/100) || 0.5;
@@ -1391,243 +1391,8 @@ function gerarPDF() {
     function truncateText(text, maxLength) {
         if (!text) return '-';
         if (text.length <= maxLength) return text;
-        return text.substring(0, maxLength);
+        return text.substring(0, maxLength) + '...';
     }
-
-    // Dividir vendas em chunks para múltiplas páginas
-    const vendasPorPagina = 35;
-    const paginasVendas = [];
-    for (let i = 0; i < ST.clientes.length; i += vendasPorPagina) {
-        paginasVendas.push(ST.clientes.slice(i, i + vendasPorPagina));
-    }
-
-    // Dividir despesas em chunks
-    const despesasPorPagina = 40;
-    const paginasDespesas = [];
-    for (let i = 0; i < ST.despesas.length; i += despesasPorPagina) {
-        paginasDespesas.push(ST.despesas.slice(i, i + despesasPorPagina));
-    }
-
-    let htmlContent = '';
-
-    // Cabeçalho para todas as páginas
-    const headerHTML = `
-        <div class="header">
-            <div class="logo-container">
-                <div class="logo-placeholder">JK</div>
-            </div>
-            <div class="empresa-info">
-                <h1>JK CHOPP</h1>
-                <div class="cnpj">CNPJ: 00.000.000/0001-00</div>
-                <div class="doc-title">RELATÓRIO DE REPASSE FINANCEIRO</div>
-            </div>
-        </div>
-
-        <div class="periodo-grid">
-            <div class="periodo-item">
-                <div class="periodo-label">Período Inicial</div>
-                <div class="periodo-value">${H.ini.value ? new Date(H.ini.value).toLocaleDateString('pt-BR') : 'Não informado'}</div>
-            </div>
-            <div class="periodo-item">
-                <div class="periodo-label">Período Final</div>
-                <div class="periodo-value">${H.fim.value ? new Date(H.fim.value).toLocaleDateString('pt-BR') : 'Não informado'}</div>
-            </div>
-            <div class="periodo-item">
-                <div class="periodo-label">Data de Pagamento</div>
-                <div class="periodo-value">${H.pag.value ? new Date(H.pag.value).toLocaleDateString('pt-BR') : 'Não informado'}</div>
-            </div>
-        </div>
-    `;
-
-    // Páginas de VENDAS
-    paginasVendas.forEach((paginaVendas, paginaIndex) => {
-        htmlContent += `
-            <div class="page">
-                ${paginaIndex === 0 ? headerHTML : '<div class="page-header">💰 FECHAMENTO DE VENDAS (CONT.)</div>'}
-                
-                <div class="section-title">💰 FECHAMENTO DE VENDAS - ${paginaIndex === 0 ? 'PERÍODO DE DUAS SEMANAS' : 'CONTINUAÇÃO'}</div>
-                
-                <table class="vendas-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 16%">Cliente</th>
-                            <th style="width: 10%">Marca</th>
-                            <th style="width: 6%" class="text-right">Litros</th>
-                            <th style="width: 8%" class="text-right">Custo/L</th>
-                            <th style="width: 6%" class="text-right">Barris</th>
-                            <th style="width: 10%" class="text-right">Custo Total</th>
-                            <th style="width: 10%" class="text-right">Valor Venda</th>
-                            <th style="width: 10%" class="text-right">Parte Marcos</th>
-                            <th style="width: 10%" class="text-right">Parte JK</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${paginaVendas.map((r, index) => {
-                            const litros = Math.max(0, toNumber(r.qtdLitros));
-                            const barris = Math.max(1, toNumber(r.qtdBarris) || 1);
-                            const cpl = Math.max(0, toNumber(r.custoPorLitro));
-                            const venda = Math.max(0, toNumber(r.venda));
-                            const custo = cpl * litros * barris;
-                            const lucro = venda - custo;
-                            
-                            return `
-                                <tr>
-                                    <td class="cliente-cell">${truncateText(r.cliente || '-', 18)}</td>
-                                    <td class="marca-cell">${truncateText(r.marca || '-', 10)}</td>
-                                    <td class="text-right">${litros.toLocaleString('pt-BR')}</td>
-                                    <td class="text-right">${fmt.money(cpl)}</td>
-                                    <td class="text-right">${barris}</td>
-                                    <td class="text-right"><strong>${fmt.money(custo)}</strong></td>
-                                    <td class="text-right"><strong>${fmt.money(venda)}</strong></td>
-                                    <td class="text-right positive">${fmt.money(lucro * pM)}</td>
-                                    <td class="text-right positive">${fmt.money(lucro * pJ)}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                    ${paginaIndex === paginasVendas.length - 1 ? `
-                    <tfoot>
-                        <tr class="total-row">
-                            <td colspan="5" class="text-right"><strong>TOTAIS GERAIS</strong></td>
-                            <td class="text-right"><strong>${fmt.money(totCusto)}</strong></td>
-                            <td class="text-right"><strong>${fmt.money(totVenda)}</strong></td>
-                            <td class="text-right"><strong class="positive">${fmt.money(totM)}</strong></td>
-                            <td class="text-right"><strong class="positive">${fmt.money(totJ)}</strong></td>
-                        </tr>
-                    </tfoot>
-                    ` : ''}
-                </table>
-                
-                <div class="page-info">Página ${paginaIndex + 1} de ${paginasVendas.length} - Vendas</div>
-            </div>
-        `;
-    });
-
-    // Páginas de DESPESAS
-    paginasDespesas.forEach((paginaDespesas, paginaIndex) => {
-        htmlContent += `
-            <div class="page">
-                <div class="page-header">💸 DESPESAS DO PERÍODO ${paginaIndex > 0 ? '(CONT.)' : ''}</div>
-                
-                <table class="despesas-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 20%">Descrição</th>
-                            <th style="width: 12%" class="text-right">Valor Total</th>
-                            <th style="width: 28%">Observações</th>
-                            <th style="width: 12%" class="text-right">Parte JK</th>
-                            <th style="width: 12%" class="text-right">Parte Marcos</th>
-                            <th style="width: 8%" class="text-center">Pago?</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${paginaDespesas.map((d, index) => `
-                            <tr>
-                                <td class="descricao-cell">${truncateText(d.descricao || '-', 22)}</td>
-                                <td class="text-right">${fmt.money(d.valor || 0)}</td>
-                                <td class="obs-cell">${truncateText(d.obs || '-', 30)}</td>
-                                <td class="text-right">${fmt.money(d.partJK || 0)}</td>
-                                <td class="text-right">${fmt.money(d.partMarcos || 0)}</td>
-                                <td class="text-center">${d.pago ? '✅' : '❌'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                    ${paginaIndex === paginasDespesas.length - 1 ? `
-                    <tfoot>
-                        <tr class="total-row">
-                            <td class="text-right"><strong>TOTAIS</strong></td>
-                            <td class="text-right"><strong>${fmt.money(totDespVal)}</strong></td>
-                            <td></td>
-                            <td class="text-right"><strong>${fmt.money(totDespJK)}</strong></td>
-                            <td class="text-right"><strong>${fmt.money(totDespM)}</strong></td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                    ` : ''}
-                </table>
-                
-                <div class="page-info">Página ${paginaIndex + 1} de ${paginasDespesas.length} - Despesas</div>
-            </div>
-        `;
-    });
-
-    // Página final com RESUMO
-    htmlContent += `
-        <div class="page">
-            <div class="page-header">📈 RESUMO FINAL</div>
-            
-            <div class="resumo-grid">
-                <div class="resumo-card amber">
-                    <h4>💼 MARCOS</h4>
-                    <div class="resumo-line">
-                        <span>Parte das Vendas:</span>
-                        <span class="positive">${fmt.money(totM)}</span>
-                    </div>
-                    <div class="resumo-line">
-                        <span>− Despesas Marcos:</span>
-                        <span class="negative">${fmt.money(totDespM)}</span>
-                    </div>
-                    <div class="resumo-line total">
-                        <span>Total a Receber:</span>
-                        <span class="${totalMarcos >= 0 ? 'positive' : 'negative'}">${fmt.money(totalMarcos)}</span>
-                    </div>
-                </div>
-
-                <div class="resumo-card sky">
-                    <h4>🏢 JK CHOPP</h4>
-                    <div class="resumo-line">
-                        <span>Parte das Vendas:</span>
-                        <span class="positive">${fmt.money(totJ)}</span>
-                    </div>
-                    <div class="resumo-line">
-                        <span>− Despesas JK:</span>
-                        <span class="negative">${fmt.money(totDespJK)}</span>
-                    </div>
-                    <div class="resumo-line total">
-                        <span>Saldo Final:</span>
-                        <span class="${saldoJK >= 0 ? 'positive' : 'negative'}">${fmt.money(saldoJK)}</span>
-                    </div>
-                </div>
-
-                <div class="resumo-card green">
-                    <h4>📊 RESUMO GERAL</h4>
-                    <div class="resumo-line">
-                        <span>Vendas Brutas:</span>
-                        <span class="positive">${fmt.money(totVenda)}</span>
-                    </div>
-                    <div class="resumo-line">
-                        <span>− Custos:</span>
-                        <span class="negative">${fmt.money(totCusto)}</span>
-                    </div>
-                    <div class="resumo-line">
-                        <span>− Despesas:</span>
-                        <span class="negative">${fmt.money(totDespVal)}</span>
-                    </div>
-                    <div class="resumo-line total">
-                        <span>Lucro Líquido:</span>
-                        <span class="${lucroLiquido >= 0 ? 'positive' : 'negative'}">${fmt.money(lucroLiquido)}</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="assinaturas">
-                <div class="assinatura">
-                    <div class="linha-assinatura"></div>
-                    <div>Marcos</div>
-                    <div class="cargo">Sócio/Responsável</div>
-                </div>
-                <div class="assinatura">
-                    <div class="linha-assinatura"></div>
-                    <div>JK CHOPP</div>
-                    <div class="cargo">Empresa</div>
-                </div>
-            </div>
-
-            <div class="rodape">
-                Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}
-            </div>
-        </div>
-    `;
 
     printWindow.document.write(`
         <!DOCTYPE html>
@@ -1642,126 +1407,128 @@ function gerarPDF() {
                         color: #1e293b; 
                         background: #ffffff; 
                         margin: 0; 
-                        padding: 5px;
-                        font-size: 8px;
-                        line-height: 1.1;
-                    }
-                    
-                    .page {
-                        page-break-after: always;
-                        margin-bottom: 10px;
-                    }
-                    
-                    .page:last-child {
-                        page-break-after: avoid;
+                        padding: 15px;
+                        font-size: 9px;
+                        line-height: 1.2;
                     }
                     
                     .header { 
                         display: flex;
                         align-items: center;
-                        gap: 8px;
-                        margin-bottom: 8px; 
-                        padding-bottom: 6px;
-                        border-bottom: 1px solid #f59e0b;
+                        gap: 12px;
+                        margin-bottom: 15px; 
+                        padding-bottom: 12px;
+                        border-bottom: 2px solid #f59e0b;
+                        page-break-after: avoid;
                     }
                     
-                    .logo-placeholder {
-                        width: 35px;
-                        height: 35px;
-                        background: #f59e0b;
-                        color: white;
+                    .logo-container {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 6px;
+                        background: white;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        border-radius: 4px;
-                        font-weight: bold;
-                        font-size: 12px;
+                        border: 1px solid #f59e0b;
+                        padding: 4px;
+                        flex-shrink: 0;
+                    }
+                    
+                    .logo-container img {
+                        max-width: 100%;
+                        max-height: 100%;
+                        object-fit: contain;
+                    }
+                    
+                    .empresa-info {
+                        flex: 1;
                     }
                     
                     .empresa-info h1 {
                         margin: 0;
-                        font-size: 11px;
+                        font-size: 14px;
                         font-weight: 800;
                         color: #1e293b;
                     }
                     
                     .empresa-info .cnpj {
                         color: #64748b;
-                        font-size: 7px;
+                        font-size: 9px;
                         font-weight: 600;
                         margin: 1px 0;
                     }
                     
                     .empresa-info .doc-title {
-                        font-size: 9px;
+                        font-size: 11px;
                         font-weight: 700;
                         color: #f59e0b;
+                        margin-top: 3px;
                     }
                     
                     .periodo-grid { 
                         display: grid; 
                         grid-template-columns: repeat(3, 1fr); 
-                        gap: 5px; 
-                        margin: 8px 0;
+                        gap: 8px; 
+                        margin: 12px 0;
                         background: #f8fafc;
-                        padding: 6px;
-                        border-radius: 3px;
+                        padding: 10px;
+                        border-radius: 5px;
                         border: 1px solid #e2e8f0;
-                        font-size: 7px;
+                        page-break-after: avoid;
+                    }
+                    
+                    .periodo-item { 
+                        text-align: center; 
                     }
                     
                     .periodo-label { 
-                        font-size: 6px;
+                        font-size: 8px;
                         color: #64748b;
                         font-weight: 600;
                         text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-bottom: 3px;
                     }
                     
                     .periodo-value { 
                         font-weight: 700;
                         color: #1e293b;
-                        font-size: 7px;
-                    }
-                    
-                    .page-header {
-                        background: #f1f5f9;
-                        padding: 4px 6px;
-                        margin: 5px 0;
-                        border-radius: 3px;
-                        font-weight: 700;
-                        font-size: 8px;
-                        border-left: 3px solid #f59e0b;
+                        font-size: 9px;
                     }
                     
                     .section-title {
                         background: linear-gradient(135deg, #f59e0b, #d97706);
                         color: white;
-                        padding: 4px 6px;
-                        margin: 6px 0 4px 0;
-                        border-radius: 3px;
+                        padding: 6px 8px;
+                        margin: 12px 0 6px 0;
+                        border-radius: 4px;
                         font-weight: 700;
-                        font-size: 8px;
+                        font-size: 9px;
+                        page-break-after: avoid;
                     }
                     
+                    /* Tabela geral */
                     table { 
                         width: 100%; 
                         border-collapse: collapse; 
-                        margin: 4px 0;
-                        font-size: 7px;
+                        margin: 8px 0;
+                        font-size: 8px;
+                        page-break-inside: avoid;
                     }
                     
                     th, td { 
                         border: 1px solid #e2e8f0; 
-                        padding: 3px 2px; 
+                        padding: 5px 3px; 
                         text-align: left;
+                        line-height: 1.1;
                     }
                     
                     th { 
                         background: #f1f5f9; 
                         font-weight: 600;
                         color: #475569;
-                        font-size: 6px;
-                        padding: 4px 2px;
+                        font-size: 8px;
                     }
                     
                     .text-right { text-align: right; }
@@ -1769,66 +1536,78 @@ function gerarPDF() {
                     .positive { color: #059669; font-weight: 600; }
                     .negative { color: #dc2626; font-weight: 600; }
                     
-                    .cliente-cell, .marca-cell, .descricao-cell, .obs-cell {
-                        word-break: break-word;
-                        max-width: 0;
-                        overflow: hidden;
+                    /* Tabela de despesas específica */
+                    .table-despesas {
+                        font-size: 7px;
                     }
                     
-                    .total-row {
-                        background: #f8fafc;
-                        font-weight: 700;
+                    .table-despesas th,
+                    .table-despesas td {
+                        padding: 4px 2px;
                     }
                     
-                    .resumo-grid { 
+                    .table-despesas th {
+                        font-size: 7px;
+                    }
+                    
+                    .col-descricao { width: 22%; }
+                    .col-valor { width: 10%; }
+                    .col-obs { width: 28%; }
+                    .col-parte-jk { width: 10%; }
+                    .col-parte-marcos { width: 10%; }
+                    .col-pago { width: 8%; }
+                    
+                    .calc-grid { 
                         display: grid; 
                         grid-template-columns: repeat(3, 1fr); 
-                        gap: 5px; 
-                        margin: 10px 0;
+                        gap: 6px; 
+                        margin: 12px 0;
+                        page-break-inside: avoid;
                     }
                     
-                    .resumo-card { 
+                    .calc-card { 
                         border: 1px solid #e2e8f0; 
-                        padding: 6px; 
-                        border-radius: 3px;
+                        padding: 10px; 
+                        border-radius: 5px;
                         background: #f8fafc;
+                        page-break-inside: avoid;
                     }
                     
-                    .resumo-card.amber { 
+                    .calc-card.amber { 
                         border-left: 2px solid #f59e0b;
                         background: #fffbeb;
                     }
                     
-                    .resumo-card.sky { 
+                    .calc-card.sky { 
                         border-left: 2px solid #60a5fa;
                         background: #eff6ff;
                     }
                     
-                    .resumo-card.green { 
+                    .calc-card.green { 
                         border-left: 2px solid #22c55e;
                         background: #f0fdf4;
                     }
                     
-                    .resumo-card h4 { 
-                        margin: 0 0 4px 0;
-                        font-size: 7px;
+                    .calc-card h4 { 
+                        margin: 0 0 6px 0;
+                        font-size: 8px;
                         font-weight: 700;
                     }
                     
-                    .resumo-line { 
+                    .calc-line { 
                         display: flex; 
                         justify-content: space-between; 
-                        margin: 2px 0;
-                        padding-bottom: 2px;
+                        margin: 3px 0;
+                        padding-bottom: 3px;
                         border-bottom: 1px solid #e2e8f0;
-                        font-size: 6px;
+                        font-size: 7px;
                     }
                     
-                    .resumo-line.total { 
-                        font-size: 7px;
+                    .calc-total { 
+                        font-size: 8px;
                         font-weight: 800;
-                        margin-top: 3px;
-                        padding-top: 3px;
+                        margin-top: 4px;
+                        padding-top: 4px;
                         border-top: 1px solid #cbd5e1;
                     }
                     
@@ -1837,8 +1616,9 @@ function gerarPDF() {
                         grid-template-columns: repeat(2, 1fr);
                         gap: 15px;
                         margin-top: 15px;
-                        padding-top: 8px;
+                        padding-top: 10px;
                         border-top: 1px dashed #cbd5e1;
+                        page-break-inside: avoid;
                     }
                     
                     .assinatura {
@@ -1847,50 +1627,249 @@ function gerarPDF() {
                     
                     .linha-assinatura {
                         border-top: 1px solid #94a3b8;
-                        margin-top: 15px;
+                        margin-top: 20px;
                         padding-top: 2px;
-                    }
-                    
-                    .cargo {
                         color: #64748b;
-                        font-size: 6px;
+                        font-size: 7px;
                     }
                     
-                    .rodape { 
-                        margin-top: 10px;
-                        padding-top: 5px;
+                    .footer { 
+                        margin-top: 15px;
+                        padding-top: 8px;
                         border-top: 1px solid #f59e0b;
                         text-align: center;
                         color: #64748b;
-                        font-size: 6px;
+                        font-size: 7px;
+                        page-break-before: avoid;
                     }
                     
-                    .page-info {
-                        text-align: right;
-                        color: #94a3b8;
-                        font-size: 6px;
-                        margin-top: 3px;
-                    }
-                    
+                    /* Controles de quebra de página */
                     @media print {
                         body { 
-                            margin: 5px; 
-                            padding: 5px;
+                            margin: 8px; 
+                            padding: 8px;
+                            font-size: 8px;
                         }
                         
-                        .page {
-                            margin-bottom: 0;
+                        .header, .periodo-grid, .section-title {
+                            page-break-after: avoid;
                         }
+                        
+                        table {
+                            page-break-inside: auto;
+                        }
+                        
+                        tr {
+                            page-break-inside: avoid;
+                        }
+                        
+                        thead { display: table-header-group; }
+                        tfoot { display: table-footer-group; }
                     }
                     
-                    @page {
-                        size: A4;
-                        margin: 0.5cm;
+                    .no-break {
+                        page-break-inside: avoid;
+                    }
+                    
+                    .break-before {
+                        page-break-before: always;
                     }
                 </style>
             </head>
             <body>
-                ${htmlContent}
+                <!-- Cabeçalho com Logo e Informações da Empresa -->
+                <div class="header">
+                    <div class="logo-container">
+                        <img src="logojk.png" alt="JK CHOPP" style="width: 42px; height: 42px; object-fit: contain;">
+                    </div>
+                    <div class="empresa-info">
+                        <h1>JK CHOPP</h1>
+                        <div class="cnpj">CNPJ: 00.000.000/0001-00</div>
+                        <div class="doc-title">RELATÓRIO DE REPASSE FINANCEIRO</div>
+                    </div>
+                </div>
+
+                <!-- Período do Relatório -->
+                <div class="periodo-grid">
+                    <div class="periodo-item">
+                        <div class="periodo-label">Período Inicial</div>
+                        <div class="periodo-value">${H.ini.value ? new Date(H.ini.value).toLocaleDateString('pt-BR') : 'Não informado'}</div>
+                    </div>
+                    <div class="periodo-item">
+                        <div class="periodo-label">Período Final</div>
+                        <div class="periodo-value">${H.fim.value ? new Date(H.fim.value).toLocaleDateString('pt-BR') : 'Não informado'}</div>
+                    </div>
+                    <div class="periodo-item">
+                        <div class="periodo-label">Data de Pagamento</div>
+                        <div class="periodo-value">${H.pag.value ? new Date(H.pag.value).toLocaleDateString('pt-BR') : 'Não informado'}</div>
+                    </div>
+                </div>
+
+                <!-- Seção de Vendas -->
+                <div class="section-title">💰 FECHAMENTO DE VENDAS - PERÍODO DE DUAS SEMANAS</div>
+                <table class="no-break">
+                    <thead>
+                        <tr>
+                            <th style="width: 18%">Cliente</th>
+                            <th style="width: 12%">Marca</th>
+                            <th style="width: 8%" class="text-right">Qtde (L)</th>
+                            <th style="width: 10%" class="text-right">Custo p/L</th>
+                            <th style="width: 8%" class="text-right">Barris</th>
+                            <th style="width: 12%" class="text-right">Custo Total</th>
+                            <th style="width: 12%" class="text-right">Valor Venda</th>
+                            <th style="width: 10%" class="text-right">Parte Marcos</th>
+                            <th style="width: 10%" class="text-right">Parte JK</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${ST.clientes.map((r, index) => {
+                            const litros = Math.max(0, toNumber(r.qtdLitros));
+                            const barris = Math.max(1, toNumber(r.qtdBarris) || 1);
+                            const cpl = Math.max(0, toNumber(r.custoPorLitro));
+                            const venda = Math.max(0, toNumber(r.venda));
+                            const custo = cpl * litros * barris;
+                            const lucro = venda - custo;
+                            
+                            return `
+                                <tr${index % 25 === 0 && index > 0 ? ' class="break-before"' : ''}>
+                                    <td style="font-size: 7px;"><strong>${truncateText(r.cliente || '-', 20)}</strong></td>
+                                    <td style="font-size: 7px;">${truncateText(r.marca || '-', 12)}</td>
+                                    <td class="text-right">${litros.toLocaleString('pt-BR')}</td>
+                                    <td class="text-right">${fmt.money(cpl)}</td>
+                                    <td class="text-right">${barris}</td>
+                                    <td class="text-right"><strong>${fmt.money(custo)}</strong></td>
+                                    <td class="text-right"><strong>${fmt.money(venda)}</strong></td>
+                                    <td class="text-right positive">${fmt.money(lucro * pM)}</td>
+                                    <td class="text-right positive">${fmt.money(lucro * pJ)}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f1f5f9;">
+                            <td colspan="5" class="text-right"><strong>TOTAIS</strong></td>
+                            <td class="text-right"><strong>${fmt.money(totCusto)}</strong></td>
+                            <td class="text-right"><strong>${fmt.money(totVenda)}</strong></td>
+                            <td class="text-right"><strong class="positive">${fmt.money(totM)}</strong></td>
+                            <td class="text-right"><strong class="positive">${fmt.money(totJ)}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <!-- Seção de Despesas -->
+                <div class="section-title">💸 DESPESAS DO PERÍODO</div>
+                <table class="table-despesas no-break">
+                    <thead>
+                        <tr>
+                            <th class="col-descricao">Descrição</th>
+                            <th class="col-valor text-right">Valor Total</th>
+                            <th class="col-obs">Observações</th>
+                            <th class="col-parte-jk text-right">Parte JK</th>
+                            <th class="col-parte-marcos text-right">Parte Marcos</th>
+                            <th class="col-pago text-center">Pago?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${ST.despesas.map((d, index) => `
+                            <tr${index % 30 === 0 && index > 0 ? ' class="break-before"' : ''}>
+                                <td class="col-descricao" style="font-size: 7px;"><strong>${truncateText(d.descricao || '-', 22)}</strong></td>
+                                <td class="col-valor text-right">${fmt.money(d.valor || 0)}</td>
+                                <td class="col-obs" style="font-size: 7px;">${truncateText(d.obs || '-', 28)}</td>
+                                <td class="col-parte-jk text-right">${fmt.money(d.partJK || 0)}</td>
+                                <td class="col-parte-marcos text-right">${fmt.money(d.partMarcos || 0)}</td>
+                                <td class="col-pago text-center">${d.pago ? '✅' : '❌'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f1f5f9;">
+                            <td class="text-right"><strong>TOTAIS</strong></td>
+                            <td class="text-right"><strong>${fmt.money(totDespVal)}</strong></td>
+                            <td></td>
+                            <td class="text-right"><strong>${fmt.money(totDespJK)}</strong></td>
+                            <td class="text-right"><strong>${fmt.money(totDespM)}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <!-- Cálculos Finais -->
+                <div class="section-title">📈 RESULTADOS FINAIS</div>
+                <div class="calc-grid">
+                    <div class="calc-card amber">
+                        <h4>💼 MARCOS</h4>
+                        <div class="calc-line">
+                            <span>Parte das Vendas:</span>
+                            <span class="positive">${fmt.money(totM)}</span>
+                        </div>
+                        <div class="calc-line">
+                            <span>− Despesas Marcos:</span>
+                            <span class="negative">${fmt.money(totDespM)}</span>
+                        </div>
+                        <div class="calc-line calc-total">
+                            <span>Total a Receber:</span>
+                            <span class="${totalMarcos >= 0 ? 'positive' : 'negative'}">${fmt.money(totalMarcos)}</span>
+                        </div>
+                    </div>
+
+                    <div class="calc-card sky">
+                        <h4>🏢 JK CHOPP</h4>
+                        <div class="calc-line">
+                            <span>Parte das Vendas:</span>
+                            <span class="positive">${fmt.money(totJ)}</span>
+                        </div>
+                        <div class="calc-line">
+                            <span>− Despesas JK:</span>
+                            <span class="negative">${fmt.money(totDespJK)}</span>
+                        </div>
+                        <div class="calc-line calc-total">
+                            <span>Saldo Final:</span>
+                            <span class="${saldoJK >= 0 ? 'positive' : 'negative'}">${fmt.money(saldoJK)}</span>
+                        </div>
+                    </div>
+
+                    <div class="calc-card green">
+                        <h4>📊 RESUMO GERAL</h4>
+                        <div class="calc-line">
+                            <span>Vendas Brutas:</span>
+                            <span class="positive">${fmt.money(totVenda)}</span>
+                        </div>
+                        <div class="calc-line">
+                            <span>− Custos:</span>
+                            <span class="negative">${fmt.money(totCusto)}</span>
+                        </div>
+                        <div class="calc-line">
+                            <span>− Despesas:</span>
+                            <span class="negative">${fmt.money(totDespVal)}</span>
+                        </div>
+                        <div class="calc-line calc-total">
+                            <span>Lucro Líquido:</span>
+                            <span class="${lucroLiquido >= 0 ? 'positive' : 'negative'}">${fmt.money(lucroLiquido)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assinaturas -->
+                <div class="assinaturas">
+                    <div class="assinatura">
+                        <div class="linha-assinatura"></div>
+                        <div>Marcos</div>
+                        <div style="font-size: 7px; color: #94a3b8;">Sócio/Responsável</div>
+                    </div>
+                    <div class="assinatura">
+                        <div class="linha-assinatura"></div>
+                        <div>JK CHOPP</div>
+                        <div style="font-size: 7px; color: #94a3b8;">Empresa</div>
+                    </div>
+                </div>
+
+                <!-- Rodapé -->
+                <div class="footer">
+                    <div class="relatorio-gerado">
+                        Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+                    </div>
+                    <div>JK CHOPP • CNPJ 00.000.000/0001-00 • Sistema Interno v1.0</div>
+                </div>
             </body>
         </html>
     `);
