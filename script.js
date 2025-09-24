@@ -787,7 +787,7 @@ function renderContratos() {
       <style>body{font-family:Arial,Helvetica,sans-serif;line-height:1.5;margin:40px} h1{font-size:18px} .muted{color:#555}
       .box{border:1px solid #ccc;padding:14px;border-radius:8px}</style>
       <h1>Contrato de Comodato — JK CHOPP</h1>
-      <p><b>Contratante:</b> JK CHOPP • CNPJ 00.000.000/0000-00</p>
+      <p><b>Contratante:</b> JK CHOPP • CNPJ 60.856.264/0001-73</p>
       <p><b>Contratado:</b> ${cli.nome} (${cli.tipo}) — Doc: ${cli.doc}<br><span class="muted">Endereço: ${cli.end || "-"} • Contato: ${cli.contato || "-"}</span></p>
       <div class="box">
         <p>Este contrato estabelece o comodato de equipamentos (chopeira/barris/cilindros) para o ponto fixo do contratado, conforme disponibilidade e condições comerciais acordadas. Prazo indeterminado, podendo ser rescindido por qualquer parte com 30 dias de antecedência.</p>
@@ -1684,7 +1684,7 @@ function truncateText(text, maxLength) {
                     </div>
                     <div class="empresa-info">
                         <h1>JK CHOPP</h1>
-                        <div class="cnpj">CNPJ: 00.000.000/0001-00</div>
+                        <div class="cnpj">CNPJ: 60.856.264/0001-73</div>
                         <div class="doc-title">RELATÓRIO DE REPASSE FINANCEIRO</div>
                     </div>
                 </div>
@@ -1854,7 +1854,7 @@ function truncateText(text, maxLength) {
                     <div class="assinatura">
                         <div class="linha-assinatura"></div>
                         <div>Marcos</div>
-                        <div style="font-size: 7px; color: #94a3b8;">Sócio/Responsável</div>
+                        <div style="font-size: 7px; color: #94a3b8;">Point Do Chopp</div>
                     </div>
                     <div class="assinatura">
                         <div class="linha-assinatura"></div>
@@ -1868,7 +1868,7 @@ function truncateText(text, maxLength) {
                     <div class="relatorio-gerado">
                         Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
                     </div>
-                    <div>JK CHOPP • CNPJ 00.000.000/0001-00 • Sistema Interno v1.0</div>
+                    <div>JK CHOPP • CNPJ 60.856.264/0001-73</div>
                 </div>
             </body>
         </html>
