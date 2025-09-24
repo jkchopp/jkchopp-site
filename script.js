@@ -11,7 +11,10 @@
    06) Placeholders + Roteador
    07) Boot
    ========================================================================== */
-// No início do arquivo, após as declarações
+/* ==========================================================================
+   JK CHOPP — SCRIPT.JS (CORRIGIDO E FUNCIONAL)
+   ========================================================================== */
+
 /* === FUNÇÕES DE AUTENTICAÇÃO === */
 function checkAuth() {
     if (!authSystem.checkAuth()) {
@@ -75,13 +78,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         document.getElementById('closeLogin')?.addEventListener('click', hideLoginModal);
+        
+        // Fechar modal clicando fora
+        document.getElementById('loginModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'loginModal') hideLoginModal();
+        });
         return;
     }
     
     initializeApp();
 });
 
-// ... resto do código (Helpers, Estado, etc.)
+// ... continue com o restante do código original a partir da linha 81 (Helpers)
+
 function initializeApp() {
     bindTopbarActions();
     bindDrawerActions();
@@ -1016,41 +1025,42 @@ function renderRelRepasse() {
   wrap.appendChild(vendas);
 
   // — Despesas
-  const despesas = document.createElement("div");
-  despesas.className = "repasse-table-container";
-  despesas.innerHTML = `
-    <div class="repasse-table-header">
-      <h3>💸 Despesas do Período</h3>
-      <button class="btn-add" id="repAddDespesa">+ Adicionar Despesa</button>
-    </div>
-    <div class="table-wrap">
-      <table class="repasse-table">
-        <thead>
-          <tr>
-            <th class="text-left">Descrição</th>
-            <th class="text-right">Valor Total</th>
-            <th class="text-left">Observações</th>
-            <th class="text-right">Parte JK</th>
-            <th class="text-right">Parte Marcos</th>
-            <th class="text-center">Pago?</th>
-            <th class="text-center">Ações</th>
-          </tr>
-        </thead>
-        <tbody id="repTblDespesas"></tbody>
-        <tfoot>
-          <tr>
-            <td class="text-right"><strong>TOTAIS</strong></td>
-            <td class="text-right"><strong id="repTotDespVal">R$ 0,00</strong></td>
-            <td></td>
-            <td class="text-right"><strong id="repTotDespJK">R$ 0,00</strong></td>
-            <td class="text-right"><strong id="repTotDespM">R$ 0,00</strong></td>
-            <td></td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  `;
+  // ... dentro da função renderRelRepasse(), substitua a parte das despesas:
+
+const despesas = document.createElement("div");
+despesas.className = "repasse-table-container";
+despesas.innerHTML = `
+  <div class="repasse-table-header">
+    <h3>💸 Despesas do Período</h3>
+    <button class="btn-add" id="repAddDespesa">+ Adicionar Despesa</button>
+  </div>
+  <div class="table-wrap">
+    <table class="repasse-table">
+      <thead>
+        <tr>
+          <th class="text-left">Descrição</th>
+          <th class="text-right">Valor Total</th>
+          <th class="text-left">Observações</th>
+          <th class="text-right">Parte JK</th>
+          <th class="text-right">Parte Marcos</th>
+          <th class="text-center">Pago?</th>
+          <th class="text-center">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="repTblDespesas"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="1" class="text-right"><strong>TOTAIS</strong></td>
+          <td class="text-right"><strong id="repTotDespVal">R$ 0,00</strong></td>
+          <td></td>
+          <td class="text-right"><strong id="repTotDespJK">R$ 0,00</strong></td>
+          <td class="text-right"><strong id="repTotDespM">R$ 0,00</strong></td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+`;
   wrap.appendChild(despesas);
 
   // — Resultados
@@ -1339,8 +1349,15 @@ function renderRelRepasse() {
     renderTotais();
   });
 
+  // Função para truncar texto longo
+function truncateText(text, maxLength) {
+    if (!text) return '-';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
   // — Função para gerar PDF do relatório
-function gerarPDF() {
+  function gerarPDF() {
     const printWindow = window.open('', '_blank');
     const pM = (toNumber(ST.split.percMarcos)/100) || 0.5;
     const pJ = (toNumber(ST.split.percJK)/100) || 0.5;
@@ -1370,284 +1387,308 @@ function gerarPDF() {
     const saldoJK = totJ - totDespJK;
     const lucroLiquido = totVenda - totCusto - totDespVal;
 
+    // Função helper para truncar texto
+    function truncateText(text, maxLength) {
+        if (!text) return '-';
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
+
     printWindow.document.write(`
         <!DOCTYPE html>
         <html>
             <head>
                 <title>Relatório de Repasse - JK CHOPP</title>
                 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
-    body { 
-        font-family: 'Inter', Arial, sans-serif; 
-        color: #1e293b; 
-        background: #ffffff; 
-        margin: 0; 
-        padding: 20px;
-        font-size: 10px;
-        line-height: 1.3;
-    }
-    
-    .header { 
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 20px; 
-        padding-bottom: 15px;
-        border-bottom: 2px solid #f59e0b;
-        page-break-after: avoid;
-    }
-    
-    .logo-container {
-        width: 60px;
-        height: 60px;
-        border-radius: 8px;
-        background: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #f59e0b;
-        padding: 5px;
-        flex-shrink: 0;
-    }
-    
-    .logo-container img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-    
-    .empresa-info {
-        flex: 1;
-    }
-    
-    .empresa-info h1 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 800;
-        color: #1e293b;
-    }
-    
-    .empresa-info .cnpj {
-        color: #64748b;
-        font-size: 10px;
-        font-weight: 600;
-        margin: 2px 0;
-    }
-    
-    .empresa-info .doc-title {
-        font-size: 12px;
-        font-weight: 700;
-        color: #f59e0b;
-        margin-top: 4px;
-    }
-    
-    .periodo-grid { 
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 10px; 
-        margin: 15px 0;
-        background: #f8fafc;
-        padding: 12px;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        page-break-after: avoid;
-    }
-    
-    .periodo-item { 
-        text-align: center; 
-    }
-    
-    .periodo-label { 
-        font-size: 9px;
-        color: #64748b;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        margin-bottom: 4px;
-    }
-    
-    .periodo-value { 
-        font-weight: 700;
-        color: #1e293b;
-        font-size: 10px;
-    }
-    
-    .section-title {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-        padding: 8px 10px;
-        margin: 15px 0 8px 0;
-        border-radius: 5px;
-        font-weight: 700;
-        font-size: 10px;
-        page-break-after: avoid;
-    }
-    
-    table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        margin: 10px 0;
-        font-size: 8px;
-        page-break-inside: avoid;
-    }
-    
-    th, td { 
-        border: 1px solid #e2e8f0; 
-        padding: 6px 4px; 
-        text-align: left;
-        line-height: 1.2;
-    }
-    
-    th { 
-        background: #f1f5f9; 
-        font-weight: 600;
-        color: #475569;
-        font-size: 8px;
-    }
-    
-    .text-right { text-align: right; }
-    .text-center { text-align: center; }
-    .positive { color: #059669; font-weight: 600; }
-    .negative { color: #dc2626; font-weight: 600; }
-    
-    .calc-grid { 
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 8px; 
-        margin: 15px 0;
-        page-break-inside: avoid;
-    }
-    
-    .calc-card { 
-        border: 1px solid #e2e8f0; 
-        padding: 12px; 
-        border-radius: 6px;
-        background: #f8fafc;
-        page-break-inside: avoid;
-    }
-    
-    .calc-card.amber { 
-        border-left: 3px solid #f59e0b;
-        background: #fffbeb;
-    }
-    
-    .calc-card.sky { 
-        border-left: 3px solid #60a5fa;
-        background: #eff6ff;
-    }
-    
-    .calc-card.green { 
-        border-left: 3px solid #22c55e;
-        background: #f0fdf4;
-    }
-    
-    .calc-card h4 { 
-        margin: 0 0 8px 0;
-        font-size: 9px;
-        font-weight: 700;
-    }
-    
-    .calc-line { 
-        display: flex; 
-        justify-content: space-between; 
-        margin: 4px 0;
-        padding-bottom: 4px;
-        border-bottom: 1px solid #e2e8f0;
-        font-size: 8px;
-    }
-    
-    .calc-total { 
-        font-size: 9px;
-        font-weight: 800;
-        margin-top: 6px;
-        padding-top: 6px;
-        border-top: 1px solid #cbd5e1;
-    }
-    
-    .assinaturas {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-        margin-top: 20px;
-        padding-top: 15px;
-        border-top: 1px dashed #cbd5e1;
-        page-break-inside: avoid;
-    }
-    
-    .assinatura {
-        text-align: center;
-    }
-    
-    .linha-assinatura {
-        border-top: 1px solid #94a3b8;
-        margin-top: 25px;
-        padding-top: 3px;
-        color: #64748b;
-        font-size: 8px;
-    }
-    
-    .footer { 
-        margin-top: 20px;
-        padding-top: 10px;
-        border-top: 1px solid #f59e0b;
-        text-align: center;
-        color: #64748b;
-        font-size: 8px;
-        page-break-before: avoid;
-    }
-    
-    /* Controles de quebra de página */
-    @media print {
-        body { 
-            margin: 10px; 
-            padding: 10px;
-            font-size: 9px;
-        }
-        
-        .header, .periodo-grid, .section-title {
-            page-break-after: avoid;
-            break-after: avoid;
-        }
-        
-        table {
-            page-break-inside: auto;
-            break-inside: auto;
-        }
-        
-        tr {
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-        
-        thead { display: table-header-group; }
-        tfoot { display: table-footer-group; }
-        
-        .calc-grid {
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-        
-        /* Evitar quebras dentro de cards importantes */
-        .calc-card {
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-    }
-</style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                    
+                    body { 
+                        font-family: 'Inter', Arial, sans-serif; 
+                        color: #1e293b; 
+                        background: #ffffff; 
+                        margin: 0; 
+                        padding: 15px;
+                        font-size: 9px;
+                        line-height: 1.2;
+                    }
+                    
+                    .header { 
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        margin-bottom: 15px; 
+                        padding-bottom: 12px;
+                        border-bottom: 2px solid #f59e0b;
+                        page-break-after: avoid;
+                    }
+                    
+                    .logo-container {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 6px;
+                        background: white;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border: 1px solid #f59e0b;
+                        padding: 4px;
+                        flex-shrink: 0;
+                    }
+                    
+                    .logo-container img {
+                        max-width: 100%;
+                        max-height: 100%;
+                        object-fit: contain;
+                    }
+                    
+                    .empresa-info {
+                        flex: 1;
+                    }
+                    
+                    .empresa-info h1 {
+                        margin: 0;
+                        font-size: 14px;
+                        font-weight: 800;
+                        color: #1e293b;
+                    }
+                    
+                    .empresa-info .cnpj {
+                        color: #64748b;
+                        font-size: 9px;
+                        font-weight: 600;
+                        margin: 1px 0;
+                    }
+                    
+                    .empresa-info .doc-title {
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: #f59e0b;
+                        margin-top: 3px;
+                    }
+                    
+                    .periodo-grid { 
+                        display: grid; 
+                        grid-template-columns: repeat(3, 1fr); 
+                        gap: 8px; 
+                        margin: 12px 0;
+                        background: #f8fafc;
+                        padding: 10px;
+                        border-radius: 5px;
+                        border: 1px solid #e2e8f0;
+                        page-break-after: avoid;
+                    }
+                    
+                    .periodo-item { 
+                        text-align: center; 
+                    }
+                    
+                    .periodo-label { 
+                        font-size: 8px;
+                        color: #64748b;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-bottom: 3px;
+                    }
+                    
+                    .periodo-value { 
+                        font-weight: 700;
+                        color: #1e293b;
+                        font-size: 9px;
+                    }
+                    
+                    .section-title {
+                        background: linear-gradient(135deg, #f59e0b, #d97706);
+                        color: white;
+                        padding: 6px 8px;
+                        margin: 12px 0 6px 0;
+                        border-radius: 4px;
+                        font-weight: 700;
+                        font-size: 9px;
+                        page-break-after: avoid;
+                    }
+                    
+                    /* Tabela geral */
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin: 8px 0;
+                        font-size: 8px;
+                        page-break-inside: avoid;
+                    }
+                    
+                    th, td { 
+                        border: 1px solid #e2e8f0; 
+                        padding: 5px 3px; 
+                        text-align: left;
+                        line-height: 1.1;
+                    }
+                    
+                    th { 
+                        background: #f1f5f9; 
+                        font-weight: 600;
+                        color: #475569;
+                        font-size: 8px;
+                    }
+                    
+                    .text-right { text-align: right; }
+                    .text-center { text-align: center; }
+                    .positive { color: #059669; font-weight: 600; }
+                    .negative { color: #dc2626; font-weight: 600; }
+                    
+                    /* Tabela de despesas específica */
+                    .table-despesas {
+                        font-size: 7px;
+                    }
+                    
+                    .table-despesas th,
+                    .table-despesas td {
+                        padding: 4px 2px;
+                    }
+                    
+                    .table-despesas th {
+                        font-size: 7px;
+                    }
+                    
+                    .col-descricao { width: 22%; }
+                    .col-valor { width: 10%; }
+                    .col-obs { width: 28%; }
+                    .col-parte-jk { width: 10%; }
+                    .col-parte-marcos { width: 10%; }
+                    .col-pago { width: 8%; }
+                    
+                    .calc-grid { 
+                        display: grid; 
+                        grid-template-columns: repeat(3, 1fr); 
+                        gap: 6px; 
+                        margin: 12px 0;
+                        page-break-inside: avoid;
+                    }
+                    
+                    .calc-card { 
+                        border: 1px solid #e2e8f0; 
+                        padding: 10px; 
+                        border-radius: 5px;
+                        background: #f8fafc;
+                        page-break-inside: avoid;
+                    }
+                    
+                    .calc-card.amber { 
+                        border-left: 2px solid #f59e0b;
+                        background: #fffbeb;
+                    }
+                    
+                    .calc-card.sky { 
+                        border-left: 2px solid #60a5fa;
+                        background: #eff6ff;
+                    }
+                    
+                    .calc-card.green { 
+                        border-left: 2px solid #22c55e;
+                        background: #f0fdf4;
+                    }
+                    
+                    .calc-card h4 { 
+                        margin: 0 0 6px 0;
+                        font-size: 8px;
+                        font-weight: 700;
+                    }
+                    
+                    .calc-line { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        margin: 3px 0;
+                        padding-bottom: 3px;
+                        border-bottom: 1px solid #e2e8f0;
+                        font-size: 7px;
+                    }
+                    
+                    .calc-total { 
+                        font-size: 8px;
+                        font-weight: 800;
+                        margin-top: 4px;
+                        padding-top: 4px;
+                        border-top: 1px solid #cbd5e1;
+                    }
+                    
+                    .assinaturas {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 15px;
+                        margin-top: 15px;
+                        padding-top: 10px;
+                        border-top: 1px dashed #cbd5e1;
+                        page-break-inside: avoid;
+                    }
+                    
+                    .assinatura {
+                        text-align: center;
+                    }
+                    
+                    .linha-assinatura {
+                        border-top: 1px solid #94a3b8;
+                        margin-top: 20px;
+                        padding-top: 2px;
+                        color: #64748b;
+                        font-size: 7px;
+                    }
+                    
+                    .footer { 
+                        margin-top: 15px;
+                        padding-top: 8px;
+                        border-top: 1px solid #f59e0b;
+                        text-align: center;
+                        color: #64748b;
+                        font-size: 7px;
+                        page-break-before: avoid;
+                    }
+                    
+                    /* Controles de quebra de página */
+                    @media print {
+                        body { 
+                            margin: 8px; 
+                            padding: 8px;
+                            font-size: 8px;
+                        }
+                        
+                        .header, .periodo-grid, .section-title {
+                            page-break-after: avoid;
+                        }
+                        
+                        table {
+                            page-break-inside: auto;
+                        }
+                        
+                        tr {
+                            page-break-inside: avoid;
+                        }
+                        
+                        thead { display: table-header-group; }
+                        tfoot { display: table-footer-group; }
+                    }
+                    
+                    .no-break {
+                        page-break-inside: avoid;
+                    }
+                    
+                    .break-before {
+                        page-break-before: always;
+                    }
+                </style>
             </head>
             <body>
                 <!-- Cabeçalho com Logo e Informações da Empresa -->
                 <div class="header">
-    <div class="logo-container">
-        <img src="logojk.png" alt="JK CHOPP" style="width: 70px; height: 70px; object-fit: contain;">
-    </div>
-    <div class="empresa-info">
-        <h1>JK CHOPP</h1>
-        <div class="cnpj">CNPJ: 00.000.000/0001-00</div>
-        <div class="doc-title">RELATÓRIO DE REPASSE FINANCEIRO</div>
-    </div>
-</div>
+                    <div class="logo-container">
+                        <img src="logojk.png" alt="JK CHOPP" style="width: 42px; height: 42px; object-fit: contain;">
+                    </div>
+                    <div class="empresa-info">
+                        <h1>JK CHOPP</h1>
+                        <div class="cnpj">CNPJ: 00.000.000/0001-00</div>
+                        <div class="doc-title">RELATÓRIO DE REPASSE FINANCEIRO</div>
+                    </div>
+                </div>
+
                 <!-- Período do Relatório -->
                 <div class="periodo-grid">
                     <div class="periodo-item">
@@ -1666,22 +1707,22 @@ function gerarPDF() {
 
                 <!-- Seção de Vendas -->
                 <div class="section-title">💰 FECHAMENTO DE VENDAS - PERÍODO DE DUAS SEMANAS</div>
-                <table>
+                <table class="no-break">
                     <thead>
                         <tr>
-                            <th>Cliente</th>
-                            <th>Marca</th>
-                            <th class="text-right">Qtde (L)</th>
-                            <th class="text-right">Custo p/L</th>
-                            <th class="text-right">Barris</th>
-                            <th class="text-right">Custo Total</th>
-                            <th class="text-right">Valor Venda</th>
-                            <th class="text-right">Parte Marcos</th>
-                            <th class="text-right">Parte JK</th>
+                            <th style="width: 18%">Cliente</th>
+                            <th style="width: 12%">Marca</th>
+                            <th style="width: 8%" class="text-right">Qtde (L)</th>
+                            <th style="width: 10%" class="text-right">Custo p/L</th>
+                            <th style="width: 8%" class="text-right">Barris</th>
+                            <th style="width: 12%" class="text-right">Custo Total</th>
+                            <th style="width: 12%" class="text-right">Valor Venda</th>
+                            <th style="width: 10%" class="text-right">Parte Marcos</th>
+                            <th style="width: 10%" class="text-right">Parte JK</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${ST.clientes.map(r => {
+                        ${ST.clientes.map((r, index) => {
                             const litros = Math.max(0, toNumber(r.qtdLitros));
                             const barris = Math.max(1, toNumber(r.qtdBarris) || 1);
                             const cpl = Math.max(0, toNumber(r.custoPorLitro));
@@ -1690,9 +1731,9 @@ function gerarPDF() {
                             const lucro = venda - custo;
                             
                             return `
-                                <tr>
-                                    <td><strong>${r.cliente || '-'}</strong></td>
-                                    <td>${r.marca || '-'}</td>
+                                <tr${index % 25 === 0 && index > 0 ? ' class="break-before"' : ''}>
+                                    <td style="font-size: 7px;"><strong>${truncateText(r.cliente || '-', 20)}</strong></td>
+                                    <td style="font-size: 7px;">${truncateText(r.marca || '-', 12)}</td>
                                     <td class="text-right">${litros.toLocaleString('pt-BR')}</td>
                                     <td class="text-right">${fmt.money(cpl)}</td>
                                     <td class="text-right">${barris}</td>
@@ -1703,18 +1744,6 @@ function gerarPDF() {
                                 </tr>
                             `;
                         }).join('')}
-
-                        // Na parte das vendas, adicione controles de quebra
-<tbody>
-    ${ST.clientes.map((r, index) => {
-        // ... código existente ...
-        return `
-            <tr${index % 25 === 0 && index > 0 ? ' style="page-break-before: always;"' : ''}>
-                <!-- conteúdo da linha -->
-            </tr>
-        `;
-    }).join('')}
-</tbody>
                     </tbody>
                     <tfoot>
                         <tr style="background: #f1f5f9;">
@@ -1729,26 +1758,26 @@ function gerarPDF() {
 
                 <!-- Seção de Despesas -->
                 <div class="section-title">💸 DESPESAS DO PERÍODO</div>
-                <table>
+                <table class="table-despesas no-break">
                     <thead>
                         <tr>
-                            <th>Descrição</th>
-                            <th class="text-right">Valor Total</th>
-                            <th>Observações</th>
-                            <th class="text-right">Parte JK</th>
-                            <th class="text-right">Parte Marcos</th>
-                            <th class="text-center">Pago?</th>
+                            <th class="col-descricao">Descrição</th>
+                            <th class="col-valor text-right">Valor Total</th>
+                            <th class="col-obs">Observações</th>
+                            <th class="col-parte-jk text-right">Parte JK</th>
+                            <th class="col-parte-marcos text-right">Parte Marcos</th>
+                            <th class="col-pago text-center">Pago?</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${ST.despesas.map(d => `
-                            <tr>
-                                <td><strong>${d.descricao || '-'}</strong></td>
-                                <td class="text-right">${fmt.money(d.valor || 0)}</td>
-                                <td>${d.obs || '-'}</td>
-                                <td class="text-right">${fmt.money(d.partJK || 0)}</td>
-                                <td class="text-right">${fmt.money(d.partMarcos || 0)}</td>
-                                <td class="text-center">${d.pago ? '✅' : '❌'}</td>
+                        ${ST.despesas.map((d, index) => `
+                            <tr${index % 30 === 0 && index > 0 ? ' class="break-before"' : ''}>
+                                <td class="col-descricao" style="font-size: 7px;"><strong>${truncateText(d.descricao || '-', 22)}</strong></td>
+                                <td class="col-valor text-right">${fmt.money(d.valor || 0)}</td>
+                                <td class="col-obs" style="font-size: 7px;">${truncateText(d.obs || '-', 28)}</td>
+                                <td class="col-parte-jk text-right">${fmt.money(d.partJK || 0)}</td>
+                                <td class="col-parte-marcos text-right">${fmt.money(d.partMarcos || 0)}</td>
+                                <td class="col-pago text-center">${d.pago ? '✅' : '❌'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -1825,12 +1854,12 @@ function gerarPDF() {
                     <div class="assinatura">
                         <div class="linha-assinatura"></div>
                         <div>Marcos</div>
-                        <div style="font-size: 9px; color: #94a3b8;">Point Do Chopp</div>
+                        <div style="font-size: 7px; color: #94a3b8;">Sócio/Responsável</div>
                     </div>
                     <div class="assinatura">
                         <div class="linha-assinatura"></div>
                         <div>JK CHOPP</div>
-                        <div style="font-size: 9px; color: #94a3b8;">Empresa</div>
+                        <div style="font-size: 7px; color: #94a3b8;">Empresa</div>
                     </div>
                 </div>
 
@@ -1839,7 +1868,7 @@ function gerarPDF() {
                     <div class="relatorio-gerado">
                         Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
                     </div>
-                    <div>JK CHOPP • CNPJ 60.856.264/0001-73</div>
+                    <div>JK CHOPP • CNPJ 00.000.000/0001-00 • Sistema Interno v1.0</div>
                 </div>
             </body>
         </html>
@@ -1847,10 +1876,8 @@ function gerarPDF() {
     
     printWindow.document.close();
     
-    // Aguardar o carregamento completo antes de imprimir
     setTimeout(() => {
         printWindow.print();
-        // Fechar a janela após a impressão (opcional)
         setTimeout(() => {
             printWindow.close();
         }, 1000);

@@ -1574,3 +1574,30 @@ tr:hover    { background: #ffffff0a; }
     page-break-inside: avoid;
     break-inside: avoid;
 }
+
+/* Estilos específicos para tabela de despesas */
+.table-despesas {
+    font-size: 8px;
+    page-break-inside: avoid;
+}
+
+.table-despesas th,
+.table-despesas td {
+    padding: 4px 3px;
+    line-height: 1.1;
+}
+
+.table-despesas th {
+    font-size: 7px;
+    background: #f1f5f9;
+}
+
+/* Layout de colunas otimizado para despesas */
+.col-descricao { width: 20%; }
+.col-valor { width: 12%; }
+.col-obs { width: 25%; }
+.col-parte-jk { width: 12%; }
+.col-parte-marcos { width: 12%; }
+.col-pago { width: 8%; }
+.col-acoes { width: 11%; }
+
