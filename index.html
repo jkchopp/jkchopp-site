@@ -301,9 +301,10 @@
   </template>
 
   <!-- AGENDAMENTOS -->
+<!-- AGENDAMENTOS -->
 <template id="tpl-agendamentos">
   <div class="stack agenda-grid">
-    <!-- CARD: Lista e cadastro (EM CIMA) -->
+    <!-- CARD: Lista e cadastro -->
     <section class="card">
       <div class="toolbar">
         <div class="row">
@@ -328,7 +329,7 @@
       </table>
     </section>
 
-<!-- CARD: Calendário (EMBAIXO E CENTRALIZADO) -->
+    <!-- CARD: Calendário -->
     <aside class="card calendar-wrap">
       <h3>Calendário</h3>
       <div class="cal-header">
@@ -345,22 +346,9 @@
         </div>
         <div class="cal-grid" id="calGrid"><!-- preenchido via JS --></div>
       </div>
-    
-      <table id="tblAgenda">
-        <thead>
-          <tr>
-            <th data-k="data">Data</th>
-            <th data-k="hora">Hora</th>
-            <th data-k="titulo">Título</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+    </aside>
   </div>
 </template>
-
   <!-- RELATÓRIOS -->
   <template id="tpl-relatorios">
     <div class="card">
@@ -398,7 +386,6 @@
        <!-- No final do body, antes do script.js -->
 <script src="auth.js"></script>
 <script src="script.js"></script>
-  <script src="script.js" defer></script>
   <!-- Modal de Login -->
 <div id="loginModal" class="modal" style="display: none;">
     <div class="modal-content">

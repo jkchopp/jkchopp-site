@@ -12,6 +12,7 @@
    07) Boot
    ========================================================================== */
 // No início do arquivo, após as declarações
+/* === FUNÇÕES DE AUTENTICAÇÃO === */
 function checkAuth() {
     if (!authSystem.checkAuth()) {
         showLoginModal();
@@ -30,7 +31,33 @@ function hideLoginModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// Modifique o boot sequence
+function initializeApp() {
+    bindTopbarActions();
+    bindDrawerActions();
+    buildMenu();
+    renderActive();
+    addLogoutButton();
+}
+
+function addLogoutButton() {
+    const topActions = document.querySelector('.top-actions');
+    if (topActions && !document.getElementById('btnLogout')) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'btn danger';
+        logoutBtn.id = 'btnLogout';
+        logoutBtn.innerHTML = '🚪 Sair';
+        logoutBtn.title = 'Logout';
+        logoutBtn.onclick = () => {
+            if (confirm('Deseja sair do sistema?')) {
+                authSystem.logout();
+                window.location.reload();
+            }
+        };
+        topActions.appendChild(logoutBtn);
+    }
+}
+
+/* === BOOT DA APLICAÇÃO === */
 document.addEventListener('DOMContentLoaded', () => {
     // Verificar autenticação primeiro
     if (!checkAuth()) {
@@ -54,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
 });
 
+// ... resto do código (Helpers, Estado, etc.)
 function initializeApp() {
     bindTopbarActions();
     bindDrawerActions();
@@ -914,73 +942,71 @@ function renderRelatorios() {
   return tpl;
 }
 
-/* === 05) RELATÓRIOS → RELATÓRIO DE REPASSE (SEM UI DE %) =============== */
+/* === 05) RELATÓRIOS → RELATÓRIO DE REPASSE (CORRIGIDO) =============== */
 function renderRelRepasse() {
-  // Garante uma linha inicial em cada tabela para começar
   if (!DB.repasse.clientes.length) DB.repasse.clientes.push({ id:uid(), cliente:"", marca:"", qtdLitros:30, custoPorLitro:0, qtdBarris:1, venda:0 });
   if (!DB.repasse.despesas.length) DB.repasse.despesas.push({ id:uid(), descricao:"", valor:0, obs:"", partJK:0, partMarcos:0, pago:false });
 
   const wrap = document.createElement("section");
-  wrap.className = "stack";
+  wrap.className = "relatorio-repasse stack";
 
-  // — Cabeçalho
+  // — Cabeçalho do relatório
   const head = document.createElement("div");
-  head.className = "card";
+  head.className = "repasse-header";
   head.innerHTML = `
-    <div class="row space-between">
-      <h3>Relatório de Repasse</h3>
-      <div class="row">
-        <button class="btn" id="repPrint">⬇️ Baixar PDF</button>
-      </div>
+    <div class="repasse-title">
+      <h2>📊 Relatório de Repasse Financeiro</h2>
+      <button class="btn-print" id="repPrint">📄 Baixar PDF</button>
     </div>
-    <div class="toolbar">
-      <div class="row">
-        <label class="pill">Data início
-          <input id="rep_dataIni" class="input" type="date">
-        </label>
-        <label class="pill">Data fim
-          <input id="rep_dataFim" class="input" type="date">
-        </label>
-        <label class="pill">Data pagamento
-          <input id="rep_dataPag" class="input" type="date">
-        </label>
+    <div class="repasse-periodo">
+      <div class="periodo-item">
+        <div class="periodo-label">Período Inicial</div>
+        <input id="rep_dataIni" class="periodo-value" type="date">
+      </div>
+      <div class="periodo-item">
+        <div class="periodo-label">Período Final</div>
+        <input id="rep_dataFim" class="periodo-value" type="date">
+      </div>
+      <div class="periodo-item">
+        <div class="periodo-label">Data de Pagamento</div>
+        <input id="rep_dataPag" class="periodo-value" type="date">
       </div>
     </div>
   `;
   wrap.appendChild(head);
 
   // — Vendas
-  const vendas = document.createElement("section");
-  vendas.className = "card";
+  const vendas = document.createElement("div");
+  vendas.className = "repasse-table-container";
   vendas.innerHTML = `
-    <div class="row space-between">
-      <h4>Fechamento de Duas Semanas – Vendas</h4>
-      <button id="repAddCliente" class="btn">+ Adicionar linha</button>
+    <div class="repasse-table-header">
+      <h3>💰 Fechamento de Vendas - Período de Duas Semanas</h3>
+      <button class="btn-add" id="repAddCliente">+ Adicionar Linha</button>
     </div>
     <div class="table-wrap">
-      <table class="table-compact" id="repTblVendas">
+      <table class="repasse-table">
         <thead>
           <tr>
-            <th>Cliente</th>
-            <th>Marca do Chopp</th>
-            <th class="right">Qtde (L)</th>
-            <th class="right">Custo p/L</th>
-            <th class="right">Qtde. Barris</th>
-            <th class="right">Custo</th>
-            <th class="right">Venda</th>
-            <th class="right">Parte Marcos</th>
-            <th class="right">Parte JK</th>
-            <th></th>
+            <th class="text-left">Cliente</th>
+            <th class="text-left">Marca do Chopp</th>
+            <th class="text-right">Qtde (L)</th>
+            <th class="text-right">Custo p/L</th>
+            <th class="text-right">Barris</th>
+            <th class="text-right">Custo Total</th>
+            <th class="text-right">Valor Venda</th>
+            <th class="text-right">Parte Marcos</th>
+            <th class="text-right">Parte JK</th>
+            <th class="text-center">Ações</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="repTblVendas"></tbody>
         <tfoot>
           <tr>
-            <td colspan="5"><b>Totais</b></td>
-            <td id="repTotCusto" class="right"><b>R$ 0,00</b></td>
-            <td id="repTotVenda" class="right"><b>R$ 0,00</b></td>
-            <td id="repTotM" class="right"><b>R$ 0,00</b></td>
-            <td id="repTotJ" class="right"><b>R$ 0,00</b></td>
+            <td colspan="5" class="text-right"><strong>TOTAIS</strong></td>
+            <td class="text-right"><strong id="repTotCusto">R$ 0,00</strong></td>
+            <td class="text-right"><strong id="repTotVenda">R$ 0,00</strong></td>
+            <td class="text-right"><strong id="repTotM">R$ 0,00</strong></td>
+            <td class="text-right"><strong id="repTotJ">R$ 0,00</strong></td>
             <td></td>
           </tr>
         </tfoot>
@@ -990,35 +1016,36 @@ function renderRelRepasse() {
   wrap.appendChild(vendas);
 
   // — Despesas
-  const despesas = document.createElement("section");
-  despesas.className = "card";
+  const despesas = document.createElement("div");
+  despesas.className = "repasse-table-container";
   despesas.innerHTML = `
-    <div class="row space-between">
-      <h4>Despesas</h4>
-      <button id="repAddDespesa" class="btn">+ Adicionar despesa</button>
+    <div class="repasse-table-header">
+      <h3>💸 Despesas do Período</h3>
+      <button class="btn-add" id="repAddDespesa">+ Adicionar Despesa</button>
     </div>
     <div class="table-wrap">
-      <table class="table-compact" id="repTblDespesas">
+      <table class="repasse-table">
         <thead>
           <tr>
-            <th>Descrição</th>
-            <th class="right">Valor</th>
-            <th>Obs</th>
-            <th class="right">Part. JK</th>
-            <th class="right">Part. Marcos</th>
-            <th>Pago?</th>
-            <th></th>
+            <th class="text-left">Descrição</th>
+            <th class="text-right">Valor Total</th>
+            <th class="text-left">Observações</th>
+            <th class="text-right">Parte JK</th>
+            <th class="text-right">Parte Marcos</th>
+            <th class="text-center">Pago?</th>
+            <th class="text-center">Ações</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="repTblDespesas"></tbody>
         <tfoot>
           <tr>
-            <td><b>Totais</b></td>
-            <td id="repTotDespVal" class="right"><b>R$ 0,00</b></td>
+            <td class="text-right"><strong>TOTAIS</strong></td>
+            <td class="text-right"><strong id="repTotDespVal">R$ 0,00</strong></td>
             <td></td>
-            <td id="repTotDespJK" class="right"><b>R$ 0,00</b></td>
-            <td id="repTotDespM" class="right"><b>R$ 0,00</b></td>
-            <td></td><td></td>
+            <td class="text-right"><strong id="repTotDespJK">R$ 0,00</strong></td>
+            <td class="text-right"><strong id="repTotDespM">R$ 0,00</strong></td>
+            <td></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
@@ -1027,51 +1054,82 @@ function renderRelRepasse() {
   wrap.appendChild(despesas);
 
   // — Resultados
-  const resumo = document.createElement("section");
-  resumo.className = "card";
+  const resumo = document.createElement("div");
+  resumo.className = "repasse-calculos";
   resumo.innerHTML = `
-    <h4>Cálculo</h4>
-    <div class="grid-3">
-      <div class="calc-box amber">
-        <div class="row space-between"><span>Parte Marcos</span><b id="resParteM">R$ 0,00</b></div>
-        <div class="row space-between"><span>− Despesas Marcos</span><b id="resDespM">R$ 0,00</b></div>
-        <div class="row space-between big"><span>Total a pagar Marcos</span><b id="resTotalM">R$ 0,00</b></div>
-        <hr>
+    <div class="calc-card amber">
+      <h4>💼 Marcos</h4>
+      <div class="calc-line">
+        <span>Parte das Vendas</span>
+        <strong id="resParteM">R$ 0,00</strong>
       </div>
-      <div class="calc-box sky">
-        <div class="row space-between"><span>Parte JK</span><b id="resParteJ">R$ 0,00</b></div>
-        <div class="row space-between"><span>− Despesas JK</span><b id="resDespJ">R$ 0,00</b></div>
-        <div class="row space-between big"><span>Saldo JK</span><b id="resSaldoJ">R$ 0,00</b></div>
-        <hr>
+      <div class="calc-line">
+        <span>− Despesas Marcos</span>
+        <strong id="resDespM">R$ 0,00</strong>
       </div>
-      <div class="calc-box green">
-        <div class="row space-between"><span>Vendas</span><b id="resVendas">R$ 0,00</b></div>
-        <div class="row space-between"><span>Custos</span><b id="resCustos">R$ 0,00</b></div>
-        <div class="row space-between"><span>Despesas</span><b id="resDespesas">R$ 0,00</b></div>
-        <hr>
-        <div class="row space-between big"><span>Lucro Líquido</span><b id="resLucro">R$ 0,00</b></div>
+      <div class="calc-line calc-total">
+        <span>Total a Receber</span>
+        <strong id="resTotalM" class="positive">R$ 0,00</strong>
+      </div>
+    </div>
+    
+    <div class="calc-card sky">
+      <h4>🏢 JK CHOPP</h4>
+      <div class="calc-line">
+        <span>Parte das Vendas</span>
+        <strong id="resParteJ">R$ 0,00</strong>
+      </div>
+      <div class="calc-line">
+        <span>− Despesas JK</span>
+        <strong id="resDespJ">R$ 0,00</strong>
+      </div>
+      <div class="calc-line calc-total">
+        <span>Saldo Final</span>
+        <strong id="resSaldoJ" class="positive">R$ 0,00</strong>
+      </div>
+    </div>
+    
+    <div class="calc-card green">
+      <h4>📈 Resultado Geral</h4>
+      <div class="calc-line">
+        <span>Vendas Brutas</span>
+        <strong id="resVendas">R$ 0,00</strong>
+      </div>
+      <div class="calc-line">
+        <span>− Custos</span>
+        <strong id="resCustos">R$ 0,00</strong>
+      </div>
+      <div class="calc-line">
+        <span>− Despesas</span>
+        <strong id="resDespesas">R$ 0,00</strong>
+      </div>
+      <div class="calc-line calc-total">
+        <span>Lucro Líquido</span>
+        <strong id="resLucro" class="positive">R$ 0,00</strong>
       </div>
     </div>
   `;
   wrap.appendChild(resumo);
 
-  // — Referências de DOM (sem percM/percJ)
+  // — Referências de DOM
   const H = {
     ini: $("#rep_dataIni", head),
     fim: $("#rep_dataFim", head),
     pag: $("#rep_dataPag", head),
   };
+  
   const TBL = {
-    vendasTbody: $("#repTblVendas tbody", vendas),
+    vendasTbody: $("#repTblVendas", vendas),
     totCusto:    $("#repTotCusto", vendas),
     totVenda:    $("#repTotVenda", vendas),
     totM:        $("#repTotM", vendas),
     totJ:        $("#repTotJ", vendas),
-    despesasTbody: $("#repTblDespesas tbody", despesas),
+    despesasTbody: $("#repTblDespesas", despesas),
     totDespVal:    $("#repTotDespVal", despesas),
     totDespJK:     $("#repTotDespJK", despesas),
     totDespM:      $("#repTotDespM", despesas),
   };
+  
   const OUT = {
     parteM: $("#resParteM", resumo),
     despM:  $("#resDespM", resumo),
@@ -1086,6 +1144,7 @@ function renderRelRepasse() {
   };
 
   const ST = DB.repasse;
+  
   // Header inicial
   H.ini.value = ST.header.dataIni || "";
   H.fim.value = ST.header.dataFim || "";
@@ -1093,9 +1152,8 @@ function renderRelRepasse() {
 
   // — Renderizações
   function renderVendas(){
-    // split fixo pelo estado (padrão 50/50 — sem UI)
     const pM = (toNumber(ST.split.percMarcos)/100) || 0.5;
-    const pJ = (toNumber(ST.split.percJK)/100)     || 0.5;
+    const pJ = (toNumber(ST.split.percJK)/100) || 0.5;
 
     const rows = ST.clientes.map(r=>{
       const litros = Math.max(0, toNumber(r.qtdLitros));
@@ -1107,39 +1165,41 @@ function renderRelRepasse() {
 
       return `
         <tr data-id="${r.id}">
-          <td><input class="input" data-field="cliente" value="${r.cliente||""}" placeholder="Nome do cliente"></td>
-          <td><input class="input" data-field="marca"   value="${r.marca||""}"   placeholder="Marca do chopp"></td>
-          <td class="right"><input class="input right" data-field="qtdLitros"     type="number" step="0.01" value="${r.qtdLitros||0}"></td>
-          <td class="right"><input class="input right" data-field="custoPorLitro" type="number" step="0.01" value="${r.custoPorLitro||0}"></td>
-          <td class="right"><input class="input right" data-field="qtdBarris"     type="number" step="1"    value="${r.qtdBarris||1}"></td>
-          <td class="right">${fmt.money(custo)}</td>
-          <td class="right"><input class="input right" data-field="venda" type="number" step="0.01" value="${r.venda||0}"></td>
-          <td class="right"><span>${fmt.money(lucro*pM)}</span></td>
-          <td class="right"><span>${fmt.money(lucro*pJ)}</span></td>
-          <td>${iconBtn("del", r.id, "Remover", "🗑️")}</td>
+          <td><input class="repasse-input" data-field="cliente" value="${r.cliente||""}" placeholder="Nome do cliente"></td>
+          <td><input class="repasse-input" data-field="marca" value="${r.marca||""}" placeholder="Marca do chopp"></td>
+          <td class="text-right"><input class="repasse-input text-right" data-field="qtdLitros" type="number" step="0.01" value="${r.qtdLitros||0}"></td>
+          <td class="text-right"><input class="repasse-input text-right" data-field="custoPorLitro" type="number" step="0.01" value="${r.custoPorLitro||0}"></td>
+          <td class="text-right"><input class="repasse-input text-right" data-field="qtdBarris" type="number" step="1" value="${r.qtdBarris||1}"></td>
+          <td class="text-right">${fmt.money(custo)}</td>
+          <td class="text-right"><input class="repasse-input text-right" data-field="venda" type="number" step="0.01" value="${r.venda||0}"></td>
+          <td class="text-right"><span class="positive">${fmt.money(lucro*pM)}</span></td>
+          <td class="text-right"><span class="positive">${fmt.money(lucro*pJ)}</span></td>
+          <td class="text-center">${iconBtn("del", r.id, "Remover", "🗑️")}</td>
         </tr>`;
     }).join("");
-    TBL.vendasTbody.innerHTML = rows || `<tr><td colspan="10" class="empty">Sem linhas...</td></tr>`;
+    
+    TBL.vendasTbody.innerHTML = rows || `<tr><td colspan="10" class="text-center empty">Sem vendas registradas...</td></tr>`;
   }
 
   function renderDespesas(){
     const rows = ST.despesas.map(d=>`
       <tr data-id="${d.id}">
-        <td><input class="input" data-field="descricao" value="${d.descricao||""}" placeholder="Ex.: Combustível da semana"></td>
-        <td class="right"><input class="input right" data-field="valor" type="number" step="0.01" value="${d.valor||0}"></td>
-        <td><input class="input" data-field="obs" value="${d.obs||""}" placeholder="Observações"></td>
-        <td class="right"><input class="input right" data-field="partJK" type="number" step="0.01" value="${d.partJK||0}"></td>
-        <td class="right"><input class="input right" data-field="partMarcos" type="number" step="0.01" value="${d.partMarcos||0}"></td>
-        <td class="center"><input type="checkbox" data-field="pago" ${d.pago?"checked":""}></td>
-        <td>${iconBtn("del", d.id, "Remover", "🗑️")}</td>
+        <td><input class="repasse-input" data-field="descricao" value="${d.descricao||""}" placeholder="Ex.: Combustível da semana"></td>
+        <td class="text-right"><input class="repasse-input text-right" data-field="valor" type="number" step="0.01" value="${d.valor||0}"></td>
+        <td><input class="repasse-input" data-field="obs" value="${d.obs||""}" placeholder="Observações"></td>
+        <td class="text-right"><input class="repasse-input text-right" data-field="partJK" type="number" step="0.01" value="${d.partJK||0}"></td>
+        <td class="text-right"><input class="repasse-input text-right" data-field="partMarcos" type="number" step="0.01" value="${d.partMarcos||0}"></td>
+        <td class="text-center"><input type="checkbox" data-field="pago" ${d.pago?"checked":""}></td>
+        <td class="text-center">${iconBtn("del", d.id, "Remover", "🗑️")}</td>
       </tr>
     `).join("");
-    TBL.despesasTbody.innerHTML = rows || `<tr><td colspan="7" class="empty">Sem despesas...</td></tr>`;
+    
+    TBL.despesasTbody.innerHTML = rows || `<tr><td colspan="7" class="text-center empty">Sem despesas registradas...</td></tr>`;
   }
 
   function renderTotais(){
-    const pM=(toNumber(ST.split.percMarcos)/100)||0.5;
-    const pJ=(toNumber(ST.split.percJK)/100)||0.5;
+    const pM = (toNumber(ST.split.percMarcos)/100) || 0.5;
+    const pJ = (toNumber(ST.split.percJK)/100) || 0.5;
 
     let totCusto=0, totVenda=0, totM=0, totJ=0;
     ST.clientes.forEach(r=>{
@@ -1173,434 +1233,582 @@ function renderRelRepasse() {
     // Painéis finais
     OUT.parteM.textContent = fmt.money(totM);
     OUT.despM.textContent  = fmt.money(totDespM);
-    OUT.totalM.textContent = fmt.money(totM - totDespM);
+    const totalMarcos = totM - totDespM;
+    OUT.totalM.textContent = fmt.money(totalMarcos);
+    OUT.totalM.className = totalMarcos >= 0 ? 'positive' : 'negative';
 
     OUT.parteJ.textContent = fmt.money(totJ);
     OUT.despJ.textContent  = fmt.money(totDespJK);
-    OUT.saldoJ.textContent = fmt.money(totJ - totDespJK);
+    const saldoJK = totJ - totDespJK;
+    OUT.saldoJ.textContent = fmt.money(saldoJK);
+    OUT.saldoJ.className = saldoJK >= 0 ? 'positive' : 'negative';
 
     OUT.vendas.textContent   = fmt.money(totVenda);
     OUT.custos.textContent   = fmt.money(totCusto);
     OUT.despesas.textContent = fmt.money(totDespVal);
-    OUT.lucro.textContent    = fmt.money(totVenda - totCusto - totDespVal);
+    const lucroLiquido = totVenda - totCusto - totDespVal;
+    OUT.lucro.textContent    = fmt.money(lucroLiquido);
+    OUT.lucro.className = lucroLiquido >= 0 ? 'positive' : 'negative';
   }
 
   // — Eventos
-  $("#repAddCliente", vendas).addEventListener("click", () => {
-    ST.clientes.push({ id:uid(), cliente:"", marca:"", qtdLitros:30, custoPorLitro:0, qtdBarris:1, venda:0 });
-    save(); renderVendas(); renderTotais();
-  });
-  $("#repAddDespesa", despesas).addEventListener("click", () => {
-    ST.despesas.push({ id:uid(), descricao:"", valor:0, obs:"", partJK:0, partMarcos:0, pago:false });
-    save(); renderDespesas(); renderTotais();
-  });
-
-  // Edição inline — vendas
-  $("#repTblVendas tbody", vendas).addEventListener("input", (e)=>{
-    const tr = e.target.closest("tr[data-id]"); if (!tr) return;
-    const id = tr.getAttribute("data-id");
-    const f  = e.target.getAttribute("data-field");
-    const row = ST.clientes.find(x=>x.id===id); if (!row || !f) return;
-
-    row[f] = e.target.value;
-
-    const litros = Math.max(0,toNumber(row.qtdLitros));
-    const barris = Math.max(1,toNumber(row.qtdBarris) || 1);
-    const cpl    = Math.max(0,toNumber(row.custoPorLitro));
-    const venda  = Math.max(0,toNumber(row.venda));
-    const custo  = cpl * litros * barris;
-    const lucro  = venda - custo;
-    const pM=(toNumber(ST.split.percMarcos)/100)||0.5;
-    const pJ=(toNumber(ST.split.percJK)/100)||0.5;
-    const tds = tr.querySelectorAll("td");
-    if (tds[5]) tds[5].textContent = fmt.money(custo);
-    if (tds[7]?.querySelector("span")) tds[7].querySelector("span").textContent = fmt.money(lucro*pM);
-    if (tds[8]?.querySelector("span")) tds[8].querySelector("span").textContent = fmt.money(lucro*pJ);
-
-    save(); renderTotais();
-  });
-  $("#repTblVendas tbody", vendas).addEventListener("click", (e)=>{
-    const b = e.target.closest("button[data-act='del']"); if (!b) return;
-    const id = b.dataset.id;
-    ST.clientes = ST.clientes.filter(x=>x.id!==id);
-    save(); renderVendas(); renderTotais();
-  });
-
-  // Edição inline — despesas
-  $("#repTblDespesas tbody", despesas).addEventListener("input", (e)=>{
-    const tr = e.target.closest("tr[data-id]"); if (!tr) return;
-    const id = tr.getAttribute("data-id");
-    const f  = e.target.getAttribute("data-field");
-    const row = ST.despesas.find(x=>x.id===id); if (!row || !f) return;
-
-    if (f === "pago") row.pago = !!e.target.checked; else row[f] = e.target.value;
-
-    if (f === "valor"){
-      const v  = toNumber(row.valor);
-      const pj = v * ((toNumber(ST.split.percJK)||50)/100);
-      const pm = v - pj;
-      row.partJK = pj; row.partMarcos = pm;
-      tr.querySelector('[data-field="partJK"]').value = pj.toFixed(2);
-      tr.querySelector('[data-field="partMarcos"]').value = pm.toFixed(2);
-    } else if (f === "partJK"){
-      const v  = toNumber(row.valor);
-      const pj = toNumber(row.partJK);
-      row.partMarcos = v - pj;
-      tr.querySelector('[data-field="partMarcos"]').value = row.partMarcos.toFixed(2);
-    } else if (f === "partMarcos"){
-      const v  = toNumber(row.valor);
-      const pm = toNumber(row.partMarcos);
-      row.partJK = v - pm;
-      tr.querySelector('[data-field="partJK"]').value = row.partJK.toFixed(2);
+  function handleInputChange(ev) {
+    const input = ev.target;
+    const field = input.dataset.field;
+    const row = input.closest('tr');
+    const id = row.dataset.id;
+    const isVenda = row.closest('#repTblVendas') !== null;
+    
+    let item;
+    if (isVenda) {
+      item = ST.clientes.find(c => c.id === id);
+    } else {
+      item = ST.despesas.find(d => d.id === id);
     }
-
-    save(); renderTotais();
-  });
-  $("#repTblDespesas tbody", despesas).addEventListener("click", (e)=>{
-    const b = e.target.closest("button[data-act='del']"); if (!b) return;
-    const id = b.dataset.id;
-    ST.despesas = ST.despesas.filter(x=>x.id!==id);
-    save(); renderDespesas(); renderTotais();
-  });
-
-  // Datas do cabeçalho
-  H.ini.addEventListener("input", e=>{ ST.header.dataIni = e.target.value || ""; save(); });
-  H.fim.addEventListener("input", e=>{ ST.header.dataFim = e.target.value || ""; save(); });
-  H.pag.addEventListener("input", e=>{ ST.header.dataPagamento = e.target.value || ""; save(); });
-
-// ================= PDF / IMPRESSÃO =================
-$("#repPrint", head).addEventListener("click", () => {
-  const pM = (toNumber(ST.split.percMarcos) / 100) || 0.5;
-  const pJ = (toNumber(ST.split.percJK)     / 100) || 0.5;
-
-  let totC=0, totV=0, totM=0, totJ=0;
-  const rowsV = ST.clientes.map(r=>{
-    const litros=Math.max(0,toNumber(r.qtdLitros));
-    const barris=Math.max(1,toNumber(r.qtdBarris)||1);
-    const cpl=Math.max(0,toNumber(r.custoPorLitro));
-    const venda=Math.max(0,toNumber(r.venda));
-    const custo=cpl*litros*barris;
-    const lucro=venda-custo;
-    totC+=custo; totV+=venda; totM+=lucro*pM; totJ+=lucro*pJ;
-    return `
-      <tr>
-        <td>${r.cliente||""}</td><td>${r.marca||""}</td>
-        <td class="r">${litros.toFixed(2)}</td><td class="r">${fmt.money(cpl)}</td><td class="r">${barris}</td>
-        <td class="r">${fmt.money(custo)}</td><td class="r">${fmt.money(venda)}</td>
-        <td class="r">${fmt.money(lucro*pM)}</td><td class="r">${fmt.money(lucro*pJ)}</td>
-      </tr>`;
-  }).join("");
-
-  let tDesp=0, tJK=0, tM=0;
-  const rowsD = ST.despesas.map(d=>{
-    const v=toNumber(d.valor); const pj=toNumber(d.partJK); const pm=toNumber(d.partMarcos);
-    tDesp+=v; tJK+=pj; tM+=pm;
-    return `
-      <tr>
-        <td>${d.descricao||""}</td>
-        <td class="r">${fmt.money(v)}</td>
-        <td>${d.obs||""}</td>
-        <td class="r">${fmt.money(pj)}</td>
-        <td class="r">${fmt.money(pm)}</td>
-        <td>${d.pago?"Sim":"Não"}</td>
-      </tr>`;
-  }).join("");
-
-  const saldoM = totM - tM;
-  const saldoJ = totJ - tJK;
-  const lucroB = totV - totC - tDesp;
-
-  const html = `<!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório de Repasse - JK CHOPP</title>
-<style>
-  @page { size: A4; margin: 12mm; }
-  body { font: 13px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial; color:#111; margin:0; }
-  #print-toolbar {
-    position: sticky; top: 0; background: #fff; border-bottom: 1px solid #ddd;
-    display: flex; gap: 8px; justify-content: flex-end; padding: 10px 12px; z-index: 10;
+    
+    if (!item) return;
+    
+    if (input.type === 'checkbox') {
+      item[field] = input.checked;
+    } else if (input.type === 'number') {
+      item[field] = parseFloat(input.value) || 0;
+    } else {
+      item[field] = input.value;
+    }
+    
+    save();
+    if (isVenda) {
+      renderVendas();
+    } else {
+      renderDespesas();
+    }
+    renderTotais();
   }
-  #print-toolbar button {
-    border: 1px solid #ccc; background:#fff; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+
+  function handleDeleteClick(ev) {
+    const button = ev.target.closest('button.icon-btn');
+    if (!button || button.dataset.act !== 'del') return;
+    
+    const id = button.dataset.id;
+    const row = button.closest('tr');
+    const isVenda = row.closest('#repTblVendas') !== null;
+    
+    if (confirm('Deseja realmente excluir este item?')) {
+      if (isVenda) {
+        ST.clientes = ST.clientes.filter(c => c.id !== id);
+      } else {
+        ST.despesas = ST.despesas.filter(d => d.id !== id);
+      }
+      save();
+      if (isVenda) {
+        renderVendas();
+      } else {
+        renderDespesas();
+      }
+      renderTotais();
+    }
   }
-  #print-toolbar button:hover { border-color:#999; }
-  main { padding: 16px; }
+
+  function handleHeaderChange(ev) {
+    const input = ev.target;
+    const field = input.id.replace('rep_', '');
+    
+    if (field === 'dataIni') ST.header.dataIni = input.value;
+    if (field === 'dataFim') ST.header.dataFim = input.value;
+    if (field === 'dataPag') ST.header.dataPagamento = input.value;
+    
+    save();
+  }
+
+  // Vincular eventos
+  wrap.addEventListener('input', handleInputChange);
+  wrap.addEventListener('click', handleDeleteClick);
+  head.addEventListener('change', handleHeaderChange);
+
+  $("#repAddCliente", wrap).addEventListener("click", () => {
+    ST.clientes.push({ id:uid(), cliente:"", marca:"", qtdLitros:30, custoPorLitro:0, qtdBarris:1, venda:0 });
+    save(); 
+    renderVendas(); 
+    renderTotais();
+  });
   
-  /* Cabeçalho da empresa */
-  .empresa-header {
+  $("#repAddDespesa", wrap).addEventListener("click", () => {
+    ST.despesas.push({ id:uid(), descricao:"", valor:0, obs:"", partJK:0, partMarcos:0, pago:false });
+    save(); 
+    renderDespesas(); 
+    renderTotais();
+  });
+
+  // — Função para gerar PDF do relatório
+function gerarPDF() {
+    const printWindow = window.open('', '_blank');
+    const pM = (toNumber(ST.split.percMarcos)/100) || 0.5;
+    const pJ = (toNumber(ST.split.percJK)/100) || 0.5;
+
+    // Calcular totais
+    let totCusto=0, totVenda=0, totM=0, totJ=0;
+    ST.clientes.forEach(r=>{
+        const litros = Math.max(0,toNumber(r.qtdLitros));
+        const barris = Math.max(1,toNumber(r.qtdBarris) || 1);
+        const cpl    = Math.max(0,toNumber(r.custoPorLitro));
+        const venda  = Math.max(0,toNumber(r.venda));
+        const custo  = cpl * litros * barris;
+        const lucro  = venda - custo;
+        totCusto += custo; totVenda += venda;
+        totM += lucro * pM; totJ += lucro * pJ;
+    });
+
+    let totDespVal=0, totDespJK=0, totDespM=0;
+    ST.despesas.forEach(d=>{
+        const v = Math.max(0,toNumber(d.valor));
+        const pj= Math.max(0,toNumber(d.partJK));
+        const pm= Math.max(0,toNumber(d.partMarcos));
+        totDespVal += v; totDespJK += pj; totDespM += pm;
+    });
+
+    const totalMarcos = totM - totDespM;
+    const saldoJK = totJ - totDespJK;
+    const lucroLiquido = totVenda - totCusto - totDespVal;
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Relatório de Repasse - JK CHOPP</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                    
+                    body { 
+                        font-family: 'Inter', Arial, sans-serif; 
+                        color: #1e293b; 
+                        background: #ffffff; 
+                        margin: 0; 
+                        padding: 30px;
+                        font-size: 12px;
+                        line-height: 1.4;
+                    }
+                    
+                    .header { 
+                        display: flex;
+                        align-items: center;
+                        gap: 20px;
+                        margin-bottom: 30px; 
+                        padding-bottom: 20px;
+                        border-bottom: 3px solid #f59e0b;
+                    }
+                    
+                    .logo-container {
+    width: 90px;
+    height: 90px;
+    border-radius: 12px;
+    background: white;
     display: flex;
     align-items: center;
-    gap: 20px;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #f59e0b;
-  }
-  .logo-empresa {
-    width: 80px;
-    height: 80px;
-    border-radius: 12px;
-    object-fit: contain;
+    justify-content: center;
     border: 2px solid #f59e0b;
-    padding: 4px;
-    background: white;
+    padding: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
-  .empresa-info h1 {
-    margin: 0;
-    font-size: 24px;
-    color: #f59e0b;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-  }
-  .empresa-info .cnpj {
-    color: #666;
-    font-size: 14px;
-    margin: 4px 0;
-    font-weight: 600;
-  }
-  .empresa-info .doc-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin-top: 8px;
-  }
-  
-  /* Período */
-  .periodo {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin: 20px 0;
-  }
-  .periodo-box {
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 14px;
-    text-align: center;
-    background: #fafafa;
-  }
-  .periodo-label {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 6px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .periodo-value {
-    font-weight: 700;
-    color: #333;
-    font-size: 14px;
-  }
-  
-  /* Tabelas */
-  table{ border-collapse:collapse; width:100%; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  th,td{ padding:10px 12px; border:1px solid #ddd; vertical-align:middle; }
-  thead{ background:#f8f9fa; font-weight:600; color: #333; }
-  tfoot{ background:#f8f9fa; font-weight:600; }
-  .r{ text-align:right; }
-  
-  /* Cálculos */
-  .calculos-grid { 
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 20px;
-    margin: 30px 0;
-  }
-  .calc-box { 
-    border: 1px solid #e0e0e0; 
-    border-radius: 10px; 
-    padding: 18px;
-    background: #fafafa;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
-  .calc-box.amber { border-left: 4px solid #f59e0b; }
-  .calc-box.sky { border-left: 4px solid #60a5fa; }
-  .calc-box.green { border-left: 4px solid #22c55e; }
-  
-  .row{ display:flex; justify-content:space-between; margin: 10px 0; align-items: center; }
-  .big { font-size: 15px; font-weight: 700; margin-top: 14px; color: #222; }
-  hr { border: none; border-top: 1px solid #e0e0e0; margin: 14px 0; }
-  
-  .muted{ color:#666; font-size:12px; }
-  
-  h2 {
-    color: #333;
-    border-bottom: 1px solid #f59e0b;
-    padding-bottom: 8px;
-    margin: 25px 0 15px 0;
-    font-size: 18px;
-  }
-  
-  @media print { 
-    #print-toolbar { display:none !important; } 
-    main{ padding:0; }
-    .calculos-grid { break-inside: avoid; }
-    table { break-inside: avoid; }
-    .empresa-header { break-inside: avoid; }
-  }
-</style>
-</head>
-<body>
-  <div id="print-toolbar">
-    <button id="btnSave" onclick="window.print()">🖨️ Imprimir/Salvar como PDF</button>
-    <button id="btnClose" onclick="window.close()">✕ Fechar</button>
-  </div>
-  <main>
-    <!-- Cabeçalho da empresa -->
-    <div class="empresa-header">
-      <img src="logojk.png" alt="JK CHOPP" class="logo-empresa">
-      <div class="empresa-info">
+}
+
+.logo-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+                    .empresa-info {
+                        flex: 1;
+                    }
+                    
+                    .empresa-info h1 {
+                        margin: 0;
+                        font-size: 24px;
+                        font-weight: 800;
+                        color: #1e293b;
+                        letter-spacing: -0.5px;
+                    }
+                    
+                    .empresa-info .cnpj {
+                        color: #64748b;
+                        font-size: 14px;
+                        font-weight: 600;
+                        margin: 4px 0;
+                    }
+                    
+                    .empresa-info .doc-title {
+                        font-size: 18px;
+                        font-weight: 700;
+                        color: #f59e0b;
+                        margin-top: 8px;
+                    }
+                    
+                    .periodo-grid { 
+                        display: grid; 
+                        grid-template-columns: repeat(3, 1fr); 
+                        gap: 20px; 
+                        margin: 25px 0;
+                        background: #f8fafc;
+                        padding: 20px;
+                        border-radius: 10px;
+                        border: 1px solid #e2e8f0;
+                    }
+                    
+                    .periodo-item { 
+                        text-align: center; 
+                    }
+                    
+                    .periodo-label { 
+                        font-size: 11px;
+                        color: #64748b;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        margin-bottom: 6px;
+                    }
+                    
+                    .periodo-value { 
+                        font-weight: 700;
+                        color: #1e293b;
+                        font-size: 14px;
+                    }
+                    
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin: 20px 0;
+                        font-size: 10px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    }
+                    
+                    th, td { 
+                        border: 1px solid #e2e8f0; 
+                        padding: 10px 8px; 
+                        text-align: left;
+                    }
+                    
+                    th { 
+                        background: #f1f5f9; 
+                        font-weight: 600;
+                        color: #475569;
+                    }
+                    
+                    .text-right { text-align: right; }
+                    .text-center { text-align: center; }
+                    .positive { color: #059669; font-weight: 600; }
+                    .negative { color: #dc2626; font-weight: 600; }
+                    
+                    .section-title {
+                        background: linear-gradient(135deg, #f59e0b, #d97706);
+                        color: white;
+                        padding: 12px 16px;
+                        margin: 25px 0 15px 0;
+                        border-radius: 8px;
+                        font-weight: 700;
+                        font-size: 14px;
+                    }
+                    
+                    .calc-grid { 
+                        display: grid; 
+                        grid-template-columns: repeat(3, 1fr); 
+                        gap: 15px; 
+                        margin: 30px 0;
+                    }
+                    
+                    .calc-card { 
+                        border: 1px solid #e2e8f0; 
+                        padding: 20px; 
+                        border-radius: 10px;
+                        background: #f8fafc;
+                    }
+                    
+                    .calc-card.amber { 
+                        border-left: 4px solid #f59e0b;
+                        background: #fffbeb;
+                    }
+                    
+                    .calc-card.sky { 
+                        border-left: 4px solid #60a5fa;
+                        background: #eff6ff;
+                    }
+                    
+                    .calc-card.green { 
+                        border-left: 4px solid #22c55e;
+                        background: #f0fdf4;
+                    }
+                    
+                    .calc-card h4 { 
+                        margin: 0 0 15px 0;
+                        font-size: 13px;
+                        font-weight: 700;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                    
+                    .calc-line { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        margin: 8px 0;
+                        padding-bottom: 8px;
+                        border-bottom: 1px solid #e2e8f0;
+                    }
+                    
+                    .calc-total { 
+                        font-size: 13px;
+                        font-weight: 800;
+                        margin-top: 10px;
+                        padding-top: 10px;
+                        border-top: 2px solid #cbd5e1;
+                    }
+                    
+                    .footer { 
+                        margin-top: 40px;
+                        padding-top: 20px;
+                        border-top: 2px solid #f59e0b;
+                        text-align: center;
+                        color: #64748b;
+                        font-size: 10px;
+                    }
+                    
+                    .assinaturas {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 30px;
+                        margin-top: 40px;
+                        padding-top: 20px;
+                        border-top: 1px dashed #cbd5e1;
+                    }
+                    
+                    .assinatura {
+                        text-align: center;
+                    }
+                    
+                    .linha-assinatura {
+                        border-top: 1px solid #94a3b8;
+                        margin-top: 40px;
+                        padding-top: 5px;
+                        color: #64748b;
+                        font-size: 10px;
+                    }
+                    
+                    @media print {
+                        body { margin: 0; padding: 15px; }
+                        .section-title { break-inside: avoid; }
+                        table { break-inside: avoid; }
+                        .calc-grid { break-inside: avoid; }
+                    }
+                </style>
+            </head>
+            <body>
+                <!-- Cabeçalho com Logo e Informações da Empresa -->
+                <div class="header">
+    <div class="logo-container">
+        <img src="logojk.png" alt="JK CHOPP" style="width: 70px; height: 70px; object-fit: contain;">
+    </div>
+    <div class="empresa-info">
         <h1>JK CHOPP</h1>
-        <div class="cnpj">CNPJ: 60.856.264/0001-73</div>
-        <div class="muted">Especialistas em Chopp</div>
+        <div class="cnpj">CNPJ: 00.000.000/0001-00</div>
         <div class="doc-title">RELATÓRIO DE REPASSE FINANCEIRO</div>
-      </div>
     </div>
+</div>
+                <!-- Período do Relatório -->
+                <div class="periodo-grid">
+                    <div class="periodo-item">
+                        <div class="periodo-label">Período Inicial</div>
+                        <div class="periodo-value">${H.ini.value ? new Date(H.ini.value).toLocaleDateString('pt-BR') : 'Não informado'}</div>
+                    </div>
+                    <div class="periodo-item">
+                        <div class="periodo-label">Período Final</div>
+                        <div class="periodo-value">${H.fim.value ? new Date(H.fim.value).toLocaleDateString('pt-BR') : 'Não informado'}</div>
+                    </div>
+                    <div class="periodo-item">
+                        <div class="periodo-label">Data de Pagamento</div>
+                        <div class="periodo-value">${H.pag.value ? new Date(H.pag.value).toLocaleDateString('pt-BR') : 'Não informado'}</div>
+                    </div>
+                </div>
 
-    <!-- Período -->
-    <div class="periodo">
-      <div class="periodo-box">
-        <div class="periodo-label">Período Inicial</div>
-        <div class="periodo-value">${ST.header.dataIni || "Não informado"}</div>
-      </div>
-      <div class="periodo-box">
-        <div class="periodo-label">Período Final</div>
-        <div class="periodo-value">${ST.header.dataFim || "Não informado"}</div>
-      </div>
-      <div class="periodo-box">
-        <div class="periodo-label">Data de Pagamento</div>
-        <div class="periodo-value">${ST.header.dataPagamento || "Não agendada"}</div>
-      </div>
-    </div>
+                <!-- Seção de Vendas -->
+                <div class="section-title">💰 FECHAMENTO DE VENDAS - PERÍODO DE DUAS SEMANAS</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Marca</th>
+                            <th class="text-right">Qtde (L)</th>
+                            <th class="text-right">Custo p/L</th>
+                            <th class="text-right">Barris</th>
+                            <th class="text-right">Custo Total</th>
+                            <th class="text-right">Valor Venda</th>
+                            <th class="text-right">Parte Marcos</th>
+                            <th class="text-right">Parte JK</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${ST.clientes.map(r => {
+                            const litros = Math.max(0, toNumber(r.qtdLitros));
+                            const barris = Math.max(1, toNumber(r.qtdBarris) || 1);
+                            const cpl = Math.max(0, toNumber(r.custoPorLitro));
+                            const venda = Math.max(0, toNumber(r.venda));
+                            const custo = cpl * litros * barris;
+                            const lucro = venda - custo;
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${r.cliente || '-'}</strong></td>
+                                    <td>${r.marca || '-'}</td>
+                                    <td class="text-right">${litros.toLocaleString('pt-BR')}</td>
+                                    <td class="text-right">${fmt.money(cpl)}</td>
+                                    <td class="text-right">${barris}</td>
+                                    <td class="text-right"><strong>${fmt.money(custo)}</strong></td>
+                                    <td class="text-right"><strong>${fmt.money(venda)}</strong></td>
+                                    <td class="text-right positive">${fmt.money(lucro * pM)}</td>
+                                    <td class="text-right positive">${fmt.money(lucro * pJ)}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f1f5f9;">
+                            <td colspan="5" class="text-right"><strong>TOTAIS</strong></td>
+                            <td class="text-right"><strong>${fmt.money(totCusto)}</strong></td>
+                            <td class="text-right"><strong>${fmt.money(totVenda)}</strong></td>
+                            <td class="text-right"><strong class="positive">${fmt.money(totM)}</strong></td>
+                            <td class="text-right"><strong class="positive">${fmt.money(totJ)}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
 
-    <!-- Vendas -->
-    <h2>📊 Fechamento de Vendas - Período de Duas Semanas</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Marca do Chopp</th>
-          <th class="r">Quantidade (L)</th>
-          <th class="r">Custo por Litro</th>
-          <th class="r">Qtde. Barris</th>
-          <th class="r">Custo Total</th>
-          <th class="r">Valor de Venda</th>
-          <th class="r">Parte Marcos</th>
-          <th class="r">Parte JK</th>
-        </tr>
-      </thead>
-      <tbody>${rowsV}</tbody>
-      <tfoot>
-        <tr>
-          <td colspan="5"><b>TOTAIS</b></td>
-          <td class="r"><b>${fmt.money(totC)}</b></td>
-          <td class="r"><b>${fmt.money(totV)}</b></td>
-          <td class="r"><b>${fmt.money(totM)}</b></td>
-          <td class="r"><b>${fmt.money(totJ)}</b></td>
-        </tr>
-      </tfoot>
-    </table>
+                <!-- Seção de Despesas -->
+                <div class="section-title">💸 DESPESAS DO PERÍODO</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th class="text-right">Valor Total</th>
+                            <th>Observações</th>
+                            <th class="text-right">Parte JK</th>
+                            <th class="text-right">Parte Marcos</th>
+                            <th class="text-center">Pago?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${ST.despesas.map(d => `
+                            <tr>
+                                <td><strong>${d.descricao || '-'}</strong></td>
+                                <td class="text-right">${fmt.money(d.valor || 0)}</td>
+                                <td>${d.obs || '-'}</td>
+                                <td class="text-right">${fmt.money(d.partJK || 0)}</td>
+                                <td class="text-right">${fmt.money(d.partMarcos || 0)}</td>
+                                <td class="text-center">${d.pago ? '✅' : '❌'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f1f5f9;">
+                            <td class="text-right"><strong>TOTAIS</strong></td>
+                            <td class="text-right"><strong>${fmt.money(totDespVal)}</strong></td>
+                            <td></td>
+                            <td class="text-right"><strong>${fmt.money(totDespJK)}</strong></td>
+                            <td class="text-right"><strong>${fmt.money(totDespM)}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
 
-    <!-- Despesas -->
-    <h2>💸 Despesas do Período</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Descrição</th>
-          <th class="r">Valor Total</th>
-          <th>Observações</th>
-          <th class="r">Parte JK</th>
-          <th class="r">Parte Marcos</th>
-          <th>Pago?</th>
-        </tr>
-      </thead>
-      <tbody>${rowsD}</tbody>
-      <tfoot>
-        <tr>
-          <td><b>TOTAIS</b></td>
-          <td class="r"><b>${fmt.money(tDesp)}</b></td>
-          <td></td>
-          <td class="r"><b>${fmt.money(tJK)}</b></td>
-          <td class="r"><b>${fmt.money(tM)}</b></td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
+                <!-- Cálculos Finais -->
+                <div class="section-title">📈 RESULTADOS FINAIS</div>
+                <div class="calc-grid">
+                    <div class="calc-card amber">
+                        <h4>💼 MARCOS</h4>
+                        <div class="calc-line">
+                            <span>Parte das Vendas:</span>
+                            <span class="positive">${fmt.money(totM)}</span>
+                        </div>
+                        <div class="calc-line">
+                            <span>− Despesas Marcos:</span>
+                            <span class="negative">${fmt.money(totDespM)}</span>
+                        </div>
+                        <div class="calc-line calc-total">
+                            <span>Total a Receber:</span>
+                            <span class="${totalMarcos >= 0 ? 'positive' : 'negative'}">${fmt.money(totalMarcos)}</span>
+                        </div>
+                    </div>
 
-    <!-- Cálculos -->
-    <h2>🧮 Resumo Financeiro - Rateio 50/50</h2>
-    <div class="calculos-grid">
-      <div class="calc-box amber">
-        <h3 style="margin:0 0 12px 0; color: #f59e0b;">💼 Marcos</h3>
-        <div class="row"><span>Parte das Vendas</span><b>${fmt.money(totM)}</b></div>
-        <div class="row"><span>− Despesas</span><b>${fmt.money(tM)}</b></div>
-        <hr>
-        <div class="row big"><span>Total a Receber</span><b style="color: #f59e0b;">${fmt.money(saldoM)}</b></div>
-      </div>
-      
-      <div class="calc-box sky">
-        <h3 style="margin:0 0 12px 0; color: #60a5fa;">🏢 JK CHOPP</h3>
-        <div class="row"><span>Parte das Vendas</span><b>${fmt.money(totJ)}</b></div>
-        <div class="row"><span>− Despesas</span><b>${fmt.money(tJK)}</b></div>
-        <hr>
-        <div class="row big"><span>Saldo Final</span><b style="color: #60a5fa;">${fmt.money(saldoJ)}</b></div>
-      </div>
-      
-      <div class="calc-box green">
-        <h3 style="margin:0 0 12px 0; color: #22c55e;">📈 Resultado Geral</h3>
-        <div class="row"><span>Vendas Brutas</span><b>${fmt.money(totV)}</b></div>
-        <div class="row"><span>− Custos</span><b>${fmt.money(totC)}</b></div>
-        <div class="row"><span>− Despesas</span><b>${fmt.money(tDesp)}</b></div>
-        <hr>
-        <div class="row big"><span>Lucro Líquido</span><b style="color: #22c55e;">${fmt.money(lucroB)}</b></div>
-      </div>
-    </div>
+                    <div class="calc-card sky">
+                        <h4>🏢 JK CHOPP</h4>
+                        <div class="calc-line">
+                            <span>Parte das Vendas:</span>
+                            <span class="positive">${fmt.money(totJ)}</span>
+                        </div>
+                        <div class="calc-line">
+                            <span>− Despesas JK:</span>
+                            <span class="negative">${fmt.money(totDespJK)}</span>
+                        </div>
+                        <div class="calc-line calc-total">
+                            <span>Saldo Final:</span>
+                            <span class="${saldoJK >= 0 ? 'positive' : 'negative'}">${fmt.money(saldoJK)}</span>
+                        </div>
+                    </div>
 
-    <!-- Rodapé -->
-    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #f59e0b; text-align: center; color: #666; font-size: 12px;">
-      <div style="margin-bottom: 8px; font-weight: 600;">Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
-      <div>JK CHOPP • CNPJ 60.856.264/0001-73 • Sistema Interno de Gestão</div>
-      <div class="muted" style="margin-top: 4px;">Este documento é confidencial e de uso interno</div>
-    </div>
-  </main>
-</body></html>`;
+                    <div class="calc-card green">
+                        <h4>📊 RESUMO GERAL</h4>
+                        <div class="calc-line">
+                            <span>Vendas Brutas:</span>
+                            <span class="positive">${fmt.money(totVenda)}</span>
+                        </div>
+                        <div class="calc-line">
+                            <span>− Custos:</span>
+                            <span class="negative">${fmt.money(totCusto)}</span>
+                        </div>
+                        <div class="calc-line">
+                            <span>− Despesas:</span>
+                            <span class="negative">${fmt.money(totDespVal)}</span>
+                        </div>
+                        <div class="calc-line calc-total">
+                            <span>Lucro Líquido:</span>
+                            <span class="${lucroLiquido >= 0 ? 'positive' : 'negative'}">${fmt.money(lucroLiquido)}</span>
+                        </div>
+                    </div>
+                </div>
 
-    // === imprimir via IFRAME invisível ===
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    iframe.style.visibility = "hidden";
-    document.body.appendChild(iframe);
+                <!-- Assinaturas -->
+                <div class="assinaturas">
+                    <div class="assinatura">
+                        <div class="linha-assinatura"></div>
+                        <div>Marcos</div>
+                        <div style="font-size: 9px; color: #94a3b8;">Point Do Chopp</div>
+                    </div>
+                    <div class="assinatura">
+                        <div class="linha-assinatura"></div>
+                        <div>JK CHOPP</div>
+                        <div style="font-size: 9px; color: #94a3b8;">Empresa</div>
+                    </div>
+                </div>
 
-    iframe.onload = () => {
-      try {
-        iframe.contentWindow.focus();
+                <!-- Rodapé -->
+                <div class="footer">
+                    <div class="relatorio-gerado">
+                        Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+                    </div>
+                    <div>JK CHOPP • CNPJ 60.856.264/0001-73</div>
+                </div>
+            </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    
+    // Aguardar o carregamento completo antes de imprimir
+    setTimeout(() => {
+        printWindow.print();
+        // Fechar a janela após a impressão (opcional)
         setTimeout(() => {
-          iframe.contentWindow.print();
-          setTimeout(() => iframe.remove(), 500);
-        }, 50);
-      } catch (e) {
-        console.error(e);
-        alert("Não foi possível preparar a impressão.");
-        iframe.remove();
-      }
-    };
+            printWindow.close();
+        }, 1000);
+    }, 500);
+}
 
-    if ("srcdoc" in iframe) {
-      iframe.srcdoc = html;
-    } else {
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      doc.close();
-    }
-});
-// <-- FECHA o addEventListener corretamente
-  // =============== PDF / IMPRESSÃO — FIM ===============
+  // Vincular o evento de clique ao botão de PDF
+  $("#repPrint", wrap).addEventListener("click", gerarPDF);
 
   // Render inicial
   renderVendas();
