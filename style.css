@@ -1601,3 +1601,113 @@ tr:hover    { background: #ffffff0a; }
 .col-pago { width: 8%; }
 .col-acoes { width: 11%; }
 
+/* === RESPONSIVIDADE MOBILE (AJUSTES GERAIS) ============================ */
+
+/* 1) Container mais compacto e fluido no celular */
+@media (max-width: 768px) {
+  .wrap { max-width: 100%; padding: 14px 14px; }
+  main { padding: 10px 0; }
+}
+
+/* 2) Topbar empilhada e ações compactas */
+@media (max-width: 768px) {
+  .topbar { 
+    flex-direction: column; 
+    align-items: stretch; 
+    gap: 10px;
+  }
+
+  .topbar .row { 
+    justify-content: space-between; 
+    gap: 10px;
+  }
+
+  .brand .title h1 { font-size: 16px; }
+  .brand .title small { font-size: 12px; }
+
+  .top-actions { 
+    display: grid; 
+    grid-template-columns: repeat(3, minmax(0, 1fr)); 
+    gap: 8px; 
+  }
+  .top-actions .btn, .top-actions label.btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+  /* Input file continua invisível */
+  #importFile { display: none; }
+}
+
+/* 3) Tabs roláveis horizontalmente (sem quebra) */
+@media (max-width: 900px) {
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    gap: 6px;
+  }
+  .tab { flex: 0 0 auto; }
+}
+
+/* 4) Drawer ocupa toda largura no celular e área de toque maior */
+@media (max-width: 480px) {
+  .drawer { width: 100%; }
+  .drawer .drawer-header { padding: 16px; }
+  .drawer nav { padding: 10px 6px 70px; } /* espaço p/ footer fixo */
+  .menu-item { padding: 10px 8px; }
+}
+
+/* 5) Grid / linhas viram coluna */
+@media (max-width: 768px) {
+  .row { flex-direction: column; align-items: stretch; }
+}
+
+/* 6) Tabelas responsivas (empilhadas) — usar com .table */
+@media (max-width: 768px) {
+  .table { 
+    width: 100%;
+    border: 0;
+  }
+  .table thead { 
+    display: none; 
+  }
+  .table, 
+  .table tbody, 
+  .table tr, 
+  .table td, 
+  .table th { 
+    display: block; 
+    width: 100%;
+  }
+  .table tr { 
+    margin-bottom: 12px; 
+    background: var(--card);
+    border: 1px solid var(--bd-soft);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px var(--shadow);
+    overflow: hidden;
+  }
+  .table td {
+    border-bottom: 1px solid var(--bd-soft);
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 140px 1fr;  /* label + valor */
+    gap: 8px;
+  }
+  .table td:last-child { border-bottom: 0; }
+  .table td::before {
+    content: attr(data-th);
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: none;
+  }
+}
+
+/* 7) Cards e botões: toque confortável */
+@media (max-width: 768px) {
+  .card { border-radius: 14px; }
+  .btn { min-height: 44px; }
+}

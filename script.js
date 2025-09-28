@@ -89,34 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
 });
 
-// ... continue com o restante do código original a partir da linha 81 (Helpers)
-
-function initializeApp() {
-    bindTopbarActions();
-    bindDrawerActions();
-    buildMenu();
-    renderActive();
-    
-    // Adicionar botão de logout no topbar
-    addLogoutButton();
-}
-
-function addLogoutButton() {
-    const topActions = document.querySelector('.top-actions');
-    if (topActions && !document.getElementById('btnLogout')) {
-        const logoutBtn = document.createElement('button');
-        logoutBtn.className = 'btn danger';
-        logoutBtn.id = 'btnLogout';
-        logoutBtn.innerHTML = '🚪 Sair';
-        logoutBtn.title = 'Logout';
-        logoutBtn.onclick = () => {
-            if (confirm('Deseja sair do sistema?')) {
-                authSystem.logout();
-            }
-        };
-        topActions.appendChild(logoutBtn);
-    }
-}
 /* === 00) HELPERS ======================================================== */
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -1944,14 +1916,25 @@ function renderActive() {
         default:                view = renderStub("Página não encontrada");
     }
 
-    if (view) content.appendChild(view);
+    if (view) {
+  content.appendChild(view);
+  // Ajuste responsivo pós-render (tabelas empilháveis em mobile)
+  enhanceResponsiveTables(content);
+}
 }
 
-/* === 07) BOOT =========================================================== */
-// ... código posterior mantido ...*/
-document.addEventListener("DOMContentLoaded", () => {
-  bindTopbarActions();
-  bindDrawerActions();
-  buildMenu();
-  renderActive();
-});
+/* === 06.1) UTIL - Responsividade de tabelas (adiciona data-th nos <td>) === */
+function enhanceResponsiveTables(root=document) {
+  const tables = root.querySelectorAll('table.table');
+  tables.forEach(table => {
+    const ths = Array.from(table.querySelectorAll(':scope > thead > tr > th')).map(th => th.innerText.trim());
+    if (!ths.length) return;
+    table.querySelectorAll(':scope > tbody > tr').forEach(tr => {
+      Array.from(tr.children).forEach((td, i) => {
+        if (!td.hasAttribute('data-th') && ths[i]) {
+          td.setAttribute('data-th', ths[i]);
+        }
+      });
+    });
+  });
+}
