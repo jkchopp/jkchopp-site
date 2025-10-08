@@ -11,83 +11,18 @@
    06) Placeholders + Roteador
    07) Boot
    ========================================================================== */
-/* ==========================================================================
-   JK CHOPP — SCRIPT.JS (CORRIGIDO E FUNCIONAL)
-   ========================================================================== */
 
-/* === FUNÇÕES DE AUTENTICAÇÃO === */
-function checkAuth() {
-    if (!authSystem.checkAuth()) {
-        showLoginModal();
-        return false;
-    }
-    return true;
-}
-
-function showLoginModal() {
-    const modal = document.getElementById('loginModal');
-    if (modal) modal.style.display = 'flex';
-}
-
-function hideLoginModal() {
-    const modal = document.getElementById('loginModal');
-    if (modal) modal.style.display = 'none';
-}
+/* === BOOT DA APLICAÇÃO === */
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+});
 
 function initializeApp() {
     bindTopbarActions();
     bindDrawerActions();
     buildMenu();
     renderActive();
-    addLogoutButton();
 }
-
-function addLogoutButton() {
-    const topActions = document.querySelector('.top-actions');
-    if (topActions && !document.getElementById('btnLogout')) {
-        const logoutBtn = document.createElement('button');
-        logoutBtn.className = 'btn danger';
-        logoutBtn.id = 'btnLogout';
-        logoutBtn.innerHTML = '🚪 Sair';
-        logoutBtn.title = 'Logout';
-        logoutBtn.onclick = () => {
-            if (confirm('Deseja sair do sistema?')) {
-                authSystem.logout();
-                window.location.reload();
-            }
-        };
-        topActions.appendChild(logoutBtn);
-    }
-}
-
-/* === BOOT DA APLICAÇÃO === */
-document.addEventListener('DOMContentLoaded', () => {
-    // Verificar autenticação primeiro
-    if (!checkAuth()) {
-        // Bind eventos do modal de login
-        document.getElementById('btnLogin')?.addEventListener('click', () => {
-            const user = document.getElementById('loginUser').value;
-            const pass = document.getElementById('loginPass').value;
-            
-            if (authSystem.login(user, pass)) {
-                hideLoginModal();
-                initializeApp();
-            } else {
-                alert('Usuário ou senha inválidos!');
-            }
-        });
-        
-        document.getElementById('closeLogin')?.addEventListener('click', hideLoginModal);
-        
-        // Fechar modal clicando fora
-        document.getElementById('loginModal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'loginModal') hideLoginModal();
-        });
-        return;
-    }
-    
-    initializeApp();
-});
 
 /* === 00) HELPERS ======================================================== */
 const $  = (sel, root = document) => root.querySelector(sel);
@@ -997,42 +932,40 @@ function renderRelRepasse() {
   wrap.appendChild(vendas);
 
   // — Despesas
-  // ... dentro da função renderRelRepasse(), substitua a parte das despesas:
-
-const despesas = document.createElement("div");
-despesas.className = "repasse-table-container";
-despesas.innerHTML = `
-  <div class="repasse-table-header">
-    <h3>💸 Despesas do Período</h3>
-    <button class="btn-add" id="repAddDespesa">+ Adicionar Despesa</button>
-  </div>
-  <div class="table-wrap">
-    <table class="repasse-table">
-      <thead>
-        <tr>
-          <th class="text-left">Descrição</th>
-          <th class="text-right">Valor Total</th>
-          <th class="text-left">Observações</th>
-          <th class="text-right">Parte JK</th>
-          <th class="text-right">Parte Marcos</th>
-          <th class="text-center">Pago?</th>
-          <th class="text-center">Ações</th>
-        </tr>
-      </thead>
-      <tbody id="repTblDespesas"></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="1" class="text-right"><strong>TOTAIS</strong></td>
-          <td class="text-right"><strong id="repTotDespVal">R$ 0,00</strong></td>
-          <td></td>
-          <td class="text-right"><strong id="repTotDespJK">R$ 0,00</strong></td>
-          <td class="text-right"><strong id="repTotDespM">R$ 0,00</strong></td>
-          <td colspan="2"></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-`;
+  const despesas = document.createElement("div");
+  despesas.className = "repasse-table-container";
+  despesas.innerHTML = `
+    <div class="repasse-table-header">
+      <h3>💸 Despesas do Período</h3>
+      <button class="btn-add" id="repAddDespesa">+ Adicionar Despesa</button>
+    </div>
+    <div class="table-wrap">
+      <table class="repasse-table">
+        <thead>
+          <tr>
+            <th class="text-left">Descrição</th>
+            <th class="text-right">Valor Total</th>
+            <th class="text-left">Observações</th>
+            <th class="text-right">Parte JK</th>
+            <th class="text-right">Parte Marcos</th>
+            <th class="text-center">Pago?</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="repTblDespesas"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="1" class="text-right"><strong>TOTAIS</strong></td>
+            <td class="text-right"><strong id="repTotDespVal">R$ 0,00</strong></td>
+            <td></td>
+            <td class="text-right"><strong id="repTotDespJK">R$ 0,00</strong></td>
+            <td class="text-right"><strong id="repTotDespM">R$ 0,00</strong></td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
   wrap.appendChild(despesas);
 
   // — Resultados
@@ -1233,7 +1166,9 @@ despesas.innerHTML = `
     OUT.lucro.className = lucroLiquido >= 0 ? 'positive' : 'negative';
   }
 
-  // — Eventos
+  // — CORREÇÃO: Eventos otimizados para evitar perda de foco
+  let inputTimeout;
+
   function handleInputChange(ev) {
     const input = ev.target;
     const field = input.dataset.field;
@@ -1258,13 +1193,13 @@ despesas.innerHTML = `
       item[field] = input.value;
     }
     
-    save();
-    if (isVenda) {
-      renderVendas();
-    } else {
-      renderDespesas();
-    }
-    renderTotais();
+    // Usar debounce para evitar múltiplas renderizações
+    clearTimeout(inputTimeout);
+    inputTimeout = setTimeout(() => {
+      save();
+      // Atualizar apenas os totais, não re-renderizar toda a tabela
+      renderTotais();
+    }, 300);
   }
 
   function handleDeleteClick(ev) {
@@ -1278,13 +1213,11 @@ despesas.innerHTML = `
     if (confirm('Deseja realmente excluir este item?')) {
       if (isVenda) {
         ST.clientes = ST.clientes.filter(c => c.id !== id);
-      } else {
-        ST.despesas = ST.despesas.filter(d => d.id !== id);
-      }
-      save();
-      if (isVenda) {
+        save(); 
         renderVendas();
       } else {
+        ST.despesas = ST.despesas.filter(d => d.id !== id);
+        save(); 
         renderDespesas();
       }
       renderTotais();
@@ -1302,7 +1235,7 @@ despesas.innerHTML = `
     save();
   }
 
-  // Vincular eventos
+  // Vincular eventos - CORREÇÃO: Usar event delegation para evitar múltiplos listeners
   wrap.addEventListener('input', handleInputChange);
   wrap.addEventListener('click', handleDeleteClick);
   head.addEventListener('change', handleHeaderChange);
@@ -1322,11 +1255,11 @@ despesas.innerHTML = `
   });
 
   // Função para truncar texto longo
-function truncateText(text, maxLength) {
+  function truncateText(text, maxLength) {
     if (!text) return '-';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
-}
+  }
 
   // — Função para gerar PDF do relatório
   function gerarPDF() {
@@ -1358,13 +1291,6 @@ function truncateText(text, maxLength) {
     const totalMarcos = totM - totDespM;
     const saldoJK = totJ - totDespJK;
     const lucroLiquido = totVenda - totCusto - totDespVal;
-
-    // Função helper para truncar texto
-    function truncateText(text, maxLength) {
-        if (!text) return '-';
-        if (text.length <= maxLength) return text;
-        return text.substring(0, maxLength) + '...';
-    }
 
     printWindow.document.write(`
         <!DOCTYPE html>
@@ -1866,7 +1792,498 @@ function truncateText(text, maxLength) {
   return wrap;
 }
 
-/* === 06) PLACEHOLDERS + ROTEADOR ======================================= */
+/* === FUNÇÕES FALTANTES - CORREÇÃO ======================================= */
+
+// Função mount para renderizar componentes
+function mount(component) {
+    const content = $("#content");
+    if (!content) return;
+    content.innerHTML = "";
+    content.appendChild(component);
+}
+
+// Função para melhorar responsividade das tabelas
+function enhanceResponsiveTables(root = document) {
+    const tables = root.querySelectorAll('table');
+    tables.forEach(table => {
+        const ths = Array.from(table.querySelectorAll(':scope > thead > tr > th')).map(th => {
+            // Remove emojis e espaços extras do texto do cabeçalho
+            return th.innerText.replace(/[^\w\s]/gi, '').trim();
+        });
+        
+        if (!ths.length) return;
+        
+        table.querySelectorAll(':scope > tbody > tr').forEach(tr => {
+            Array.from(tr.children).forEach((td, i) => {
+                if (!td.hasAttribute('data-th') && ths[i]) {
+                    td.setAttribute('data-th', ths[i]);
+                }
+            });
+        });
+    });
+}
+
+// Inicializar responsividade quando o DOM carregar
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        enhanceResponsiveTables();
+    }, 100);
+});
+
+/* === ROTA: ESTOQUE ==================================================== */
+function renderEstoque() {
+    console.log('Renderizando estoque...');
+    
+    const tpl = document.getElementById('tpl-estoque');
+    if (!tpl) {
+        console.error('Template de estoque não encontrado!');
+        return document.createElement('div');
+    }
+    
+    const el = tpl.content.cloneNode(true);
+    const root = document.createElement('div'); 
+    root.appendChild(el);
+
+    // helpers escopados
+    const $=(s,sc=root)=>sc.querySelector(s), $$=(s,sc=root)=>Array.from(sc.querySelectorAll(s));
+    const fmt=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const money=v=>"R$ "+fmt.format(Number(v||0));
+
+    // estado + storage
+    const LS={
+        produtos:'jk_estoque_produtos',
+        depositos:'jk_estoque_depositos',
+        movs:'jk_estoque_movimentos'
+    };
+    
+    const State={
+        produtos:[],
+        depositos:[],
+        movs:[],
+        saldos:new Map(),
+        currentCount:[],
+        
+        getSaldo(sku,dep){
+            return this.saldos.get(`${sku}|${dep}`)||{saldo:0,reservado:0,custoMedio:0}
+        },
+        setSaldo(sku,dep,obj){
+            this.saldos.set(`${sku}|${dep}`,{...this.getSaldo(sku,dep),...obj})
+        }
+    };
+
+    function seed(){
+        console.log('Inicializando dados de estoque...');
+        State.depositos=[
+            {codigo:'MATRIZ',descricao:'Depósito Matriz'},
+            {codigo:'EVENTOS',descricao:'Depósito de Eventos'}
+        ];
+        State.produtos=[
+            {sku:'BARRIL50',nome:'Barril Chopp 50L',categoria:'Insumo',un:'UN',min:2,max:20,localPadrao:'MATRIZ'},
+            {sku:'CILINDRO6',nome:'Cilindro CO₂ 6Kg',categoria:'Equipamento',un:'UN',min:1,max:10,localPadrao:'MATRIZ'},
+            {sku:'CHOPEIRA',nome:'Chopeira 30/50',categoria:'Equipamento',un:'UN',min:1,max:10,localPadrao:'MATRIZ'},
+            {sku:'PILSEN50L',nome:'Chopp Pilsen 50L',categoria:'Produto',un:'L',min:2,max:30,localPadrao:'EVENTOS'}
+        ];
+        State.movs=[
+            {id:'100001',data:new Date(Date.now()-86400e3*10).toISOString(),tipo:'ENTRADA',sku:'BARRIL50',produto:'Barril Chopp 50L',origem:null,destino:'MATRIZ',qtd:10,custo:600,ref:'NF 123',obs:'Compra'},
+            {id:'100002',data:new Date(Date.now()-86400e3*9).toISOString(),tipo:'ENTRADA',sku:'CILINDRO6',produto:'Cilindro CO₂ 6Kg',origem:null,destino:'MATRIZ',qtd:5,custo:450,ref:'NF 124',obs:'Compra'},
+            {id:'100003',data:new Date(Date.now()-86400e3*8).toISOString(),tipo:'ENTRADA',sku:'PILSEN50L',produto:'Chopp Pilsen 50L',origem:null,destino:'EVENTOS',qtd:8,custo:320,ref:'NF 125',obs:'Compra'}
+        ];
+        
+        localStorage.setItem(LS.produtos,JSON.stringify(State.produtos));
+        localStorage.setItem(LS.depositos,JSON.stringify(State.depositos));
+        localStorage.setItem(LS.movs,JSON.stringify(State.movs));
+    }
+
+    function loadAll(){
+        console.log('Carregando dados do estoque...');
+        try {
+            State.produtos=JSON.parse(localStorage.getItem(LS.produtos)||'[]');
+            State.depositos=JSON.parse(localStorage.getItem(LS.depositos)||'[]');
+            State.movs=JSON.parse(localStorage.getItem(LS.movs)||'[]');
+            
+            if(State.produtos.length===0 && State.depositos.length===0) {
+                seed();
+            }
+            recalcSaldos();
+        } catch (e) {
+            console.error('Erro ao carregar dados:', e);
+            seed();
+        }
+    }
+
+    function saveAll(){
+        localStorage.setItem(LS.produtos,JSON.stringify(State.produtos));
+        localStorage.setItem(LS.depositos,JSON.stringify(State.depositos));
+        localStorage.setItem(LS.movs,JSON.stringify(State.movs));
+    }
+
+    function recalcSaldos(){
+        console.log('Recalculando saldos...');
+        State.saldos=new Map();
+        
+        // Inicializar todos os saldos como zero
+        for(const d of State.depositos){ 
+            for(const p of State.produtos){ 
+                State.setSaldo(p.sku,d.codigo,{saldo:0,reservado:0,custoMedio:0}) 
+            } 
+        }
+        
+        const ord=[...State.movs].sort((a,b)=>new Date(a.data)-new Date(b.data));
+        
+        for(const m of ord){
+            const qtd=Number(m.qtd)||0, custo=Number(m.custo)||0;
+            const get=dep=>State.getSaldo(m.sku,dep), 
+                  set=(dep,obj)=>State.setSaldo(m.sku,dep,obj);
+                  
+            if(m.tipo==='ENTRADA'||m.tipo==='AJUSTE_MAIS'||m.tipo==='DEV_CLIENTE'){
+                const s=get(m.destino); 
+                const totalAnt=s.saldo*s.custoMedio; 
+                const totalNovo=totalAnt+qtd*custo; 
+                const saldo=s.saldo+qtd; 
+                const cm=saldo>0?totalNovo/saldo:0; 
+                set(m.destino,{saldo,custoMedio:cm});
+            } else if(m.tipo==='SAIDA'||m.tipo==='AJUSTE_MENOS'||m.tipo==='DEV_FORNEC'){
+                const s=get(m.origem); 
+                set(m.origem,{saldo:s.saldo-qtd,custoMedio:s.custoMedio});
+            } else if(m.tipo==='TRANSFERENCIA'){
+                const so=get(m.origem); 
+                set(m.origem,{saldo:so.saldo-qtd,custoMedio:so.custoMedio});
+                const sd=get(m.destino); 
+                const totalAnt=sd.saldo*sd.custoMedio; 
+                const totalNovo=totalAnt+qtd*so.custoMedio; 
+                const saldo=sd.saldo+qtd; 
+                const cm=saldo>0?totalNovo/saldo:0; 
+                set(m.destino,{saldo,custoMedio:cm});
+            }
+        }
+    }
+
+    const somaOutrosDepositos=(sku,exc)=> State.depositos.map(d=>d.codigo).filter(dep=>dep!==exc).reduce((a,dep)=>a+(State.getSaldo(sku,dep).saldo||0),0);
+
+    function fillDatalists(){
+        const dl=$('#listaProdutos'); if(dl) dl.innerHTML=State.produtos.map(p=>`<option value="${p.sku} — ${p.nome}"></option>`).join('');
+        const depOpts = `<option value="">(Selecione)</option>` + State.depositos.map(d=>`<option value="${d.codigo}">${d.codigo} — ${d.descricao}</option>`).join('');
+        ['#movOrigem','#movDestino','#prodLocal','#contDeposito'].forEach(sel=>{ const el=$(sel); if(el) el.innerHTML=depOpts; });
+    }
+
+    // RENDERERS
+    function renderKPIs(){
+        const deps=State.depositos.map(d=>d.codigo);
+        let totalItens=0, valorTotal=0, abaixoMin=0;
+        for(const p of State.produtos){
+            let saldo=0, valor=0; for(const d of deps){ const s=State.getSaldo(p.sku,d); saldo+=s.saldo; valor+=s.saldo*s.custoMedio; }
+            totalItens+=saldo; valorTotal+=valor; if(p.min && saldo<Number(p.min)) abaixoMin++;
+        }
+        $('#kpiProdutos').textContent=State.produtos.length;
+        $('#kpiItens').textContent=fmt.format(totalItens);
+        $('#kpiValor').textContent=money(valorTotal);
+        $('#kpiMinimo').textContent=abaixoMin;
+    }
+
+    function renderEstoque(){
+        const tb=$('#tbodyEstoque'), blank=$('#estadoVazio');
+        const busca=($('#filtroBusca').value||'').toLowerCase();
+        const depFiltro=$('#filtroDeposito').value; const catFiltro=$('#filtroCategoria').value; const somenteMin=$('#filtroAbaixoMin').checked;
+        const rows=[];
+        for(const p of State.produtos){
+            const ok=(p.sku+' '+p.nome+' '+(p.categoria||'')).toLowerCase().includes(busca); if(!ok) continue;
+            if(catFiltro && p.categoria!==catFiltro) continue;
+            const deps= depFiltro?[depFiltro]:State.depositos.map(d=>d.codigo);
+            for(const dep of deps){
+                const s=State.getSaldo(p.sku,dep); const disp=(s.saldo||0)-(s.reservado||0); const val=(s.saldo||0)*(s.custoMedio||0);
+                if(somenteMin && Number(p.min||0)<=0) continue;
+                if(somenteMin && (s.saldo+somaOutrosDepositos(p.sku,dep))>=Number(p.min||0)) continue;
+                rows.push(`<tr>
+                    <td>${p.sku}</td><td>${p.nome}</td><td>${p.categoria||''}</td><td>${dep}</td>
+                    <td class="num">${fmt.format(s.saldo||0)}</td>
+                    <td class="num">${fmt.format(s.reservado||0)}</td>
+                    <td class="num">${fmt.format(disp)}</td>
+                    <td class="num">${money(s.custoMedio||0)}</td>
+                    <td class="num">${money(val)}</td>
+                    <td class="num">${fmt.format(Number(p.min||0))}</td>
+                    <td class="num">${fmt.format(Number(p.max||0))}</td>
+                    <td>
+                        <div class="row-actions">
+                        <button class="btn" data-act="mov" data-sku="${p.sku}" data-dep="${dep}">Mov.</button>
+                        <button class="btn" data-act="hist" data-sku="${p.sku}">Hist.</button>
+                        <button class="btn" data-act="editp" data-sku="${p.sku}">Editar</button>
+                        <button class="btn danger" data-act="delp" data-sku="${p.sku}">Excluir</button>
+                        </div>
+                    </td>
+                </tr>`);
+            }
+        }
+        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block';
+        // binds por linha
+        $$('#tbodyEstoque [data-act="mov"]').forEach(b=>b.addEventListener('click',e=>openMovDialog({sku:e.currentTarget.dataset.sku,destino:e.currentTarget.dataset.dep})));
+        $$('#tbodyEstoque [data-act="hist"]').forEach(b=>b.addEventListener('click',e=>openHistorico(e.currentTarget.dataset.sku)));
+        $$('#tbodyEstoque [data-act="editp"]').forEach(b=>b.addEventListener('click',e=>openProdutoDialog(State.produtos.find(p=>p.sku===e.currentTarget.dataset.sku))));
+        $$('#tbodyEstoque [data-act="delp"]').forEach(b=>b.addEventListener('click',e=>{
+            const sku=e.currentTarget.dataset.sku; const nome=(State.produtos.find(p=>p.sku===sku)?.nome)||sku;
+            if(confirm(`Excluir o produto "${nome}" e TODAS as movimentações dele?`)){
+                State.produtos=State.produtos.filter(p=>p.sku!==sku);
+                State.movs=State.movs.filter(m=>m.sku!==sku);
+                saveAll(); recalcSaldos(); renderTudo();
+            }
+        }));
+    }
+
+    function renderMovs(){
+        const tb=$('#tbodyMovs'), blank=$('#estadoVazioMov');
+        const rows=State.movs.map(m=>`<tr>
+            <td>${m.id}</td><td>${new Date(m.data).toLocaleString('pt-BR')}</td><td>${m.tipo}</td>
+            <td>${m.sku}</td><td>${m.produto}</td><td>${m.origem||''}</td><td>${m.destino||''}</td>
+            <td class="num">${fmt.format(m.qtd)}</td><td class="num">${money(m.custo||0)}</td>
+            <td>${m.ref||''}</td><td title="${m.obs||''}">${m.obs||''}</td>
+            <td><button class="btn danger" data-act="delmov" data-id="${m.id}">Excluir</button></td>
+        </tr>`);
+        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block';
+        $$('#tbodyMovs [data-act="delmov"]').forEach(b=>b.addEventListener('click',e=>{
+            const id=e.currentTarget.dataset.id;
+            if(confirm('Excluir movimentação #'+id+'? Esta ação não pode ser desfeita.')){
+                State.movs=State.movs.filter(x=>x.id!==id); saveAll(); recalcSaldos(); renderTudo();
+            }
+        }));
+    }
+
+    function renderProdutos(){
+        const tb=$('#tbodyProdutos'), blank=$('#estadoVazioProd');
+        const rows=State.produtos.map(p=>`<tr>
+            <td>${p.sku}</td><td>${p.nome}</td><td>${p.categoria||''}</td><td>${p.un||'UN'}</td>
+            <td class="num">${fmt.format(Number(p.min||0))}</td><td class="num">${fmt.format(Number(p.max||0))}</td>
+            <td>${p.localPadrao||''}</td>
+            <td>
+                <div class="row-actions">
+                <button class="btn" data-act="editp" data-sku="${p.sku}">Editar</button>
+                <button class="btn" data-act="movp" data-sku="${p.sku}">Mov.</button>
+                <button class="btn danger" data-act="delp" data-sku="${p.sku}">Excluir</button>
+                </div>
+            </td>
+        </tr>`);
+        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block';
+        $$('#tbodyProdutos [data-act="editp"]').forEach(b=>b.addEventListener('click',e=>openProdutoDialog(State.produtos.find(p=>p.sku===e.currentTarget.dataset.sku))));
+        $$('#tbodyProdutos [data-act="movp"]').forEach(b=>b.addEventListener('click',e=>openMovDialog({sku:e.currentTarget.dataset.sku})));
+        $$('#tbodyProdutos [data-act="delp"]').forEach(b=>b.addEventListener('click',e=>{
+            const sku=e.currentTarget.dataset.sku; const nome=(State.produtos.find(p=>p.sku===sku)?.nome)||sku;
+            if(confirm(`Excluir o produto "${nome}" e TODAS as movimentações dele?`)){
+                State.produtos=State.produtos.filter(p=>p.sku!==sku);
+                State.movs=State.movs.filter(m=>m.sku!==sku);
+                saveAll(); recalcSaldos(); renderTudo();
+            }
+        }));
+    }
+
+    function renderDepositos(){
+        const tb=$('#tbodyDepositos'), blank=$('#estadoVazioDep');
+        const rows=State.depositos.map(d=>`<tr>
+            <td>${d.codigo}</td><td>${d.descricao}</td>
+            <td>
+                <div class="row-actions">
+                <button class="btn" data-act="editd" data-cod="${d.codigo}">Editar</button>
+                <button class="btn danger" data-act="deld" data-cod="${d.codigo}">Excluir</button>
+                </div>
+            </td>
+        </tr>`);
+        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block';
+        $$('#tbodyDepositos [data-act="editd"]').forEach(b=>b.addEventListener('click',e=>openDepositoDialog(State.depositos.find(d=>d.codigo===e.currentTarget.dataset.cod))));
+        $$('#tbodyDepositos [data-act="deld"]').forEach(b=>b.addEventListener('click',e=>{
+            const cod=e.currentTarget.dataset.cod;
+            if(confirm(`Excluir o depósito "${cod}" e remover movimentações que usam esse depósito?`)){
+                State.depositos=State.depositos.filter(d=>d.codigo!==cod);
+                State.movs=State.movs.filter(m=> (m.origem||'')!==cod && (m.destino||'')!==cod );
+                saveAll(); recalcSaldos(); renderTudo();
+            }
+        }));
+    }
+
+    function renderFiltros(){
+        const dep=$('#filtroDeposito'), cat=$('#filtroCategoria');
+        if(dep) dep.innerHTML = `<option value="">Todos depósitos</option>` + State.depositos.map(d=>`<option value="${d.codigo}">${d.codigo} — ${d.descricao}</option>`).join('');
+        const cats=[...new Set(State.produtos.map(p=>p.categoria).filter(Boolean))].sort();
+        if(cat) cat.innerHTML = `<option value="">Todas categorias</option>` + cats.map(c=>`<option>${c}</option>`).join('');
+    }
+
+    function renderTudo(){ 
+        renderFiltros(); 
+        renderEstoque(); 
+        renderMovs(); 
+        renderProdutos(); 
+        renderDepositos(); 
+        renderContagem(); 
+        renderKPIs(); 
+        fillDatalists(); 
+        enhanceResponsiveTables(root); 
+    }
+
+    // DIALOGS
+    function openMovDialog(preset={}){
+        const dlg=$('#dlgMov'); $('#dlgMovTitulo').textContent='Nova Movimentação';
+        $('#movTipo').value='ENTRADA'; $('#movProduto').value=preset.sku?`${preset.sku} — ${getNomeProduto(preset.sku)}`:'';
+        $('#movOrigem').value=preset.origem||''; $('#movDestino').value=preset.destino||preset.origem||'';
+        $('#movQtd').value=''; $('#movCusto').value=''; $('#movRef').value=''; $('#movObs').value='';
+        $('#movData').value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+        dlg.showModal();
+    }
+
+    function openProdutoDialog(p){
+        const dlg=$('#dlgProduto'); $('#dlgProdTitulo').textContent=p?'Editar Produto':'Novo Produto';
+        $('#prodSku').value=p?.sku||''; $('#prodNome').value=p?.nome||''; $('#prodCategoria').value=p?.categoria||''; $('#prodUnid').value=p?.un||'UN';
+        $('#prodMin').value=p?.min??0; $('#prodMax').value=p?.max??0; $('#prodLocal').value=p?.localPadrao||''; dlg.showModal();
+    }
+
+    function openDepositoDialog(d){ 
+        const dlg=$('#dlgDeposito'); 
+        $('#dlgDepTitulo').textContent=d?'Editar Depósito':'Novo Depósito'; 
+        $('#depCodigo').value=d?.codigo||''; 
+        $('#depDesc').value=d?.descricao||''; 
+        dlg.showModal(); 
+    }
+
+    function openHistorico(sku){ 
+        const tb=$('#tbodyHistorico'); 
+        const hist=State.movs.filter(m=>m.sku===sku).sort((a,b)=>new Date(b.data)-new Date(a.data)); 
+        tb.innerHTML=hist.map(m=>`<tr><td>${new Date(m.data).toLocaleString('pt-BR')}</td><td>${m.tipo}</td><td>${m.origem||''}</td><td>${m.destino||''}</td><td class="num">${fmt.format(m.qtd)}</td><td class="num">${money(m.custo||0)}</td><td>${m.ref||''}</td><td title="${m.obs||''}">${m.obs||''}</td></tr>`).join(''); 
+        $('#dlgHistorico').showModal(); 
+    }
+
+    root.querySelector('#btnFecharHist')?.addEventListener('click',()=> root.querySelector('#dlgHistorico').close());
+
+    // Events globais da tela
+    root.querySelector('#btnNovaMov')?.addEventListener('click',()=>openMovDialog());
+    ['#btnNovoProdutoEstoque','#btnNovoProdutoProd'].forEach(sel=>{ root.querySelector(sel)?.addEventListener('click',()=>openProdutoDialog()); });
+    ['#btnNovoDepositoEstoque','#btnNovoDepositoProd'].forEach(sel=>{ root.querySelector(sel)?.addEventListener('click',()=>openDepositoDialog()); });
+    
+    ['#filtroBusca','#filtroDeposito','#filtroCategoria','#filtroAbaixoMin'].forEach(sel=>{
+        root.querySelector(sel)?.addEventListener('input',renderEstoque);
+        root.querySelector(sel)?.addEventListener('change',renderEstoque);
+    });
+
+    root.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click',e=>{
+        root.querySelectorAll('.ptab').forEach(x=>x.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        const id=e.currentTarget.dataset.ptab;
+        const areas={movimentacoes:'#area-mov', estoque:'#area-estoque', produtos:'#area-produtos', contagem:'#area-contagem'};
+        ['#area-mov','#area-estoque','#area-produtos','#area-contagem'].forEach(sel=>{ const el=root.querySelector(sel); if(el) el.style.display='none'; });
+        const alvo=root.querySelector(areas[id]); if(alvo) alvo.style.display='';
+        if(id==='estoque'){ renderEstoque(); renderKPIs(); }
+        if(id==='produtos'){ renderProdutos(); renderDepositos(); }
+        if(id==='movimentacoes'){ renderMovs(); }
+        if(id==='contagem'){ renderContagem(); }
+    }));
+
+    // Forms
+    root.querySelector('#formMov')?.addEventListener('submit',ev=>{
+        ev.preventDefault();
+        const tipo=root.querySelector('#movTipo').value;
+        const prodRaw=root.querySelector('#movProduto').value.trim();
+        const sku=prodRaw.split('—')[0]?.trim();
+        const produto=getNomeProduto(sku);
+        if(!produto){alert('Selecione um produto válido.');return}
+        let origem=root.querySelector('#movOrigem').value||null;
+        let destino=root.querySelector('#movDestino').value||null;
+        const qtd=Number(root.querySelector('#movQtd').value||0);
+        const custo=Number(root.querySelector('#movCusto').value||0);
+        const ref=root.querySelector('#movRef').value.trim()||null;
+        const obs=root.querySelector('#movObs').value.trim()||null;
+        const data=root.querySelector('#movData').value?new Date(root.querySelector('#movData').value).toISOString():new Date().toISOString();
+
+        if(['SAIDA','AJUSTE_MENOS','DEV_FORNEC'].includes(tipo)&&!origem){alert('Informe o depósito de origem.');return}
+        if(['ENTRADA','AJUSTE_MAIS','DEV_CLIENTE'].includes(tipo)&&(!destino || (!custo && (tipo==='ENTRADA'||tipo==='AJUSTE_MAIS')))){alert('Informe destino e custo.');return}
+        if(tipo==='TRANSFERENCIA'){ if(!origem||!destino){alert('Informe origem e destino.');return} if(origem===destino){alert('Origem e destino não podem ser iguais.');return} }
+        if(qtd<=0){alert('Quantidade deve ser maior que zero.');return}
+
+        const novo={id:String(Date.now()).slice(-6),data,tipo,sku,produto,origem,destino,qtd,custo,ref,obs};
+        State.movs.unshift(novo); saveAll(); recalcSaldos(); renderTudo(); root.querySelector('#dlgMov').close();
+    });
+
+    (function(){ // anti-duplo submit produto
+        let savingProduto=false;
+        root.querySelector('#formProduto')?.addEventListener('submit',ev=>{
+            ev.preventDefault(); if(savingProduto) return; savingProduto=true;
+            const p={sku:root.querySelector('#prodSku').value.trim(),nome:root.querySelector('#prodNome').value.trim(),categoria:root.querySelector('#prodCategoria').value.trim()||null,un:root.querySelector('#prodUnid').value||'UN',min:Number(root.querySelector('#prodMin').value||0),max:Number(root.querySelector('#prodMax').value||0),localPadrao:root.querySelector('#prodLocal').value||null};
+            if(!p.sku||!p.nome){alert('Preencha SKU e Nome.');savingProduto=false;return}
+            p.sku=p.sku.toUpperCase();
+            const i=State.produtos.findIndex(x=>x.sku===p.sku); if(i>=0) State.produtos[i]=p; else State.produtos.push(p);
+            saveAll(); recalcSaldos(); renderTudo(); root.querySelector('#dlgProduto').close(); savingProduto=false;
+        });
+    })();
+
+    root.querySelector('#formDeposito')?.addEventListener('submit',ev=>{
+        ev.preventDefault();
+        const d={codigo:root.querySelector('#depCodigo').value.trim().toUpperCase(),descricao:root.querySelector('#depDesc').value.trim()};
+        if(!d.codigo||!d.descricao){alert('Informe código e descrição.');return}
+        const i=State.depositos.findIndex(x=>x.codigo===d.codigo); if(i>=0) State.depositos[i]=d; else State.depositos.push(d);
+        saveAll(); recalcSaldos(); renderTudo(); root.querySelector('#dlgDeposito').close();
+    });
+
+    // Contagem
+    function renderContagem(){
+        const tb=root.querySelector('#tbodyContagem'), blank=root.querySelector('#estadoVazioCont'), totItens=root.querySelector('#contTotItens'), totValor=root.querySelector('#contTotValor');
+        const rows=State.currentCount.map((it,i)=>`<tr><td>${i+1}</td><td>${it.tipo}</td><td>${it.sku}</td><td>${it.produto}</td><td>${it.deposito||''}</td><td class="num">${fmt.format(it.qtd)}</td><td class="num">${money(it.custo||0)}</td><td><button class="btn danger" data-act="delcnt" data-idx="${i}">Remover</button></td></tr>`);
+        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block'; totItens.textContent=String(rows.length);
+        const v=State.currentCount.filter(x=>x.tipo==='ENTRADA'||x.tipo==='RETORNO').reduce((a,b)=>a+(Number(b.qtd||0)*Number(b.custo||0)),0);
+        totValor.textContent=money(v);
+        root.querySelectorAll('[data-act="delcnt"]').forEach(b=>b.addEventListener('click',e=>{ const i=Number(e.currentTarget.dataset.idx); State.currentCount.splice(i,1); renderContagem(); }));
+        const wrap=root.querySelector('#contCustoWrap'); const tipo=root.querySelector('#contTipo')?.value; if(wrap) wrap.style.display=(tipo==='ENTRADA'||tipo==='RETORNO')?'block':'none';
+    }
+
+    function addToContagem(){
+        const tipo=root.querySelector('#contTipo').value;
+        const prodRaw=root.querySelector('#contProduto').value.trim();
+        const sku=prodRaw.split('—')[0]?.trim();
+        const produto=State.produtos.find(p=>p.sku===sku)?.nome;
+        const deposito=root.querySelector('#contDeposito').value||null;
+        const qtd=Number(root.querySelector('#contQtd').value||0);
+        const custo=Number(root.querySelector('#contCusto').value||0);
+        if(!produto){alert('Selecione um produto válido.');return}
+        if(!deposito && (tipo!=='SAIDA' && tipo!=='DEVOLUCAO')){alert('Escolha o depósito.');return}
+        if(qtd<=0){alert('Quantidade deve ser maior que zero.');return}
+        if((tipo==='ENTRADA'||tipo==='RETORNO') && !custo){alert('Informe o custo para Entrada/Retorno.');return}
+        State.currentCount.push({tipo,sku,produto,deposito,qtd,custo});
+        root.querySelector('#contProduto').value=''; root.querySelector('#contQtd').value='1'; root.querySelector('#contCusto').value=''; renderContagem();
+    }
+
+    function finalizarContagem(){
+        if(!State.currentCount.length){alert('Nada para lançar.');return}
+        const map={ENTRADA:'ENTRADA',SAIDA:'SAIDA',RETORNO:'DEV_CLIENTE',DEVOLUCAO:'DEV_FORNEC'};
+        const agora=new Date().toISOString(); const batch=String(Date.now()).slice(-6);
+        const novos=State.currentCount.map((it,i)=>({ id:batch+'-'+(i+1), data:agora, tipo:map[it.tipo], sku:it.sku, produto:it.produto,
+            origem:(it.tipo==='SAIDA'||it.tipo==='DEVOLUCAO')?(it.deposito||State.produtos.find(p=>p.sku===it.sku)?.localPadrao||null):null,
+            destino:(it.tipo==='ENTRADA'||it.tipo==='RETORNO')?(it.deposito||State.produtos.find(p=>p.sku===it.sku)?.localPadrao||null):null,
+            qtd:it.qtd, custo:(it.tipo==='ENTRADA'||it.tipo==='RETORNO')?it.custo:0, ref:'CONTAGEM', obs:'Gerado via aba Contagem' }));
+        State.movs=[...novos,...State.movs]; saveAll(); State.currentCount=[]; recalcSaldos(); renderTudo(); alert('Contagem lançada com sucesso!');
+    }
+
+    root.querySelector('#btnContAdd')?.addEventListener('click',addToContagem);
+    root.querySelector('#btnContFinalizar')?.addEventListener('click',finalizarContagem);
+    root.querySelector('#btnContLimpar')?.addEventListener('click',()=>{ State.currentCount=[]; renderContagem(); });
+    root.querySelector('#contTipo')?.addEventListener('change',renderContagem);
+
+    // Export/recalc
+    root.querySelector('#btnExportar')?.addEventListener('click',()=>{
+        const linhas=[["SKU","Produto","Categoria","Depósito","Saldo","Reservado","Disponível","Custo Médio","Valor","Min","Max"]];
+        for(const p of State.produtos){
+            for(const d of State.depositos){
+                const s=State.getSaldo(p.sku,d.codigo); const disp=(s.saldo||0)-(s.reservado||0); const val=(s.saldo||0)*(s.custoMedio||0);
+                linhas.push([p.sku,p.nome,(p.categoria||''),d.codigo,s.saldo||0,s.reservado||0,disp,(s.custoMedio||0),val,(p.min||0),(p.max||0)]);
+            }
+        }
+        const csv=linhas.map(l=>l.map(x=>`"${String(x).replaceAll('"','""')}"`).join(';')).join("\n");
+        const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob); a.download='estoque-jk-chopp.csv'; a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    root.querySelector('#btnRecalcular')?.addEventListener('click',()=>{ recalcSaldos(); renderTudo(); alert('Custos e saldos recalculados.'); });
+
+    function getNomeProduto(sku){return State.produtos.find(p=>p.sku===sku)?.nome||null}
+
+    // boot da tela
+    loadAll(); 
+    renderTudo();
+
+    return root.firstElementChild;
+}
+
 function renderStub(titulo = "Em construção") {
   const el = document.createElement("section");
   el.className = "card";
@@ -1875,15 +2292,6 @@ function renderStub(titulo = "Em construção") {
 }
 
 function renderActive() {
-    if (!authSystem.isAuthenticated) return;
-    
-    // Verificar permissões para áreas restritas
-    if (ACTIVE === 'financeiro' && !authSystem.hasPermission('admin')) {
-        alert('Acesso restrito à administração!');
-        ACTIVE = 'home';
-        localStorage.setItem('jk_tab', ACTIVE);
-    }
-    
     const content = $("#content");
     if (!content) return;
     content.innerHTML = "";
@@ -1902,13 +2310,13 @@ function renderActive() {
         case "contratos":       view = renderContratos();       break;
         case "agendamentos":    view = renderAgenda();          break;
         case "rel_repasse":     view = renderRelRepasse();      break;
+        case "estoque":         mount(renderEstoque());         break;
 
         case "fornecedores":    view = renderStub("Fornecedores");        break;
         case "funcionarios":    view = renderStub("Funcionários");        break;
         case "grupos_preco":    view = renderStub("Grupos de Preço");     break;
         case "interacoes":      view = renderStub("Interações");          break;
         case "transportadoras": view = renderStub("Transportadoras");     break;
-        case "estoque":         view = renderStub("Estoque");             break;
         case "nfe_boletos":     view = renderStub("NF-e e Boletos");      break;
         case "ajuda":           view = renderStub("Central de Ajuda");    break;
         case "relatorios":      view = renderRelatorios();                break;
@@ -1917,24 +2325,8 @@ function renderActive() {
     }
 
     if (view) {
-  content.appendChild(view);
-  // Ajuste responsivo pós-render (tabelas empilháveis em mobile)
-  enhanceResponsiveTables(content);
-}
-}
-
-/* === 06.1) UTIL - Responsividade de tabelas (adiciona data-th nos <td>) === */
-function enhanceResponsiveTables(root=document) {
-  const tables = root.querySelectorAll('table.table');
-  tables.forEach(table => {
-    const ths = Array.from(table.querySelectorAll(':scope > thead > tr > th')).map(th => th.innerText.trim());
-    if (!ths.length) return;
-    table.querySelectorAll(':scope > tbody > tr').forEach(tr => {
-      Array.from(tr.children).forEach((td, i) => {
-        if (!td.hasAttribute('data-th') && ths[i]) {
-          td.setAttribute('data-th', ths[i]);
-        }
-      });
-    });
-  });
+        content.appendChild(view);
+        // Ajuste responsivo pós-render (tabelas empilháveis em mobile)
+        enhanceResponsiveTables(content);
+    }
 }

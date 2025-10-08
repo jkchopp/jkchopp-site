@@ -38,14 +38,15 @@
         </div>
 
         <!-- ====== LADO DIREITO (ações rápidas) ====== -->
-<div class="row top-actions">
-  <button class="btn" id="btnTheme" title="Alternar tema">🌓 Tema</button>
-  <button class="btn" id="btnExport" title="Exportar backup (JSON)">⬇️ Exportar</button>
-  <label class="btn" for="importFile" title="Importar backup (JSON)">⬆️ Importar</label>
-  <input id="importFile" type="file" accept="application/json" class="hidden">
-  <button class="btn" id="btnReset" title="Zerar base (local)">🗑️ Zerar</button>
-  <button class="btn" id="btnPerfil" title="Perfil do usuário">👤 Perfil</button>
-</div>
+        <div class="row top-actions">
+          <button class="btn" id="btnTheme" title="Alternar tema">🌓 Tema</button>
+          <button class="btn" id="btnExport" title="Exportar backup (JSON)">⬇️ Exportar</button>
+          <label class="btn" for="importFile" title="Importar backup (JSON)">⬆️ Importar</label>
+          <input id="importFile" type="file" accept="application/json" class="hidden">
+          <button class="btn" id="btnReset" title="Zerar base (local)">🗑️ Zerar</button>
+          <button class="btn" id="btnPerfil" title="Perfil do usuário">👤 Perfil</button>
+        </div>
+      </div>
 
       <!-- Barra de abas (preenchida pelo JS) -->
       <div class="wrap">
@@ -56,9 +57,9 @@
     <!-- =========================
          CONTEÚDO
          ========================= -->
-   <main class="wrap">
-  <section id="content"></section>
-</main>
+    <main class="wrap">
+      <section id="content"></section>
+    </main>
 
     <!-- =========================
          RODAPÉ
@@ -301,54 +302,54 @@
   </template>
 
   <!-- AGENDAMENTOS -->
-<!-- AGENDAMENTOS -->
-<template id="tpl-agendamentos">
-  <div class="stack agenda-grid">
-    <!-- CARD: Lista e cadastro -->
-    <section class="card">
-      <div class="toolbar">
-        <div class="row">
-          <input id="ag_titulo" class="input" placeholder="Título" />
-          <input id="ag_data"   class="input" type="date" />
-          <input id="ag_hora"   class="input" type="time" />
-          <button class="btn success" id="btnAddAgenda">➕ Adicionar</button>
+  <template id="tpl-agendamentos">
+    <div class="stack agenda-grid">
+      <!-- CARD: Lista e cadastro -->
+      <section class="card">
+        <div class="toolbar">
+          <div class="row">
+            <input id="ag_titulo" class="input" placeholder="Título" />
+            <input id="ag_data"   class="input" type="date" />
+            <input id="ag_hora"   class="input" type="time" />
+            <button class="btn success" id="btnAddAgenda">➕ Adicionar</button>
+          </div>
+          <input id="buscaAgenda" class="input" placeholder="Buscar..." />
         </div>
-        <input id="buscaAgenda" class="input" placeholder="Buscar..." />
-      </div>
 
-      <table id="tblAgenda">
-        <thead>
-          <tr>
-            <th data-k="data">Data</th>
-            <th data-k="hora">Hora</th>
-            <th data-k="titulo">Título</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+        <table id="tblAgenda">
+          <thead>
+            <tr>
+              <th data-k="data">Data</th>
+              <th data-k="hora">Hora</th>
+              <th data-k="titulo">Título</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
 
-    <!-- CARD: Calendário -->
-    <aside class="card calendar-wrap">
-      <h3>Calendário</h3>
-      <div class="cal-header">
-        <button class="btn ghost icon" id="calPrev" aria-label="Mês anterior">‹</button>
-        <div class="cal-title"><span id="calTitle">setembro de 2025</span></div>
-        <button class="btn ghost icon" id="calNext" aria-label="Próximo mês">›</button>
-        <button class="btn ghost pill" id="calToday">Hoje</button>
-      </div>
-
-      <div class="calendar" id="calendar">
-        <div class="cal-weekdays">
-          <span>Seg</span><span>Ter</span><span>Qua</span>
-          <span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+      <!-- CARD: Calendário -->
+      <aside class="card calendar-wrap">
+        <h3>Calendário</h3>
+        <div class="cal-header">
+          <button class="btn ghost icon" id="calPrev" aria-label="Mês anterior">‹</button>
+          <div class="cal-title"><span id="calTitle">setembro de 2025</span></div>
+          <button class="btn ghost icon" id="calNext" aria-label="Próximo mês">›</button>
+          <button class="btn ghost pill" id="calToday">Hoje</button>
         </div>
-        <div class="cal-grid" id="calGrid"><!-- preenchido via JS --></div>
-      </div>
-    </aside>
-  </div>
-</template>
+
+        <div class="calendar" id="calendar">
+          <div class="cal-weekdays">
+            <span>Seg</span><span>Ter</span><span>Qua</span>
+            <span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+          </div>
+          <div class="cal-grid" id="calGrid"><!-- preenchido via JS --></div>
+        </div>
+      </aside>
+    </div>
+  </template>
+
   <!-- RELATÓRIOS -->
   <template id="tpl-relatorios">
     <div class="card">
@@ -368,6 +369,446 @@
     </div>
   </template>
 
+  <!-- === TPL: ESTOQUE ==================================================== -->
+  <template id="tpl-estoque">
+    <section class="screen screen--estoque">
+      <div class="container" id="estoque-app">
+        <div class="brand">
+          <div class="dot"></div>
+          <h1>JK Chopp · Controle de Estoque</h1>
+        </div>
+        
+        <div class="tabs" style="margin-bottom:16px">
+          <button class="ptab active" data-ptab="movimentacoes">Movimentações</button>
+          <button class="ptab" data-ptab="estoque">Estoque consolidado</button>
+          <button class="ptab" data-ptab="produtos">Produtos</button>
+          <button class="ptab" data-ptab="contagem">Contagem</button>
+        </div>
+
+        <!-- Movimentações -->
+        <section id="area-mov">
+          <div class="card">
+            <div class="card-header">
+              <div class="badge">Movimentações</div>
+              <div class="row-actions">
+                <button class="btn" id="btnNovaMov">+ Movimentação</button>
+                <button class="btn" id="btnExportar">Exportar CSV</button>
+                <button class="btn" id="btnRecalcular">Recalcular</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Data</th>
+                      <th>Tipo</th>
+                      <th>SKU</th>
+                      <th>Produto</th>
+                      <th>Origem</th>
+                      <th>Destino</th>
+                      <th>Qtd</th>
+                      <th>Custo</th>
+                      <th>Ref</th>
+                      <th>Obs</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyMovs"></tbody>
+                </table>
+              </div>
+              <div id="estadoVazioMov" style="display:none;margin-top:10px;color:var(--muted)">Nenhuma movimentação.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Estoque consolidado -->
+        <section id="area-estoque" style="display:none">
+          <div class="grid kpis">
+            <div class="card">
+              <div class="card-body kpi">
+                <div class="icon">📦</div>
+                <div>
+                  <div class="value" id="kpiProdutos">0</div>
+                  <div class="label">Produtos</div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-body kpi">
+                <div class="icon">📊</div>
+                <div>
+                  <div class="value" id="kpiItens">0</div>
+                  <div class="label">Itens em estoque</div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-body kpi">
+                <div class="icon">💰</div>
+                <div>
+                  <div class="value" id="kpiValor">R$ 0,00</div>
+                  <div class="label">Valor total</div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-body kpi">
+                <div class="icon">⚠️</div>
+                <div>
+                  <div class="value" id="kpiMinimo">0</div>
+                  <div class="label">Abaixo do mínimo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:16px">
+            <div class="card-header">
+              <div class="badge">Estoque consolidado</div>
+              <div class="row-actions">
+                <button class="btn" id="btnNovoProdutoEstoque">+ Produto</button>
+                <button class="btn" id="btnNovoDepositoEstoque">+ Depósito</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="filters" style="margin-bottom:12px">
+                <div>
+                  <label>Busca</label>
+                  <input id="filtroBusca" placeholder="SKU, produto, categoria…" />
+                </div>
+                <div>
+                  <label>Depósito</label>
+                  <select id="filtroDeposito"></select>
+                </div>
+                <div>
+                  <label>Categoria</label>
+                  <select id="filtroCategoria"></select>
+                </div>
+                <div class="check" style="align-self:end">
+                  <input type="checkbox" id="filtroAbaixoMin" />
+                  <label for="filtroAbaixoMin" style="margin:0">Somente abaixo do mínimo</label>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>SKU</th>
+                      <th>Produto</th>
+                      <th>Categoria</th>
+                      <th>Depósito</th>
+                      <th>Saldo</th>
+                      <th>Reservado</th>
+                      <th>Disponível</th>
+                      <th>Custo Médio</th>
+                      <th>Valor</th>
+                      <th>Min</th>
+                      <th>Max</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyEstoque"></tbody>
+                </table>
+              </div>
+              <div id="estadoVazio" style="display:none;margin-top:10px;color:var(--muted)">Nenhum item encontrado.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Produtos -->
+        <section id="area-produtos" style="display:none">
+          <div class="grid" style="margin-top:0">
+            <div class="card">
+              <div class="card-header">
+                <div class="badge">Produtos</div>
+                <div class="row-actions">
+                  <button class="btn" id="btnNovoProdutoProd">+ Produto</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>SKU</th>
+                        <th>Produto</th>
+                        <th>Categoria</th>
+                        <th>Un</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Local padrão</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tbodyProdutos"></tbody>
+                  </table>
+                </div>
+                <div id="estadoVazioProd" style="display:none;margin-top:10px;color:var(--muted)">Sem produtos.</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="badge">Depósitos</div>
+                <div class="row-actions">
+                  <button class="btn" id="btnNovoDepositoProd">+ Depósito</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tbodyDepositos"></tbody>
+                  </table>
+                </div>
+                <div id="estadoVazioDep" style="display:none;margin-top:10px;color:var(--muted)">Sem depósitos.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Contagem -->
+        <section id="area-contagem" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <div class="badge">Contagem de estoque (Entrada · Saída · Retorno · Devolução)</div>
+              <div class="row-actions">
+                <button class="btn" id="btnContLimpar">Limpar</button>
+                <button class="btn primary" id="btnContFinalizar">Finalizar Contagem</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-row" style="margin-bottom:12px">
+                <div class="col-3">
+                  <label>Tipo</label>
+                  <select id="contTipo">
+                    <option value="ENTRADA">Entrada</option>
+                    <option value="SAIDA">Saída</option>
+                    <option value="RETORNO">Retorno</option>
+                    <option value="DEVOLUCAO">Devolução</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label>Produto</label>
+                  <input list="listaProdutos" id="contProduto" placeholder="SKU — Nome" />
+                  <datalist id="listaProdutos"></datalist>
+                </div>
+                <div class="col-3">
+                  <label>Depósito</label>
+                  <select id="contDeposito"></select>
+                </div>
+                <div class="col-3">
+                  <label>Quantidade</label>
+                  <input id="contQtd" type="number" min="0" step="1" value="1" />
+                </div>
+                <div class="col-3" id="contCustoWrap">
+                  <label>Custo Unitário</label>
+                  <input id="contCusto" type="number" min="0" step="0.01" placeholder="0,00" />
+                </div>
+                <div class="col-3" style="align-self:end">
+                  <button class="btn primary" id="btnContAdd">Adicionar</button>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Tipo</th>
+                      <th>SKU</th>
+                      <th>Produto</th>
+                      <th>Depósito</th>
+                      <th>Qtd</th>
+                      <th>Custo</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyContagem"></tbody>
+                </table>
+              </div>
+              <div id="estadoVazioCont" style="display:none;margin-top:10px;color:var(--muted)">Nenhum item na contagem.</div>
+              <div style="margin-top:12px;display:flex;gap:18px;color:var(--muted)">
+                <div>Total itens: <b id="contTotItens">0</b></div>
+                <div>Valor entradas/retornos: <b id="contTotValor">R$ 0,00</b></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Dialogs COMPLETOS (funcionando) -->
+      <dialog id="dlgMov">
+        <form id="formMov" method="dialog">
+          <div class="dg-head">
+            <h3 id="dlgMovTitulo">Nova Movimentação</h3>
+            <button type="button" class="btn" onclick="this.closest('dialog').close()">✕</button>
+          </div>
+          <div class="dg-body">
+            <div class="form-row">
+              <div class="col-4">
+                <label>Tipo</label>
+                <select id="movTipo" class="input">
+                  <option value="ENTRADA">Entrada</option>
+                  <option value="SAIDA">Saída</option>
+                  <option value="TRANSFERENCIA">Transferência</option>
+                  <option value="AJUSTE_MAIS">Ajuste (+)</option>
+                  <option value="AJUSTE_MENOS">Ajuste (−)</option>
+                  <option value="DEV_CLIENTE">Retorno Cliente</option>
+                  <option value="DEV_FORNEC">Devolução Fornecedor</option>
+                </select>
+              </div>
+              <div class="col-8">
+                <label>Produto (SKU — Nome)</label>
+                <input id="movProduto" class="input" list="listaProdutos" placeholder="Ex.: BARRIL50 — Barril Chopp 50L">
+              </div>
+
+              <div class="col-6">
+                <label>Origem</label>
+                <select id="movOrigem" class="input"></select>
+              </div>
+              <div class="col-6">
+                <label>Destino</label>
+                <select id="movDestino" class="input"></select>
+              </div>
+
+              <div class="col-3">
+                <label>Quantidade</label>
+                <input id="movQtd" type="number" min="0" step="1" class="input" value="1">
+              </div>
+              <div class="col-3">
+                <label>Custo unit.</label>
+                <input id="movCusto" type="number" min="0" step="0.01" class="input" placeholder="0,00">
+              </div>
+              <div class="col-3">
+                <label>Data/Hora</label>
+                <input id="movData" type="datetime-local" class="input">
+              </div>
+              <div class="col-3">
+                <label>Ref.</label>
+                <input id="movRef" class="input" placeholder="NF / Pedido / Lote">
+              </div>
+
+              <div class="col-12">
+                <label>Observações</label>
+                <textarea id="movObs" class="input" rows="2" placeholder="Detalhes da movimentação (opcional)"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="dg-actions">
+            <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
+            <button type="submit" class="btn primary">Salvar</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="dlgProduto">
+        <form id="formProduto" method="dialog">
+          <div class="dg-head">
+            <h3 id="dlgProdTitulo">Novo Produto</h3>
+            <button type="button" class="btn" onclick="this.closest('dialog').close()">✕</button>
+          </div>
+          <div class="dg-body">
+            <div class="form-row">
+              <div class="col-4">
+                <label>SKU</label>
+                <input id="prodSku" class="input" placeholder="Ex.: BARRIL50">
+              </div>
+              <div class="col-8">
+                <label>Nome</label>
+                <input id="prodNome" class="input" placeholder="Ex.: Barril Chopp 50L">
+              </div>
+              <div class="col-4">
+                <label>Categoria</label>
+                <input id="prodCategoria" class="input" placeholder="Ex.: Insumo / Equipamento / Produto">
+              </div>
+              <div class="col-2">
+                <label>Un</label>
+                <input id="prodUnid" class="input" value="UN">
+              </div>
+              <div class="col-3">
+                <label>Min</label>
+                <input id="prodMin" type="number" min="0" step="1" class="input" value="0">
+              </div>
+              <div class="col-3">
+                <label>Max</label>
+                <input id="prodMax" type="number" min="0" step="1" class="input" value="0">
+              </div>
+              <div class="col-6">
+                <label>Local padrão</label>
+                <select id="prodLocal" class="input"></select>
+              </div>
+            </div>
+          </div>
+          <div class="dg-actions">
+            <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
+            <button type="submit" class="btn primary">Salvar</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="dlgDeposito">
+        <form id="formDeposito" method="dialog">
+          <div class="dg-head">
+            <h3 id="dlgDepTitulo">Novo Depósito</h3>
+            <button type="button" class="btn" onclick="this.closest('dialog').close()">✕</button>
+          </div>
+          <div class="dg-body">
+            <div class="form-row">
+              <div class="col-4">
+                <label>Código</label>
+                <input id="depCodigo" class="input" placeholder="Ex.: MATRIZ">
+              </div>
+              <div class="col-8">
+                <label>Descrição</label>
+                <input id="depDesc" class="input" placeholder="Ex.: Depósito Matriz">
+              </div>
+            </div>
+          </div>
+          <div class="dg-actions">
+            <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
+            <button type="submit" class="btn primary">Salvar</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="dlgHistorico">
+        <div class="dg-head">
+          <h3>Histórico de Movimentações</h3>
+          <button type="button" class="btn" id="btnFecharHist">✕</button>
+        </div>
+        <div class="dg-body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                  <th>Origem</th>
+                  <th>Destino</th>
+                  <th>Qtd</th>
+                  <th>Custo</th>
+                  <th>Ref</th>
+                  <th>Obs</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyHistorico"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="dg-actions">
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">Fechar</button>
+        </div>
+      </dialog>
+    </section>
+  </template>
+
   <!-- =========================
     DRAWER (MENU LATERAL) + BACKDROP
     ========================= -->
@@ -381,27 +822,8 @@
   </aside>
 
   <!-- =========================
-       JS EXTERNO
+       JS EXTERNO (lógica da aplicação)
        ========================= -->
-       <!-- No final do body, antes do script.js -->
-<script src="auth.js"></script>
-<script src="script.js"></script>
-  <!-- Modal de Login -->
-<div id="loginModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>🔐 Login - JK CHOPP</h3>
-            <button class="modal-close" id="closeLogin">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="stack">
-                <input type="text" id="loginUser" class="input" placeholder="Usuário" value="admin">
-                <input type="password" id="loginPass" class="input" placeholder="Senha" value="jk#adm25">
-                <button class="btn primary" id="btnLogin">Entrar</button>
-                <small class="muted">Use: JK CHOPP</small>
-            </div>
-        </div>
-    </div>
-</div>
+  <script src="script.js"></script>
 </body>
 </html>
