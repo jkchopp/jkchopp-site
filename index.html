@@ -1,33 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <!-- =========================
-       META BÁSICO / TÍTULO
-       ========================= -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>JK CHOPP — Sistema Interno</title>
-
-  <!-- =========================
-       CSS EXTERNO (responsável por todo o layout/estilos)
-       ========================= -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
-<body data-theme="dark"><!-- tema inicial (JS alterna depois) -->
-  <div class="app"><!-- wrapper geral -->
-
-    <!-- =========================
-         HEADER / TOPO
-         ========================= -->
+<body data-theme="dark">
+  <div class="app">
     <header>
       <div class="wrap topbar">
-        <!-- ====== LADO ESQUERDO (hamburger + brand) ====== -->
         <div class="left">
-          <!-- Botão hamburger à ESQUERDA -->
           <button class="hamburger" id="btnMenu" title="Abrir menu">☰</button>
-
-          <!-- Branding -->
           <div class="brand">
             <div class="logo">JK</div>
             <div class="title">
@@ -37,7 +22,6 @@
           </div>
         </div>
 
-        <!-- ====== LADO DIREITO (ações rápidas) ====== -->
         <div class="row top-actions">
           <button class="btn" id="btnTheme" title="Alternar tema">🌓 Tema</button>
           <button class="btn" id="btnExport" title="Exportar backup (JSON)">⬇️ Exportar</button>
@@ -48,22 +32,15 @@
         </div>
       </div>
 
-      <!-- Barra de abas (preenchida pelo JS) -->
       <div class="wrap">
         <nav class="tabs" id="mainTabs"></nav>
       </div>
     </header>
 
-    <!-- =========================
-         CONTEÚDO
-         ========================= -->
     <main class="wrap">
       <section id="content"></section>
     </main>
 
-    <!-- =========================
-         RODAPÉ
-         ========================= -->
     <footer class="wrap">
       <div class="footer">
         <span>v1.0 • Persistência localStorage • Ordenação • Busca • CRUD • Contrato automático p/ <span class="hl">Ponto Fixo</span></span>
@@ -73,10 +50,81 @@
   </div>
 
   <!-- =========================
-       TEMPLATES (as telas do app)
+       TODOS OS TEMPLATES DO SISTEMA
        ========================= -->
 
-  <!-- CLIENTES -->
+  <!-- 🏠 INÍCIO (HOME) -->
+  <template id="tpl-home">
+    <div class="grid-home">
+      <section class="card card-stats">
+        <h3>Pedidos — Visão Geral</h3>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="homePedidosAbertos">0</span>
+            <span class="stat-label">Abertos / Aguardando pagamento</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="homePedidosConcluidos">0</span>
+            <span class="stat-label">Concluídos</span>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn success" id="goNovoPedido">➕ Novo Pedido</button>
+          <button class="btn" id="goPedidos">📋 Ver todos</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Agenda — Próximos compromissos</h3>
+        <div class="toolbar">
+          <div class="row">
+            <input id="home_ag_titulo" class="input" placeholder="Título" />
+            <input id="home_ag_data" class="input" type="date" />
+            <input id="home_ag_hora" class="input" type="time" />
+            <button class="btn success" id="homeAddAgenda">➕ Adicionar</button>
+            <button class="btn" id="goAgenda">📅 Abrir Agenda</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table-compact">
+            <thead><tr><th>Data</th><th>Hora</th><th>Título</th><th></th></tr></thead>
+            <tbody id="home_ag_tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Cards adicionais para métricas -->
+      <section class="card">
+        <h3>📊 Resumo Financeiro</h3>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="homeReceber">R$ 0,00</span>
+            <span class="stat-label">A Receber</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="homePagar">R$ 0,00</span>
+            <span class="stat-label">A Pagar</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>👥 Clientes Ativos</h3>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="homeClientesAtivos">0</span>
+            <span class="stat-label">Clientes Ativos</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="homePontosFixos">0</span>
+            <span class="stat-label">Pontos Fixos</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </template>
+
+  <!-- 👥 CLIENTES -->
   <template id="tpl-clientes">
     <div class="grid">
       <aside class="card">
@@ -89,21 +137,21 @@
             <option value="PJ">PJ</option>
           </select>
 
-          <input class="input" id="cli_nome"     placeholder="Nome/Razão Social" />
-          <input class="input" id="cli_doc"      placeholder="CPF/CNPJ" />
+          <input class="input" id="cli_nome" placeholder="Nome/Razão Social" />
+          <input class="input" id="cli_doc" placeholder="CPF/CNPJ" />
           <input class="input" id="cli_fantasia" placeholder="Fantasia (opcional)" />
-          <input class="input" id="cli_contato"  placeholder="Contato (tel/whatsapp)" />
-          <input class="input" id="cli_end"      placeholder="Endereço" />
+          <input class="input" id="cli_contato" placeholder="Contato (tel/whatsapp)" />
+          <input class="input" id="cli_end" placeholder="Endereço" />
 
           <div class="flex">
-            <label class="pill"><input type="checkbox" id="cli_fixo"  /> Ponto Fixo</label>
+            <label class="pill"><input type="checkbox" id="cli_fixo" /> Ponto Fixo</label>
             <label class="pill"><input type="checkbox" id="cli_ativo" checked /> Ativo</label>
             <label class="pill"><input type="checkbox" id="cli_delivery" /> Delivery</label>
           </div>
 
           <div class="flex">
             <button class="btn success" id="btnSalvarCliente">💾 Salvar</button>
-            <button class="btn"          id="btnLimparCliente">🧹 Limpar</button>
+            <button class="btn" id="btnLimparCliente">🧹 Limpar</button>
           </div>
 
           <input type="hidden" id="cli_id" />
@@ -113,8 +161,10 @@
 
       <section class="card">
         <div class="toolbar">
-          <div class="row"><input class="input" id="buscaClientes" placeholder="Buscar clientes..." /></div>
-          <div class="row"><span class="muted" id="infoClientes"></span></div>
+          <div class="row">
+            <input class="input" id="buscaClientes" placeholder="Buscar clientes..." />
+            <span class="muted" id="infoClientes"></span>
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -136,7 +186,7 @@
     </div>
   </template>
 
-  <!-- PRODUTOS -->
+  <!-- 📦 PRODUTOS -->
   <template id="tpl-produtos">
     <div class="grid">
       <aside class="card">
@@ -151,14 +201,14 @@
             <option value="Produto">Produto</option>
             <option value="Outro">Outro</option>
           </select>
-          <input class="input" id="prd_nome"   placeholder="Nome do Produto" />
+          <input class="input" id="prd_nome" placeholder="Nome do Produto" />
           <input class="input" id="prd_codigo" placeholder="Código Interno" />
-          <input class="input" id="prd_preco"  placeholder="Preço (R$)" inputmode="decimal" />
+          <input class="input" id="prd_preco" placeholder="Preço (R$)" inputmode="decimal" />
           <label class="pill"><input type="checkbox" id="prd_estoque_ctrl" checked /> Controlar estoque</label>
 
           <div class="flex">
             <button class="btn success" id="btnSalvarProduto">💾 Salvar</button>
-            <button class="btn"          id="btnLimparProduto">🧹 Limpar</button>
+            <button class="btn" id="btnLimparProduto">🧹 Limpar</button>
           </div>
 
           <input type="hidden" id="prd_id" />
@@ -188,7 +238,7 @@
     </div>
   </template>
 
-  <!-- PEDIDOS -->
+  <!-- 📋 PEDIDOS -->
   <template id="tpl-pedidos">
     <div class="card">
       <div class="toolbar">
@@ -223,7 +273,7 @@
     </div>
   </template>
 
-  <!-- CONTRATOS -->
+  <!-- 📄 CONTRATOS -->
   <template id="tpl-contratos">
     <div class="card">
       <div class="toolbar">
@@ -245,15 +295,15 @@
     </div>
   </template>
 
-  <!-- FINANCEIRO -->
+  <!-- 💰 FINANCEIRO -->
   <template id="tpl-financeiro">
     <div class="grid">
       <aside class="card">
         <h3>Título (Boleto/Nota)</h3>
         <div class="stack">
-          <input class="input" id="fin_doc"     placeholder="Documento/NSU" />
+          <input class="input" id="fin_doc" placeholder="Documento/NSU" />
           <input class="input" id="fin_cliente" placeholder="Cliente" />
-          <input class="input" id="fin_valor"   placeholder="Valor (R$)" inputmode="decimal" />
+          <input class="input" id="fin_valor" placeholder="Valor (R$)" inputmode="decimal" />
           <select id="fin_tipo" class="input">
             <option>Receber</option>
             <option>Pagar</option>
@@ -262,7 +312,7 @@
 
           <div class="flex">
             <button class="btn success" id="btnSalvarTitulo">💾 Salvar</button>
-            <button class="btn"          id="btnLimparTitulo">🧹 Limpar</button>
+            <button class="btn" id="btnLimparTitulo">🧹 Limpar</button>
           </div>
 
           <input type="hidden" id="fin_id" />
@@ -301,16 +351,15 @@
     </div>
   </template>
 
-  <!-- AGENDAMENTOS -->
+  <!-- 📅 AGENDAMENTOS -->
   <template id="tpl-agendamentos">
     <div class="stack agenda-grid">
-      <!-- CARD: Lista e cadastro -->
       <section class="card">
         <div class="toolbar">
           <div class="row">
             <input id="ag_titulo" class="input" placeholder="Título" />
-            <input id="ag_data"   class="input" type="date" />
-            <input id="ag_hora"   class="input" type="time" />
+            <input id="ag_data" class="input" type="date" />
+            <input id="ag_hora" class="input" type="time" />
             <button class="btn success" id="btnAddAgenda">➕ Adicionar</button>
           </div>
           <input id="buscaAgenda" class="input" placeholder="Buscar..." />
@@ -329,7 +378,6 @@
         </table>
       </section>
 
-      <!-- CARD: Calendário -->
       <aside class="card calendar-wrap">
         <h3>Calendário</h3>
         <div class="cal-header">
@@ -344,13 +392,13 @@
             <span>Seg</span><span>Ter</span><span>Qua</span>
             <span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
           </div>
-          <div class="cal-grid" id="calGrid"><!-- preenchido via JS --></div>
+          <div class="cal-grid" id="calGrid"></div>
         </div>
       </aside>
     </div>
   </template>
 
-  <!-- RELATÓRIOS -->
+  <!-- 📊 RELATÓRIOS -->
   <template id="tpl-relatorios">
     <div class="card">
       <div class="toolbar">
@@ -359,6 +407,7 @@
           <option value="produtos">Produtos</option>
           <option value="pedidos">Pedidos</option>
           <option value="financeiro">Financeiro</option>
+          <option value="estoque">Estoque</option>
         </select>
 
         <button class="btn" id="btnGerarRelatorio">📊 Gerar Relatório</button>
@@ -369,444 +418,454 @@
     </div>
   </template>
 
-  <!-- === TPL: ESTOQUE ==================================================== -->
-  <template id="tpl-estoque">
-    <section class="screen screen--estoque">
-      <div class="container" id="estoque-app">
-        <div class="brand">
-          <div class="dot"></div>
-          <h1>JK Chopp · Controle de Estoque</h1>
+  <!-- 💸 RELATÓRIO DE REPASSE -->
+  <template id="tpl-rel-repasse">
+    <section class="relatorio-repasse stack">
+      <div class="repasse-header">
+        <div class="repasse-title">
+          <h2>📊 Relatório de Repasse Financeiro</h2>
+          <button class="btn-print" id="repPrint">📄 Baixar PDF</button>
         </div>
-        
-        <div class="tabs" style="margin-bottom:16px">
-          <button class="ptab active" data-ptab="movimentacoes">Movimentações</button>
-          <button class="ptab" data-ptab="estoque">Estoque consolidado</button>
-          <button class="ptab" data-ptab="produtos">Produtos</button>
-          <button class="ptab" data-ptab="contagem">Contagem</button>
+        <div class="repasse-periodo">
+          <div class="periodo-item">
+            <div class="periodo-label">Período Inicial</div>
+            <input id="rep_dataIni" class="periodo-value" type="date">
+          </div>
+          <div class="periodo-item">
+            <div class="periodo-label">Período Final</div>
+            <input id="rep_dataFim" class="periodo-value" type="date">
+          </div>
+          <div class="periodo-item">
+            <div class="periodo-label">Data de Pagamento</div>
+            <input id="rep_dataPag" class="periodo-value" type="date">
+          </div>
         </div>
-
-        <!-- Movimentações -->
-        <section id="area-mov">
-          <div class="card">
-            <div class="card-header">
-              <div class="badge">Movimentações</div>
-              <div class="row-actions">
-                <button class="btn" id="btnNovaMov">+ Movimentação</button>
-                <button class="btn" id="btnExportar">Exportar CSV</button>
-                <button class="btn" id="btnRecalcular">Recalcular</button>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="table-wrap">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Data</th>
-                      <th>Tipo</th>
-                      <th>SKU</th>
-                      <th>Produto</th>
-                      <th>Origem</th>
-                      <th>Destino</th>
-                      <th>Qtd</th>
-                      <th>Custo</th>
-                      <th>Ref</th>
-                      <th>Obs</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbodyMovs"></tbody>
-                </table>
-              </div>
-              <div id="estadoVazioMov" style="display:none;margin-top:10px;color:var(--muted)">Nenhuma movimentação.</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Estoque consolidado -->
-        <section id="area-estoque" style="display:none">
-          <div class="grid kpis">
-            <div class="card">
-              <div class="card-body kpi">
-                <div class="icon">📦</div>
-                <div>
-                  <div class="value" id="kpiProdutos">0</div>
-                  <div class="label">Produtos</div>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-body kpi">
-                <div class="icon">📊</div>
-                <div>
-                  <div class="value" id="kpiItens">0</div>
-                  <div class="label">Itens em estoque</div>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-body kpi">
-                <div class="icon">💰</div>
-                <div>
-                  <div class="value" id="kpiValor">R$ 0,00</div>
-                  <div class="label">Valor total</div>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-body kpi">
-                <div class="icon">⚠️</div>
-                <div>
-                  <div class="value" id="kpiMinimo">0</div>
-                  <div class="label">Abaixo do mínimo</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" style="margin-top:16px">
-            <div class="card-header">
-              <div class="badge">Estoque consolidado</div>
-              <div class="row-actions">
-                <button class="btn" id="btnNovoProdutoEstoque">+ Produto</button>
-                <button class="btn" id="btnNovoDepositoEstoque">+ Depósito</button>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="filters" style="margin-bottom:12px">
-                <div>
-                  <label>Busca</label>
-                  <input id="filtroBusca" placeholder="SKU, produto, categoria…" />
-                </div>
-                <div>
-                  <label>Depósito</label>
-                  <select id="filtroDeposito"></select>
-                </div>
-                <div>
-                  <label>Categoria</label>
-                  <select id="filtroCategoria"></select>
-                </div>
-                <div class="check" style="align-self:end">
-                  <input type="checkbox" id="filtroAbaixoMin" />
-                  <label for="filtroAbaixoMin" style="margin:0">Somente abaixo do mínimo</label>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>SKU</th>
-                      <th>Produto</th>
-                      <th>Categoria</th>
-                      <th>Depósito</th>
-                      <th>Saldo</th>
-                      <th>Reservado</th>
-                      <th>Disponível</th>
-                      <th>Custo Médio</th>
-                      <th>Valor</th>
-                      <th>Min</th>
-                      <th>Max</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbodyEstoque"></tbody>
-                </table>
-              </div>
-              <div id="estadoVazio" style="display:none;margin-top:10px;color:var(--muted)">Nenhum item encontrado.</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Produtos -->
-        <section id="area-produtos" style="display:none">
-          <div class="grid" style="margin-top:0">
-            <div class="card">
-              <div class="card-header">
-                <div class="badge">Produtos</div>
-                <div class="row-actions">
-                  <button class="btn" id="btnNovoProdutoProd">+ Produto</button>
-                </div>
-              </div>
-              <div class="card-body">
-                <div class="table-wrap">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>SKU</th>
-                        <th>Produto</th>
-                        <th>Categoria</th>
-                        <th>Un</th>
-                        <th>Min</th>
-                        <th>Max</th>
-                        <th>Local padrão</th>
-                        <th>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tbodyProdutos"></tbody>
-                  </table>
-                </div>
-                <div id="estadoVazioProd" style="display:none;margin-top:10px;color:var(--muted)">Sem produtos.</div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-header">
-                <div class="badge">Depósitos</div>
-                <div class="row-actions">
-                  <button class="btn" id="btnNovoDepositoProd">+ Depósito</button>
-                </div>
-              </div>
-              <div class="card-body">
-                <div class="table-wrap">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>Código</th>
-                        <th>Descrição</th>
-                        <th>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tbodyDepositos"></tbody>
-                  </table>
-                </div>
-                <div id="estadoVazioDep" style="display:none;margin-top:10px;color:var(--muted)">Sem depósitos.</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Contagem -->
-        <section id="area-contagem" style="display:none">
-          <div class="card">
-            <div class="card-header">
-              <div class="badge">Contagem de estoque (Entrada · Saída · Retorno · Devolução)</div>
-              <div class="row-actions">
-                <button class="btn" id="btnContLimpar">Limpar</button>
-                <button class="btn primary" id="btnContFinalizar">Finalizar Contagem</button>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="form-row" style="margin-bottom:12px">
-                <div class="col-3">
-                  <label>Tipo</label>
-                  <select id="contTipo">
-                    <option value="ENTRADA">Entrada</option>
-                    <option value="SAIDA">Saída</option>
-                    <option value="RETORNO">Retorno</option>
-                    <option value="DEVOLUCAO">Devolução</option>
-                  </select>
-                </div>
-                <div class="col-6">
-                  <label>Produto</label>
-                  <input list="listaProdutos" id="contProduto" placeholder="SKU — Nome" />
-                  <datalist id="listaProdutos"></datalist>
-                </div>
-                <div class="col-3">
-                  <label>Depósito</label>
-                  <select id="contDeposito"></select>
-                </div>
-                <div class="col-3">
-                  <label>Quantidade</label>
-                  <input id="contQtd" type="number" min="0" step="1" value="1" />
-                </div>
-                <div class="col-3" id="contCustoWrap">
-                  <label>Custo Unitário</label>
-                  <input id="contCusto" type="number" min="0" step="0.01" placeholder="0,00" />
-                </div>
-                <div class="col-3" style="align-self:end">
-                  <button class="btn primary" id="btnContAdd">Adicionar</button>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Tipo</th>
-                      <th>SKU</th>
-                      <th>Produto</th>
-                      <th>Depósito</th>
-                      <th>Qtd</th>
-                      <th>Custo</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbodyContagem"></tbody>
-                </table>
-              </div>
-              <div id="estadoVazioCont" style="display:none;margin-top:10px;color:var(--muted)">Nenhum item na contagem.</div>
-              <div style="margin-top:12px;display:flex;gap:18px;color:var(--muted)">
-                <div>Total itens: <b id="contTotItens">0</b></div>
-                <div>Valor entradas/retornos: <b id="contTotValor">R$ 0,00</b></div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
-      <!-- Dialogs COMPLETOS (funcionando) -->
-      <dialog id="dlgMov">
-        <form id="formMov" method="dialog">
-          <div class="dg-head">
-            <h3 id="dlgMovTitulo">Nova Movimentação</h3>
-            <button type="button" class="btn" onclick="this.closest('dialog').close()">✕</button>
-          </div>
-          <div class="dg-body">
-            <div class="form-row">
-              <div class="col-4">
-                <label>Tipo</label>
-                <select id="movTipo" class="input">
-                  <option value="ENTRADA">Entrada</option>
-                  <option value="SAIDA">Saída</option>
-                  <option value="TRANSFERENCIA">Transferência</option>
-                  <option value="AJUSTE_MAIS">Ajuste (+)</option>
-                  <option value="AJUSTE_MENOS">Ajuste (−)</option>
-                  <option value="DEV_CLIENTE">Retorno Cliente</option>
-                  <option value="DEV_FORNEC">Devolução Fornecedor</option>
-                </select>
-              </div>
-              <div class="col-8">
-                <label>Produto (SKU — Nome)</label>
-                <input id="movProduto" class="input" list="listaProdutos" placeholder="Ex.: BARRIL50 — Barril Chopp 50L">
-              </div>
-
-              <div class="col-6">
-                <label>Origem</label>
-                <select id="movOrigem" class="input"></select>
-              </div>
-              <div class="col-6">
-                <label>Destino</label>
-                <select id="movDestino" class="input"></select>
-              </div>
-
-              <div class="col-3">
-                <label>Quantidade</label>
-                <input id="movQtd" type="number" min="0" step="1" class="input" value="1">
-              </div>
-              <div class="col-3">
-                <label>Custo unit.</label>
-                <input id="movCusto" type="number" min="0" step="0.01" class="input" placeholder="0,00">
-              </div>
-              <div class="col-3">
-                <label>Data/Hora</label>
-                <input id="movData" type="datetime-local" class="input">
-              </div>
-              <div class="col-3">
-                <label>Ref.</label>
-                <input id="movRef" class="input" placeholder="NF / Pedido / Lote">
-              </div>
-
-              <div class="col-12">
-                <label>Observações</label>
-                <textarea id="movObs" class="input" rows="2" placeholder="Detalhes da movimentação (opcional)"></textarea>
-              </div>
-            </div>
-          </div>
-          <div class="dg-actions">
-            <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
-            <button type="submit" class="btn primary">Salvar</button>
-          </div>
-        </form>
-      </dialog>
-
-      <dialog id="dlgProduto">
-        <form id="formProduto" method="dialog">
-          <div class="dg-head">
-            <h3 id="dlgProdTitulo">Novo Produto</h3>
-            <button type="button" class="btn" onclick="this.closest('dialog').close()">✕</button>
-          </div>
-          <div class="dg-body">
-            <div class="form-row">
-              <div class="col-4">
-                <label>SKU</label>
-                <input id="prodSku" class="input" placeholder="Ex.: BARRIL50">
-              </div>
-              <div class="col-8">
-                <label>Nome</label>
-                <input id="prodNome" class="input" placeholder="Ex.: Barril Chopp 50L">
-              </div>
-              <div class="col-4">
-                <label>Categoria</label>
-                <input id="prodCategoria" class="input" placeholder="Ex.: Insumo / Equipamento / Produto">
-              </div>
-              <div class="col-2">
-                <label>Un</label>
-                <input id="prodUnid" class="input" value="UN">
-              </div>
-              <div class="col-3">
-                <label>Min</label>
-                <input id="prodMin" type="number" min="0" step="1" class="input" value="0">
-              </div>
-              <div class="col-3">
-                <label>Max</label>
-                <input id="prodMax" type="number" min="0" step="1" class="input" value="0">
-              </div>
-              <div class="col-6">
-                <label>Local padrão</label>
-                <select id="prodLocal" class="input"></select>
-              </div>
-            </div>
-          </div>
-          <div class="dg-actions">
-            <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
-            <button type="submit" class="btn primary">Salvar</button>
-          </div>
-        </form>
-      </dialog>
-
-      <dialog id="dlgDeposito">
-        <form id="formDeposito" method="dialog">
-          <div class="dg-head">
-            <h3 id="dlgDepTitulo">Novo Depósito</h3>
-            <button type="button" class="btn" onclick="this.closest('dialog').close()">✕</button>
-          </div>
-          <div class="dg-body">
-            <div class="form-row">
-              <div class="col-4">
-                <label>Código</label>
-                <input id="depCodigo" class="input" placeholder="Ex.: MATRIZ">
-              </div>
-              <div class="col-8">
-                <label>Descrição</label>
-                <input id="depDesc" class="input" placeholder="Ex.: Depósito Matriz">
-              </div>
-            </div>
-          </div>
-          <div class="dg-actions">
-            <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
-            <button type="submit" class="btn primary">Salvar</button>
-          </div>
-        </form>
-      </dialog>
-
-      <dialog id="dlgHistorico">
-        <div class="dg-head">
-          <h3>Histórico de Movimentações</h3>
-          <button type="button" class="btn" id="btnFecharHist">✕</button>
+      <div class="repasse-table-container">
+        <div class="repasse-table-header">
+          <h3>💰 Fechamento de Vendas - Período de Duas Semanas</h3>
+          <button class="btn-add" id="repAddCliente">+ Adicionar Linha</button>
         </div>
-        <div class="dg-body">
-          <div class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Tipo</th>
-                  <th>Origem</th>
-                  <th>Destino</th>
-                  <th>Qtd</th>
-                  <th>Custo</th>
-                  <th>Ref</th>
-                  <th>Obs</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyHistorico"></tbody>
-            </table>
+        <div class="table-wrap">
+          <table class="repasse-table">
+            <thead>
+              <tr>
+                <th class="text-left">Cliente</th>
+                <th class="text-left">Marca do Chopp</th>
+                <th class="text-right">Qtde (L)</th>
+                <th class="text-right">Custo p/L</th>
+                <th class="text-right">Barris</th>
+                <th class="text-right">Custo Total</th>
+                <th class="text-right">Valor Venda</th>
+                <th class="text-right">Parte Marcos</th>
+                <th class="text-right">Parte JK</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="repTblVendas"></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5" class="text-right"><strong>TOTAIS</strong></td>
+                <td class="text-right"><strong id="repTotCusto">R$ 0,00</strong></td>
+                <td class="text-right"><strong id="repTotVenda">R$ 0,00</strong></td>
+                <td class="text-right"><strong id="repTotM">R$ 0,00</strong></td>
+                <td class="text-right"><strong id="repTotJ">R$ 0,00</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="repasse-table-container">
+        <div class="repasse-table-header">
+          <h3>💸 Despesas do Período</h3>
+          <button class="btn-add" id="repAddDespesa">+ Adicionar Despesa</button>
+        </div>
+        <div class="table-wrap">
+          <table class="repasse-table">
+            <thead>
+              <tr>
+                <th class="text-left">Descrição</th>
+                <th class="text-right">Valor Total</th>
+                <th class="text-left">Observações</th>
+                <th class="text-right">Parte JK</th>
+                <th class="text-right">Parte Marcos</th>
+                <th class="text-center">Pago?</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="repTblDespesas"></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="1" class="text-right"><strong>TOTAIS</strong></td>
+                <td class="text-right"><strong id="repTotDespVal">R$ 0,00</strong></td>
+                <td></td>
+                <td class="text-right"><strong id="repTotDespJK">R$ 0,00</strong></td>
+                <td class="text-right"><strong id="repTotDespM">R$ 0,00</strong></td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="repasse-calculos">
+        <div class="calc-card amber">
+          <h4>💼 Marcos</h4>
+          <div class="calc-line">
+            <span>Parte das Vendas</span>
+            <strong id="resParteM">R$ 0,00</strong>
+          </div>
+          <div class="calc-line">
+            <span>− Despesas Marcos</span>
+            <strong id="resDespM">R$ 0,00</strong>
+          </div>
+          <div class="calc-line calc-total">
+            <span>Total a Receber</span>
+            <strong id="resTotalM" class="positive">R$ 0,00</strong>
           </div>
         </div>
-        <div class="dg-actions">
-          <button type="button" class="btn" onclick="this.closest('dialog').close()">Fechar</button>
+        
+        <div class="calc-card sky">
+          <h4>🏢 JK CHOPP</h4>
+          <div class="calc-line">
+            <span>Parte das Vendas</span>
+            <strong id="resParteJ">R$ 0,00</strong>
+          </div>
+          <div class="calc-line">
+            <span>− Despesas JK</span>
+            <strong id="resDespJ">R$ 0,00</strong>
+          </div>
+          <div class="calc-line calc-total">
+            <span>Saldo Final</span>
+            <strong id="resSaldoJ" class="positive">R$ 0,00</strong>
+          </div>
         </div>
-      </dialog>
+        
+        <div class="calc-card green">
+          <h4>📈 Resultado Geral</h4>
+          <div class="calc-line">
+            <span>Vendas Brutas</span>
+            <strong id="resVendas">R$ 0,00</strong>
+          </div>
+          <div class="calc-line">
+            <span>− Custos</span>
+            <strong id="resCustos">R$ 0,00</strong>
+          </div>
+          <div class="calc-line">
+            <span>− Despesas</span>
+            <strong id="resDespesas">R$ 0,00</strong>
+          </div>
+          <div class="calc-line calc-total">
+            <span>Lucro Líquido</span>
+            <strong id="resLucro" class="positive">R$ 0,00</strong>
+          </div>
+        </div>
+      </div>
     </section>
+  </template>
+
+  <!-- 📦 ESTOQUE (ATUALIZADO) -->
+<template id="tpl-estoque">
+  <div class="screen screen--estoque">
+    <!-- MÉTRICAS -->
+    <section class="dashboard-grid">
+      <article class="metric-card">
+        <div class="metric-header">
+          <div class="metric-info">
+            <h3>BARRIS VAZIOS</h3>
+            <div class="metric-value" id="barrisVazios">0</div>
+            <div class="metric-label">unidades disponíveis</div>
+          </div>
+          <div class="metric-icon">🛢️</div>
+        </div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-header">
+          <div class="metric-info">
+            <h3>BARRIS CHEIOS</h3>
+            <div class="metric-value" id="barrisCheios">0</div>
+            <div class="metric-label">unidades em estoque</div>
+          </div>
+          <div class="metric-icon">🍺</div>
+        </div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-header">
+          <div class="metric-info">
+            <h3>CHOPEIRAS</h3>
+            <div class="metric-value" id="chopeiras">0</div>
+            <div class="metric-label">equipamentos ativos</div>
+          </div>
+          <div class="metric-icon">🧊</div>
+        </div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-header">
+          <div class="metric-info">
+            <h3>CILINDROS CO2</h3>
+            <div class="metric-value" id="cilindrosCO2">0</div>
+            <div class="metric-label">cilindros disponíveis</div>
+          </div>
+          <div class="metric-icon">⚡</div>
+        </div>
+      </article>
+    </section>
+
+    <!-- CONTEÚDO -->
+    <section class="content-grid">
+      <!-- FORM À ESQUERDA -->
+      <article class="card">
+        <h3>Nova Movimentação</h3>
+        <p class="muted">Registre entradas, saídas e transferências</p>
+
+        <form id="movimentacaoForm" class="stack" style="margin-top:12px">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="tipoItem">Tipo de Item</label>
+              <select id="tipoItem" class="form-select" required>
+                <option value="">Selecione o tipo</option>
+                <option value="barril">Barril</option>
+                <option value="chopeira">Chopeira</option>
+                <option value="cilindro">Cilindro CO2</option>
+              </select>
+            </div>
+
+            <!-- aparece somente quando Tipo de Item = Barril -->
+            <div class="form-group" id="grpEstadoBarril" hidden>
+              <label class="form-label" for="estadoBarril">Estado do Barril</label>
+              <select id="estadoBarril" class="form-select">
+                <option value="cheio">Cheio</option>
+                <option value="vazio">Vazio</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="grpLitragemBarril" hidden>
+              <label class="form-label" for="litragemBarril">Litragem</label>
+              <select id="litragemBarril" class="form-select">
+                <option value="15">15 L</option>
+                <option value="20">20 L</option>
+                <option value="30">30 L</option>
+                <option value="50">50 L</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="tipoMovimento">Tipo de Movimento</label>
+              <select id="tipoMovimento" class="form-select" required>
+                <option value="">Selecione o movimento</option>
+                <option value="entrada">Entrada</option>
+                <option value="saida">Saída</option>
+                <option value="recolha">Recolha</option>
+                <option value="devolucao">Devolução</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="quantidade">Quantidade</label>
+              <input id="quantidade" type="number" class="form-input" min="1" value="1" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="cliente">Cliente/Observação</label>
+              <input id="cliente" type="text" class="form-input" placeholder="Nome do cliente ou observação" />
+            </div>
+          </div>
+
+          <div class="flex">
+            <button type="submit" class="btn primary" id="btnRegistrar">Registrar Movimentação</button>
+            <button type="button" class="btn" id="btnRelatorio">📄 Gerar Relatório</button>
+          </div>
+        </form>
+      </article>
+
+      <!-- RESUMO À DIREITA -->
+      <article class="card">
+        <h3>Resumo Rápido</h3>
+        <p class="muted">Estatísticas em tempo real</p>
+
+        <div class="stats-grid" style="margin-top:12px">
+          <div class="stat-item">
+            <span class="stat-label">Movimentações hoje</span>
+            <span class="stat-value" id="movimentacoesHoje">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Entradas hoje</span>
+            <span class="stat-value" id="entradasHoje">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Saídas hoje</span>
+            <span class="stat-value" id="saidasHoje">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total no sistema</span>
+            <span class="stat-value" id="totalItens">0</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section class="card history-panel">
+      <h3>Histórico de Movimentações</h3>
+      <p class="muted">Acompanhe todas as operações realizadas</p>
+
+      <div class="history-controls">
+        <select id="filtroTipo" class="form-select" style="max-width:260px">
+          <option value="">Todos os movimentos</option>
+          <option value="entrada">Entradas</option>
+          <option value="saida">Saídas</option>
+          <option value="recolha">Recolhas</option>
+          <option value="devolucao">Devoluções</option>
+        </select>
+
+        <select id="filtroItem" class="form-select" style="max-width:240px">
+          <option value="">Todos os itens</option>
+          <option value="barril">Barris</option>
+          <option value="chopeira">Chopeiras</option>
+          <option value="cilindro">Cilindros CO2</option>
+        </select>
+
+        <button class="btn" id="btnLimpar">🗑️ Limpar Histórico</button>
+      </div>
+
+      <div class="history-list" id="historicoContainer">
+        <div class="empty">Nenhuma movimentação registrada ainda</div>
+      </div>
+
+      <div class="pagination" id="paginationContainer" hidden>
+        <button class="btn" id="prevBtn">← Anterior</button>
+        <span class="pagination-info" id="pageInfo">Página 1 de 1</span>
+        <button class="btn" id="nextBtn">Próxima →</button>
+      </div>
+    </section>
+  </div>
+</template>
+
+  <!-- 🛒 FORNECEDORES -->
+  <template id="tpl-fornecedores">
+    <div class="card">
+      <h3>🏢 Fornecedores</h3>
+      <p class="muted">Cadastro de fornecedores e parceiros comerciais.</p>
+      <div class="toolbar">
+        <button class="btn success">➕ Novo Fornecedor</button>
+        <input class="input" placeholder="Buscar fornecedores..." />
+      </div>
+      <div class="empty">
+        <p>🚧 Módulo em desenvolvimento</p>
+        <small>Cadastro completo de fornecedores em breve</small>
+      </div>
+    </div>
+  </template>
+
+  <!-- 🧑‍💼 FUNCIONÁRIOS -->
+  <template id="tpl-funcionarios">
+    <div class="card">
+      <h3>👥 Funcionários</h3>
+      <p class="muted">Gestão de equipe e colaboradores.</p>
+      <div class="toolbar">
+        <button class="btn success">➕ Novo Funcionário</button>
+        <input class="input" placeholder="Buscar funcionários..." />
+      </div>
+      <div class="empty">
+        <p>🚧 Módulo em desenvolvimento</p>
+        <small>Controle completo de funcionários em breve</small>
+      </div>
+    </div>
+  </template>
+
+  <!-- 👥 GRUPOS DE PREÇO -->
+  <template id="tpl-grupos-preco">
+    <div class="card">
+      <h3>💰 Grupos de Preço</h3>
+      <p class="muted">Configuração de tabelas de preços por segmento.</p>
+      <div class="toolbar">
+        <button class="btn success">➕ Novo Grupo</button>
+        <input class="input" placeholder="Buscar grupos..." />
+      </div>
+      <div class="empty">
+        <p>🚧 Módulo em desenvolvimento</p>
+        <small>Sistema de grupos de preço em breve</small>
+      </div>
+    </div>
+  </template>
+
+  <!-- 💬 INTERAÇÕES -->
+  <template id="tpl-interacoes">
+    <div class="card">
+      <h3>💬 Interações</h3>
+      <p class="muted">Histórico de contatos e interações com clientes.</p>
+      <div class="toolbar">
+        <button class="btn success">➕ Nova Interação</button>
+        <input class="input" placeholder="Buscar interações..." />
+      </div>
+      <div class="empty">
+        <p>🚧 Módulo em desenvolvimento</p>
+        <small>CRM completo em breve</small>
+      </div>
+    </div>
+  </template>
+
+  <!-- 🚚 TRANSPORTADORAS -->
+  <template id="tpl-transportadoras">
+    <div class="card">
+      <h3>🚚 Transportadoras</h3>
+      <p class="muted">Cadastro e gestão de empresas de transporte.</p>
+      <div class="toolbar">
+        <button class="btn success">➕ Nova Transportadora</button>
+        <input class="input" placeholder="Buscar transportadoras..." />
+      </div>
+      <div class="empty">
+        <p>🚧 Módulo em desenvolvimento</p>
+        <small>Controle de fretes e transportadoras em breve</small>
+      </div>
+    </div>
+  </template>
+
+  <!-- 🧾 NF-E E BOLETOS -->
+  <template id="tpl-nfe-boletos">
+    <div class="card">
+      <h3>🧾 NF-e e Boletos</h3>
+      <p class="muted">Gestão de documentos fiscais e cobrança.</p>
+      <div class="toolbar">
+        <button class="btn success">➕ Novo Documento</button>
+        <input class="input" placeholder="Buscar documentos..." />
+      </div>
+      <div class="empty">
+        <p>🚧 Módulo em desenvolvimento</p>
+        <small>Integração fiscal completa em breve</small>
+      </div>
+    </div>
+  </template>
+
+  <!-- ❓ AJUDA -->
+  <template id="tpl-ajuda">
+    <div class="card">
+      <h3>❓ Central de Ajuda</h3>
+      <p class="muted">Tutoriais e suporte do sistema.</p>
+      <div class="stack">
+        <div class="card">
+          <h4>📖 Como usar o sistema</h4>
+          <p>Guia completo de utilização das funcionalidades.</p>
+          <button class="btn">Abrir Tutorial</button>
+        </div>
+        <div class="card">
+          <h4>🐛 Reportar Problema</h4>
+          <p>Encontrou um erro? Nos avise!</p>
+          <button class="btn">Reportar Bug</button>
+        </div>
+        <div class="card">
+          <h4>💡 Sugestões</h4>
+          <p>Tem ideias para melhorar o sistema?</p>
+          <button class="btn">Enviar Sugestão</button>
+        </div>
+      </div>
+    </div>
   </template>
 
   <!-- =========================
@@ -820,10 +879,22 @@
     </div>
     <nav id="menuList"></nav>
   </aside>
+<!-- DIAGNÓSTICO SUPABASE -->
+<section id="diag-supabase" class="card" style="margin:16px 0">
+  <h2 class="title">Diagnóstico Supabase</h2>
+  <div id="supStatus" style="margin:8px 0;font-weight:600">⏳ Aguardando teste…</div>
+  <div class="row gap" style="margin-bottom:10px">
+    <button id="btnCheck"  class="btn">Checar conexão</button>
+    <button id="btnInsert" class="btn-primary">Inserir cliente de teste</button>
+    <button id="btnList"   class="btn">Listar últimos clientes</button>
+  </div>
+  <pre id="supOutput" style="background:#0f1622;border:1px solid #233044;border-radius:12px;padding:12px;white-space:pre-wrap;overflow:auto;max-height:260px">Saída aparecerá aqui…</pre>
+</section>
 
-  <!-- =========================
-       JS EXTERNO (lógica da aplicação)
-       ========================= -->
-  <script src="script.js"></script>
+<!-- 1) BIBLIOTECA DO SUPABASE (deve vir ANTES do seu script.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 2) SEU SCRIPT -->
+<script src="./script.js"></script>
 </body>
 </html>

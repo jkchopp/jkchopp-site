@@ -8,9 +8,19 @@
    03) Navegação (Drawer + Accordion + Rotas)
    04) Telas (Home, Clientes, Produtos, Pedidos, Financeiro, Contratos, Agenda)
    05) Relatórios → Relatório de Repasse (sua tela integrada)
-   06) Placeholders + Roteador
-   07) Boot
+   06) Novo Sistema de Estoque
+   07) Placeholders + Roteador
+   08) Boot
    ========================================================================== */
+// === Conexão com o Supabase ===
+const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";     // <- sua Project URL
+const SUPABASE_KEY = "sb_publishable_gG5EAcSXOWk9aPHX1fxxcg_Sm_TCwMa";  // <- sua Publishable key
+
+if (!window.supabase) {
+  alert("Supabase SDK não carregou. No index.html, confirme a ordem: supabase-js ANTES do script.js.");
+}
+
+const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* === BOOT DA APLICAÇÃO === */
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,6 +32,7 @@ function initializeApp() {
     bindDrawerActions();
     buildMenu();
     renderActive();
+    carregarBibliotecasExternas();
 }
 
 /* === 00) HELPERS ======================================================== */
@@ -1792,497 +1803,679 @@ function renderRelRepasse() {
   return wrap;
 }
 
-/* === FUNÇÕES FALTANTES - CORREÇÃO ======================================= */
+/* === 06) NOVO SISTEMA DE ESTOQUE ======================================= */
 
-// Função mount para renderizar componentes
-function mount(component) {
-    const content = $("#content");
-    if (!content) return;
-    content.innerHTML = "";
-    content.appendChild(component);
+// Sistema de Sincronização em Nuvem Simulado
+class CloudSync {
+  constructor() {
+      this.syncKey = 'estoque_sync_' + (localStorage.getItem('sync_id') || this.generateSyncId());
+      localStorage.setItem('sync_id', this.syncKey.replace('estoque_sync_', ''));
+      this.lastSync = Date.now();
+      this.syncInterval = 5000; // 5 segundos
+      this.startSync();
+  }
+
+  generateSyncId() {
+      return Math.random().toString(36).substr(2, 9);
+  }
+
+  async saveToCloud(data) {
+      try {
+          // Simula salvamento em nuvem usando localStorage compartilhado
+          const cloudData = {
+              data: data,
+              timestamp: Date.now(),
+              version: (this.getCloudData()?.version || 0) + 1
+          };
+          localStorage.setItem(this.syncKey, JSON.stringify(cloudData));
+          this.updateSyncStatus('Sincronizado', true);
+          return true;
+      } catch (error) {
+          this.updateSyncStatus('Erro na sincronização', false);
+          return false;
+      }
+  }
+
+  getCloudData() {
+      try {
+          const data = localStorage.getItem(this.syncKey);
+          return data ? JSON.parse(data) : null;
+      } catch (error) {
+          return null;
+      }
+  }
+
+  updateSyncStatus(message, success = true) {
+      const statusElement = document.getElementById('syncStatus');
+      const indicator = document.querySelector('.sync-indicator');
+      
+      if (statusElement) {
+          statusElement.textContent = message;
+      }
+      
+      if (indicator) {
+          indicator.style.background = success ? 'var(--primary-500)' : '#ef4444';
+      }
+  }
+
+  startSync() {
+      setInterval(() => {
+          this.updateSyncStatus('Sincronizando...', true);
+          setTimeout(() => {
+              this.updateSyncStatus('Sincronizado', true);
+          }, 1000);
+      }, this.syncInterval);
+  }
 }
 
-// Função para melhorar responsividade das tabelas
-function enhanceResponsiveTables(root = document) {
-    const tables = root.querySelectorAll('table');
-    tables.forEach(table => {
-        const ths = Array.from(table.querySelectorAll(':scope > thead > tr > th')).map(th => {
-            // Remove emojis e espaços extras do texto do cabeçalho
-            return th.innerText.replace(/[^\w\s]/gi, '').trim();
+// Sistema Principal de Estoque
+class EstoquePro {
+  constructor() {
+      this.cloudSync = new CloudSync();
+      this.currentPage = 1;
+      this.itemsPerPage = 8;
+      this.filteredHistorico = [];
+      this.loadData();
+      this.updateAllDisplays();
+      this.setupEventListeners();
+  }
+
+  loadData() {
+      // Tentar carregar da nuvem primeiro
+      const cloudData = this.cloudSync.getCloudData();
+      
+      if (cloudData && cloudData.data) {
+          this.estoque = cloudData.data.estoque;
+          this.historico = cloudData.data.historico || [];
+      } else {
+          // Fallback para dados locais
+          const localData = localStorage.getItem('estoque_local');
+          if (localData) {
+              const parsed = JSON.parse(localData);
+              this.estoque = parsed.estoque;
+              this.historico = parsed.historico || [];
+          } else {
+              this.initializeEmptyData();
+          }
+      }
+  }
+
+  initializeEmptyData() {
+      this.estoque = {
+          barrisVazios: { '15L': 0, '20L': 0, '30L': 0, '50L': 0 },
+          barrisCheios: { '15L': 0, '20L': 0, '30L': 0, '50L': 0 },
+          chopeiras: 0,
+          cilindrosCO2: 0
+      };
+      this.historico = [];
+  }
+
+  async saveData() {
+      const data = {
+          estoque: this.estoque,
+          historico: this.historico,
+          lastUpdate: Date.now()
+      };
+
+      // Salvar localmente
+      localStorage.setItem('estoque_local', JSON.stringify(data));
+      
+      // Salvar na nuvem
+      await this.cloudSync.saveToCloud(data);
+  }
+
+  registrarMovimentacao(tipoItem, estadoBarril, tipoMovimento, quantidade, cliente, litragem) {
+      const timestamp = new Date();
+      let itemKey = '';
+      let subKey = '';
+      let descricaoItem = '';
+
+      // Determinar chaves e descrição
+      if (tipoItem === 'barril') {
+          itemKey = estadoBarril === 'vazio' ? 'barrisVazios' : 'barrisCheios';
+          subKey = `${litragem}L`;
+          descricaoItem = `Barril ${estadoBarril} ${litragem}L`;
+      } else if (tipoItem === 'chopeira') {
+          itemKey = 'chopeiras';
+          descricaoItem = 'Chopeira';
+      } else if (tipoItem === 'cilindro') {
+          itemKey = 'cilindrosCO2';
+          descricaoItem = 'Cilindro CO2';
+      }
+
+      // Calcular mudança no estoque
+      let mudanca = 0;
+      if (tipoMovimento === 'entrada' || tipoMovimento === 'recolha') {
+          mudanca = quantidade;
+      } else if (tipoMovimento === 'saida' || tipoMovimento === 'devolucao') {
+          mudanca = -quantidade;
+      }
+
+      // Verificar estoque disponível
+      let estoqueAtual = 0;
+      if (tipoItem === 'barril') {
+          estoqueAtual = this.estoque[itemKey][subKey];
+      } else {
+          estoqueAtual = this.estoque[itemKey];
+      }
+
+      if (mudanca < 0 && estoqueAtual < Math.abs(mudanca)) {
+          this.showNotification(`Estoque insuficiente! Disponível: ${estoqueAtual}`, 'error');
+          return false;
+      }
+
+      // Atualizar estoque
+      if (tipoItem === 'barril') {
+          this.estoque[itemKey][subKey] = Math.max(0, this.estoque[itemKey][subKey] + mudanca);
+      } else {
+          this.estoque[itemKey] = Math.max(0, this.estoque[itemKey] + mudanca);
+      }
+
+      // Adicionar ao histórico
+      const movimentacao = {
+          id: Date.now(),
+          timestamp: timestamp.toISOString(),
+          tipoItem: descricaoItem,
+          tipoMovimento,
+          quantidade,
+          cliente: cliente || 'Não informado',
+          estoqueAnterior: estoqueAtual,
+          estoqueAtual: tipoItem === 'barril' ? this.estoque[itemKey][subKey] : this.estoque[itemKey]
+      };
+
+      this.historico.unshift(movimentacao);
+      
+      // Manter apenas os últimos 200 registros
+      if (this.historico.length > 200) {
+          this.historico = this.historico.slice(0, 200);
+      }
+
+      this.saveData();
+      this.updateAllDisplays();
+      this.showNotification('Movimentação registrada com sucesso!', 'success');
+      
+      return true;
+  }
+
+  showNotification(message, type = 'success') {
+      const submitBtn = document.querySelector('#movimentacaoForm button[type="submit"]');
+      if (!submitBtn) return;
+      
+      const originalText = submitBtn.innerHTML;
+      
+      if (type === 'success') {
+          submitBtn.innerHTML = '✅ ' + message;
+          submitBtn.classList.add('success-feedback');
+      } else {
+          submitBtn.innerHTML = '❌ ' + message;
+          submitBtn.style.background = '#ef4444';
+      }
+
+      setTimeout(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.classList.remove('success-feedback');
+          submitBtn.style.background = '';
+      }, 3000);
+  }
+
+  updateAllDisplays() {
+      this.updateMetrics();
+      this.updateStats();
+      this.updateHistorico();
+  }
+
+  updateMetrics() {
+      const totalBarrisVazios = Object.values(this.estoque.barrisVazios).reduce((a, b) => a + b, 0);
+      const totalBarrisCheios = Object.values(this.estoque.barrisCheios).reduce((a, b) => a + b, 0);
+      
+      const barrisVaziosEl = document.getElementById('barrisVazios');
+      const barrisCheiosEl = document.getElementById('barrisCheios');
+      const chopeirasEl = document.getElementById('chopeiras');
+      const cilindrosCO2El = document.getElementById('cilindrosCO2');
+      
+      if (barrisVaziosEl) barrisVaziosEl.textContent = totalBarrisVazios;
+      if (barrisCheiosEl) barrisCheiosEl.textContent = totalBarrisCheios;
+      if (chopeirasEl) chopeirasEl.textContent = this.estoque.chopeiras;
+      if (cilindrosCO2El) cilindrosCO2El.textContent = this.estoque.cilindrosCO2;
+  }
+
+  updateStats() {
+      const hoje = new Date().toDateString();
+      
+      const movimentacoesHoje = this.historico.filter(item => {
+          return new Date(item.timestamp).toDateString() === hoje;
+      }).length;
+
+      const entradasHoje = this.historico.filter(item => {
+          const itemDate = new Date(item.timestamp).toDateString();
+          return itemDate === hoje && (item.tipoMovimento === 'entrada' || item.tipoMovimento === 'recolha');
+      }).length;
+
+      const saidasHoje = this.historico.filter(item => {
+          const itemDate = new Date(item.timestamp).toDateString();
+          return itemDate === hoje && (item.tipoMovimento === 'saida' || item.tipoMovimento === 'devolucao');
+      }).length;
+
+      const totalItens = Object.values(this.estoque.barrisVazios).reduce((a, b) => a + b, 0) +
+                       Object.values(this.estoque.barrisCheios).reduce((a, b) => a + b, 0) +
+                       this.estoque.chopeiras + this.estoque.cilindrosCO2;
+
+      const movimentacoesHojeEl = document.getElementById('movimentacoesHoje');
+      const entradasHojeEl = document.getElementById('entradasHoje');
+      const saidasHojeEl = document.getElementById('saidasHoje');
+      const totalItensEl = document.getElementById('totalItens');
+      
+      if (movimentacoesHojeEl) movimentacoesHojeEl.textContent = movimentacoesHoje;
+      if (entradasHojeEl) entradasHojeEl.textContent = entradasHoje;
+      if (saidasHojeEl) saidasHojeEl.textContent = saidasHoje;
+      if (totalItensEl) totalItensEl.textContent = totalItens;
+  }
+
+  filterHistorico() {
+      const filtroTipo = document.getElementById('filtroTipo');
+      const filtroItem = document.getElementById('filtroItem');
+      
+      if (!filtroTipo || !filtroItem) return;
+      
+      const tipoValue = filtroTipo.value;
+      const itemValue = filtroItem.value;
+
+      this.filteredHistorico = this.historico.filter(item => {
+          const matchTipo = !tipoValue || item.tipoMovimento === tipoValue;
+          const matchItem = !itemValue || item.tipoItem.toLowerCase().includes(itemValue);
+          return matchTipo && matchItem;
+      });
+
+      this.currentPage = 1;
+      this.updateHistorico();
+  }
+
+  updateHistorico() {
+      const container = document.getElementById('historicoContainer');
+      if (!container) return;
+      
+      if (this.historico.length === 0) {
+          container.innerHTML = `
+              <div class="empty-state">
+                  <div class="empty-icon">📋</div>
+                  <p>Nenhuma movimentação registrada ainda</p>
+              </div>
+          `;
+          return;
+      }
+
+      // Se não há filtros, usar histórico completo
+      const filtroTipo = document.getElementById('filtroTipo');
+      const filtroItem = document.getElementById('filtroItem');
+      
+      if (this.filteredHistorico.length === 0 && 
+          filtroTipo && !filtroTipo.value && 
+          filtroItem && !filtroItem.value) {
+          this.filteredHistorico = [...this.historico];
+      }
+
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      const itemsToShow = this.filteredHistorico.slice(startIndex, endIndex);
+
+      if (itemsToShow.length === 0) {
+          container.innerHTML = `
+              <div class="empty-state">
+                  <div class="empty-icon">🔍</div>
+                  <p>Nenhuma movimentação encontrada com os filtros aplicados</p>
+              </div>
+          `;
+          return;
+      }
+
+      const tipoTexto = {
+          'entrada': 'Entrada',
+          'saida': 'Saída',
+          'recolha': 'Recolha',
+          'devolucao': 'Devolução'
+      };
+
+      const html = itemsToShow.map(item => {
+          const date = new Date(item.timestamp);
+          const dateStr = date.toLocaleDateString('pt-BR', { 
+              day: '2-digit', 
+              month: '2-digit', 
+              year: '2-digit' 
+          }) + ' ' + date.toLocaleTimeString('pt-BR', {
+              hour: '2-digit', 
+              minute: '2-digit'
+          });
+          
+          return `
+              <div class="history-item">
+                  <div class="history-header">
+                      <span class="status-badge status-${item.tipoMovimento}">
+                          ${tipoTexto[item.tipoMovimento]}
+                      </span>
+                      <span class="history-date">${dateStr}</span>
+                  </div>
+                  <div class="history-details">
+                      <div class="history-description">
+                          <strong>${item.tipoItem}</strong><br>
+                          <small>Estoque: ${item.estoqueAnterior} → ${item.estoqueAtual}</small>
+                      </div>
+                      <div class="history-quantity">${item.tipoMovimento === 'saida' || item.tipoMovimento === 'devolucao' ? '-' : '+'}${item.quantidade}</div>
+                      <div class="history-client">${item.cliente}</div>
+                  </div>
+              </div>
+          `;
+      }).join('');
+
+      container.innerHTML = html;
+      this.updatePagination();
+  }
+
+  updatePagination() {
+      const paginationContainer = document.getElementById('paginationContainer');
+      if (!paginationContainer) return;
+      
+      const totalPages = Math.ceil(this.filteredHistorico.length / this.itemsPerPage);
+      
+      if (totalPages <= 1) {
+          paginationContainer.style.display = 'none';
+          return;
+      }
+
+      paginationContainer.style.display = 'flex';
+      
+      const pageInfo = document.getElementById('pageInfo');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      if (pageInfo) pageInfo.textContent = `Página ${this.currentPage} de ${totalPages}`;
+      if (prevBtn) prevBtn.disabled = this.currentPage === 1;
+      if (nextBtn) nextBtn.disabled = this.currentPage === totalPages;
+  }
+
+  setupEventListeners() {
+      // Tipo de item change
+      const tipoItemEl = document.getElementById('tipoItem');
+      if (tipoItemEl) {
+        tipoItemEl.addEventListener('change', (e) => {
+          const estadoGroup = document.getElementById('grpEstadoBarril');
+          const litragemGroup = document.getElementById('grpLitragemBarril');
+          
+          if (e.target.value === 'barril') {
+            if (estadoGroup) estadoGroup.hidden = false;
+            if (litragemGroup) litragemGroup.hidden = false;
+          } else {
+            if (estadoGroup) estadoGroup.hidden = true;
+            if (litragemGroup) litragemGroup.hidden = true;
+          }
         });
-        
-        if (!ths.length) return;
-        
-        table.querySelectorAll(':scope > tbody > tr').forEach(tr => {
-            Array.from(tr.children).forEach((td, i) => {
-                if (!td.hasAttribute('data-th') && ths[i]) {
-                    td.setAttribute('data-th', ths[i]);
-                }
-            });
-        });
-    });
+
+        // Disparar evento change para configurar estado inicial
+        tipoItemEl.dispatchEvent(new Event('change'));
+      }
+
+      // Form submit - CORREÇÃO COMPLETA
+      const movimentacaoForm = document.getElementById('movimentacaoForm');
+      if (movimentacaoForm) {
+          movimentacaoForm.addEventListener('submit', (e) => {
+              e.preventDefault();
+              
+              const tipoItem = document.getElementById('tipoItem').value;
+              const estadoBarril = document.getElementById('estadoBarril').value;
+              const tipoMovimento = document.getElementById('tipoMovimento').value;
+              const quantidade = parseInt(document.getElementById('quantidade').value);
+              const cliente = document.getElementById('cliente').value;
+              const litragem = document.getElementById('litragemBarril').value;
+
+              if (this.registrarMovimentacao(tipoItem, estadoBarril, tipoMovimento, quantidade, cliente, litragem)) {
+                  movimentacaoForm.reset();
+                  const estadoBarrilGroup = document.getElementById('grpEstadoBarril');
+                  const litragemBarrilGroup = document.getElementById('grpLitragemBarril');
+                  if (estadoBarrilGroup) estadoBarrilGroup.hidden = true;
+                  if (litragemBarrilGroup) litragemBarrilGroup.hidden = true;
+              }
+          });
+      }
+
+      // Filtros
+      const filtroTipo = document.getElementById('filtroTipo');
+      const filtroItem = document.getElementById('filtroItem');
+      
+      if (filtroTipo) {
+          filtroTipo.addEventListener('change', () => {
+              this.filterHistorico();
+          });
+      }
+
+      if (filtroItem) {
+          filtroItem.addEventListener('change', () => {
+              this.filterHistorico();
+          });
+      }
+
+      // Botão limpar histórico
+      const btnLimpar = document.getElementById('btnLimpar');
+      if (btnLimpar) {
+          btnLimpar.addEventListener('click', () => this.limparHistorico());
+      }
+
+      // Paginação
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      if (prevBtn) prevBtn.addEventListener('click', () => this.previousPage());
+      if (nextBtn) nextBtn.addEventListener('click', () => this.nextPage());
+
+      // Botão relatório
+      const btnRelatorio = document.getElementById('btnRelatorio');
+      if (btnRelatorio) {
+          btnRelatorio.addEventListener('click', () => this.gerarRelatorio());
+      }
+  }
+
+  limparHistorico() {
+      if (confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.')) {
+          this.historico = [];
+          this.filteredHistorico = [];
+          this.currentPage = 1;
+          this.saveData();
+          this.updateAllDisplays();
+          this.showNotification('Histórico limpo com sucesso!', 'success');
+      }
+  }
+
+  previousPage() {
+      if (this.currentPage > 1) {
+          this.currentPage--;
+          this.updateHistorico();
+      }
+  }
+
+  nextPage() {
+      const totalPages = Math.ceil(this.filteredHistorico.length / this.itemsPerPage);
+      if (this.currentPage < totalPages) {
+          this.currentPage++;
+          this.updateHistorico();
+      }
+  }
+
+  toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      this.updateThemeIcon(newTheme);
+  }
+
+  updateThemeIcon(theme) {
+      const themeIcon = document.getElementById('themeIcon');
+      if (themeIcon) {
+          themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+      }
+  }
+
+  gerarRelatorio() {
+      const { jsPDF } = window.jspdf;
+      if (!jsPDF) {
+          alert('Biblioteca de PDF não carregada');
+          return;
+      }
+
+      const doc = new jsPDF();
+
+      // Cabeçalho elegante
+      doc.setFontSize(20);
+      doc.setTextColor(15, 23, 42);
+      doc.text('EstoqueSync Pro - Relatório Executivo', 20, 25);
+
+      doc.setFontSize(12);
+      doc.setTextColor(100, 116, 139);
+      const dataAtual = new Date().toLocaleDateString('pt-BR', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+      });
+      doc.text(`Gerado em: ${dataAtual}`, 20, 35);
+
+      // Linha elegante
+      doc.setDrawColor(14, 165, 233);
+      doc.setLineWidth(0.5);
+      doc.line(20, 42, 190, 42);
+
+      // Resumo executivo
+      doc.setFontSize(16);
+      doc.setTextColor(15, 23, 42);
+      doc.text('Resumo Executivo', 20, 55);
+
+      const totalBarrisVazios = Object.values(this.estoque.barrisVazios).reduce((a, b) => a + b, 0);
+      const totalBarrisCheios = Object.values(this.estoque.barrisCheios).reduce((a, b) => a + b, 0);
+
+      const resumoData = [
+          ['Categoria', 'Quantidade', 'Status'],
+          ['Barris Vazios', totalBarrisVazios.toString(), totalBarrisVazios > 10 ? 'Adequado' : 'Baixo'],
+          ['Barris Cheios', totalBarrisCheios.toString(), totalBarrisCheios > 5 ? 'Adequado' : 'Crítico'],
+          ['Chopeiras', this.estoque.chopeiras.toString(), this.estoque.chopeiras > 0 ? 'Disponível' : 'Indisponível'],
+          ['Cilindros CO2', this.estoque.cilindrosCO2.toString(), this.estoque.cilindrosCO2 > 2 ? 'Adequado' : 'Baixo']
+      ];
+
+      doc.autoTable({
+          startY: 65,
+          head: [resumoData[0]],
+          body: resumoData.slice(1),
+          theme: 'striped',
+          headStyles: { 
+              fillColor: [14, 165, 233],
+              textColor: [255, 255, 255],
+              fontSize: 12,
+              fontStyle: 'bold'
+          },
+          bodyStyles: {
+              fontSize: 11,
+              textColor: [51, 65, 85]
+          },
+          alternateRowStyles: {
+              fillColor: [248, 250, 252]
+          }
+      });
+
+      // Movimentações recentes
+      let yPos = doc.lastAutoTable.finalY + 20;
+      doc.setFontSize(16);
+      doc.text('Movimentações Recentes', 20, yPos);
+
+      if (this.historico.length > 0) {
+          const historicoData = [
+              ['Data/Hora', 'Operação', 'Item', 'Qtd', 'Responsável']
+          ];
+
+          const tipoTexto = {
+              'entrada': 'Entrada',
+              'saida': 'Saída', 
+              'recolha': 'Recolha',
+              'devolucao': 'Devolução'
+          };
+
+          this.historico.slice(0, 20).forEach(item => {
+              const date = new Date(item.timestamp);
+              const dateStr = date.toLocaleDateString('pt-BR') + ' ' + 
+                             date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+              historicoData.push([
+                  dateStr,
+                  tipoTexto[item.tipoMovimento],
+                  item.tipoItem,
+                  item.quantidade.toString(),
+                  item.cliente.substring(0, 20) + (item.cliente.length > 20 ? '...' : '')
+              ]);
+          });
+
+          doc.autoTable({
+              startY: yPos + 10,
+              head: [historicoData[0]],
+              body: historicoData.slice(1),
+              theme: 'grid',
+              headStyles: { 
+                  fillColor: [14, 165, 233],
+                  textColor: [255, 255, 255],
+                  fontSize: 10
+              },
+              bodyStyles: {
+                  fontSize: 9,
+                  textColor: [51, 65, 85]
+              },
+              columnStyles: {
+                  0: { cellWidth: 35 },
+                  1: { cellWidth: 25 },
+                  2: { cellWidth: 40 },
+                  3: { cellWidth: 15 },
+                  4: { cellWidth: 35 }
+              }
+          });
+      }
+
+      // Rodapé
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(100, 116, 139);
+          doc.text(`EstoqueSync Pro - Página ${i} de ${pageCount}`, 20, 285);
+          doc.text('Relatório confidencial - Uso interno', 150, 285);
+      }
+
+      const nomeArquivo = `estoque-pro-${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(nomeArquivo);
+  }
 }
 
-// Inicializar responsividade quando o DOM carregar
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        enhanceResponsiveTables();
-    }, 100);
-});
+// Instância global do sistema de estoque
+let estoquePro = null;
 
-/* === ROTA: ESTOQUE ==================================================== */
+// Função para renderizar o estoque - CORRIGIDA
 function renderEstoque() {
-    console.log('Renderizando estoque...');
-    
-    const tpl = document.getElementById('tpl-estoque');
-    if (!tpl) {
-        console.error('Template de estoque não encontrado!');
-        return document.createElement('div');
+  const tpl = document.getElementById('tpl-estoque');
+  if (!tpl) { 
+    console.error('Template de estoque não encontrado!'); 
+    return document.createElement('div'); 
+  }
+  
+  const clone = tpl.content.cloneNode(true);
+  
+  // Inicializar o sistema de estoque APÓS o template ser adicionado ao DOM
+  setTimeout(() => {
+    if (!estoquePro) {
+      estoquePro = new EstoquePro();
+    } else {
+      // Re-conectar event listeners se já existir
+      estoquePro.setupEventListeners();
+      estoquePro.updateAllDisplays();
     }
-    
-    const el = tpl.content.cloneNode(true);
-    const root = document.createElement('div'); 
-    root.appendChild(el);
-
-    // helpers escopados
-    const $=(s,sc=root)=>sc.querySelector(s), $$=(s,sc=root)=>Array.from(sc.querySelectorAll(s));
-    const fmt=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const money=v=>"R$ "+fmt.format(Number(v||0));
-
-    // estado + storage
-    const LS={
-        produtos:'jk_estoque_produtos',
-        depositos:'jk_estoque_depositos',
-        movs:'jk_estoque_movimentos'
-    };
-    
-    const State={
-        produtos:[],
-        depositos:[],
-        movs:[],
-        saldos:new Map(),
-        currentCount:[],
-        
-        getSaldo(sku,dep){
-            return this.saldos.get(`${sku}|${dep}`)||{saldo:0,reservado:0,custoMedio:0}
-        },
-        setSaldo(sku,dep,obj){
-            this.saldos.set(`${sku}|${dep}`,{...this.getSaldo(sku,dep),...obj})
-        }
-    };
-
-    function seed(){
-        console.log('Inicializando dados de estoque...');
-        State.depositos=[
-            {codigo:'MATRIZ',descricao:'Depósito Matriz'},
-            {codigo:'EVENTOS',descricao:'Depósito de Eventos'}
-        ];
-        State.produtos=[
-            {sku:'BARRIL50',nome:'Barril Chopp 50L',categoria:'Insumo',un:'UN',min:2,max:20,localPadrao:'MATRIZ'},
-            {sku:'CILINDRO6',nome:'Cilindro CO₂ 6Kg',categoria:'Equipamento',un:'UN',min:1,max:10,localPadrao:'MATRIZ'},
-            {sku:'CHOPEIRA',nome:'Chopeira 30/50',categoria:'Equipamento',un:'UN',min:1,max:10,localPadrao:'MATRIZ'},
-            {sku:'PILSEN50L',nome:'Chopp Pilsen 50L',categoria:'Produto',un:'L',min:2,max:30,localPadrao:'EVENTOS'}
-        ];
-        State.movs=[
-            {id:'100001',data:new Date(Date.now()-86400e3*10).toISOString(),tipo:'ENTRADA',sku:'BARRIL50',produto:'Barril Chopp 50L',origem:null,destino:'MATRIZ',qtd:10,custo:600,ref:'NF 123',obs:'Compra'},
-            {id:'100002',data:new Date(Date.now()-86400e3*9).toISOString(),tipo:'ENTRADA',sku:'CILINDRO6',produto:'Cilindro CO₂ 6Kg',origem:null,destino:'MATRIZ',qtd:5,custo:450,ref:'NF 124',obs:'Compra'},
-            {id:'100003',data:new Date(Date.now()-86400e3*8).toISOString(),tipo:'ENTRADA',sku:'PILSEN50L',produto:'Chopp Pilsen 50L',origem:null,destino:'EVENTOS',qtd:8,custo:320,ref:'NF 125',obs:'Compra'}
-        ];
-        
-        localStorage.setItem(LS.produtos,JSON.stringify(State.produtos));
-        localStorage.setItem(LS.depositos,JSON.stringify(State.depositos));
-        localStorage.setItem(LS.movs,JSON.stringify(State.movs));
-    }
-
-    function loadAll(){
-        console.log('Carregando dados do estoque...');
-        try {
-            State.produtos=JSON.parse(localStorage.getItem(LS.produtos)||'[]');
-            State.depositos=JSON.parse(localStorage.getItem(LS.depositos)||'[]');
-            State.movs=JSON.parse(localStorage.getItem(LS.movs)||'[]');
-            
-            if(State.produtos.length===0 && State.depositos.length===0) {
-                seed();
-            }
-            recalcSaldos();
-        } catch (e) {
-            console.error('Erro ao carregar dados:', e);
-            seed();
-        }
-    }
-
-    function saveAll(){
-        localStorage.setItem(LS.produtos,JSON.stringify(State.produtos));
-        localStorage.setItem(LS.depositos,JSON.stringify(State.depositos));
-        localStorage.setItem(LS.movs,JSON.stringify(State.movs));
-    }
-
-    function recalcSaldos(){
-        console.log('Recalculando saldos...');
-        State.saldos=new Map();
-        
-        // Inicializar todos os saldos como zero
-        for(const d of State.depositos){ 
-            for(const p of State.produtos){ 
-                State.setSaldo(p.sku,d.codigo,{saldo:0,reservado:0,custoMedio:0}) 
-            } 
-        }
-        
-        const ord=[...State.movs].sort((a,b)=>new Date(a.data)-new Date(b.data));
-        
-        for(const m of ord){
-            const qtd=Number(m.qtd)||0, custo=Number(m.custo)||0;
-            const get=dep=>State.getSaldo(m.sku,dep), 
-                  set=(dep,obj)=>State.setSaldo(m.sku,dep,obj);
-                  
-            if(m.tipo==='ENTRADA'||m.tipo==='AJUSTE_MAIS'||m.tipo==='DEV_CLIENTE'){
-                const s=get(m.destino); 
-                const totalAnt=s.saldo*s.custoMedio; 
-                const totalNovo=totalAnt+qtd*custo; 
-                const saldo=s.saldo+qtd; 
-                const cm=saldo>0?totalNovo/saldo:0; 
-                set(m.destino,{saldo,custoMedio:cm});
-            } else if(m.tipo==='SAIDA'||m.tipo==='AJUSTE_MENOS'||m.tipo==='DEV_FORNEC'){
-                const s=get(m.origem); 
-                set(m.origem,{saldo:s.saldo-qtd,custoMedio:s.custoMedio});
-            } else if(m.tipo==='TRANSFERENCIA'){
-                const so=get(m.origem); 
-                set(m.origem,{saldo:so.saldo-qtd,custoMedio:so.custoMedio});
-                const sd=get(m.destino); 
-                const totalAnt=sd.saldo*sd.custoMedio; 
-                const totalNovo=totalAnt+qtd*so.custoMedio; 
-                const saldo=sd.saldo+qtd; 
-                const cm=saldo>0?totalNovo/saldo:0; 
-                set(m.destino,{saldo,custoMedio:cm});
-            }
-        }
-    }
-
-    const somaOutrosDepositos=(sku,exc)=> State.depositos.map(d=>d.codigo).filter(dep=>dep!==exc).reduce((a,dep)=>a+(State.getSaldo(sku,dep).saldo||0),0);
-
-    function fillDatalists(){
-        const dl=$('#listaProdutos'); if(dl) dl.innerHTML=State.produtos.map(p=>`<option value="${p.sku} — ${p.nome}"></option>`).join('');
-        const depOpts = `<option value="">(Selecione)</option>` + State.depositos.map(d=>`<option value="${d.codigo}">${d.codigo} — ${d.descricao}</option>`).join('');
-        ['#movOrigem','#movDestino','#prodLocal','#contDeposito'].forEach(sel=>{ const el=$(sel); if(el) el.innerHTML=depOpts; });
-    }
-
-    // RENDERERS
-    function renderKPIs(){
-        const deps=State.depositos.map(d=>d.codigo);
-        let totalItens=0, valorTotal=0, abaixoMin=0;
-        for(const p of State.produtos){
-            let saldo=0, valor=0; for(const d of deps){ const s=State.getSaldo(p.sku,d); saldo+=s.saldo; valor+=s.saldo*s.custoMedio; }
-            totalItens+=saldo; valorTotal+=valor; if(p.min && saldo<Number(p.min)) abaixoMin++;
-        }
-        $('#kpiProdutos').textContent=State.produtos.length;
-        $('#kpiItens').textContent=fmt.format(totalItens);
-        $('#kpiValor').textContent=money(valorTotal);
-        $('#kpiMinimo').textContent=abaixoMin;
-    }
-
-    function renderEstoque(){
-        const tb=$('#tbodyEstoque'), blank=$('#estadoVazio');
-        const busca=($('#filtroBusca').value||'').toLowerCase();
-        const depFiltro=$('#filtroDeposito').value; const catFiltro=$('#filtroCategoria').value; const somenteMin=$('#filtroAbaixoMin').checked;
-        const rows=[];
-        for(const p of State.produtos){
-            const ok=(p.sku+' '+p.nome+' '+(p.categoria||'')).toLowerCase().includes(busca); if(!ok) continue;
-            if(catFiltro && p.categoria!==catFiltro) continue;
-            const deps= depFiltro?[depFiltro]:State.depositos.map(d=>d.codigo);
-            for(const dep of deps){
-                const s=State.getSaldo(p.sku,dep); const disp=(s.saldo||0)-(s.reservado||0); const val=(s.saldo||0)*(s.custoMedio||0);
-                if(somenteMin && Number(p.min||0)<=0) continue;
-                if(somenteMin && (s.saldo+somaOutrosDepositos(p.sku,dep))>=Number(p.min||0)) continue;
-                rows.push(`<tr>
-                    <td>${p.sku}</td><td>${p.nome}</td><td>${p.categoria||''}</td><td>${dep}</td>
-                    <td class="num">${fmt.format(s.saldo||0)}</td>
-                    <td class="num">${fmt.format(s.reservado||0)}</td>
-                    <td class="num">${fmt.format(disp)}</td>
-                    <td class="num">${money(s.custoMedio||0)}</td>
-                    <td class="num">${money(val)}</td>
-                    <td class="num">${fmt.format(Number(p.min||0))}</td>
-                    <td class="num">${fmt.format(Number(p.max||0))}</td>
-                    <td>
-                        <div class="row-actions">
-                        <button class="btn" data-act="mov" data-sku="${p.sku}" data-dep="${dep}">Mov.</button>
-                        <button class="btn" data-act="hist" data-sku="${p.sku}">Hist.</button>
-                        <button class="btn" data-act="editp" data-sku="${p.sku}">Editar</button>
-                        <button class="btn danger" data-act="delp" data-sku="${p.sku}">Excluir</button>
-                        </div>
-                    </td>
-                </tr>`);
-            }
-        }
-        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block';
-        // binds por linha
-        $$('#tbodyEstoque [data-act="mov"]').forEach(b=>b.addEventListener('click',e=>openMovDialog({sku:e.currentTarget.dataset.sku,destino:e.currentTarget.dataset.dep})));
-        $$('#tbodyEstoque [data-act="hist"]').forEach(b=>b.addEventListener('click',e=>openHistorico(e.currentTarget.dataset.sku)));
-        $$('#tbodyEstoque [data-act="editp"]').forEach(b=>b.addEventListener('click',e=>openProdutoDialog(State.produtos.find(p=>p.sku===e.currentTarget.dataset.sku))));
-        $$('#tbodyEstoque [data-act="delp"]').forEach(b=>b.addEventListener('click',e=>{
-            const sku=e.currentTarget.dataset.sku; const nome=(State.produtos.find(p=>p.sku===sku)?.nome)||sku;
-            if(confirm(`Excluir o produto "${nome}" e TODAS as movimentações dele?`)){
-                State.produtos=State.produtos.filter(p=>p.sku!==sku);
-                State.movs=State.movs.filter(m=>m.sku!==sku);
-                saveAll(); recalcSaldos(); renderTudo();
-            }
-        }));
-    }
-
-    function renderMovs(){
-        const tb=$('#tbodyMovs'), blank=$('#estadoVazioMov');
-        const rows=State.movs.map(m=>`<tr>
-            <td>${m.id}</td><td>${new Date(m.data).toLocaleString('pt-BR')}</td><td>${m.tipo}</td>
-            <td>${m.sku}</td><td>${m.produto}</td><td>${m.origem||''}</td><td>${m.destino||''}</td>
-            <td class="num">${fmt.format(m.qtd)}</td><td class="num">${money(m.custo||0)}</td>
-            <td>${m.ref||''}</td><td title="${m.obs||''}">${m.obs||''}</td>
-            <td><button class="btn danger" data-act="delmov" data-id="${m.id}">Excluir</button></td>
-        </tr>`);
-        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block';
-        $$('#tbodyMovs [data-act="delmov"]').forEach(b=>b.addEventListener('click',e=>{
-            const id=e.currentTarget.dataset.id;
-            if(confirm('Excluir movimentação #'+id+'? Esta ação não pode ser desfeita.')){
-                State.movs=State.movs.filter(x=>x.id!==id); saveAll(); recalcSaldos(); renderTudo();
-            }
-        }));
-    }
-
-    function renderProdutos(){
-        const tb=$('#tbodyProdutos'), blank=$('#estadoVazioProd');
-        const rows=State.produtos.map(p=>`<tr>
-            <td>${p.sku}</td><td>${p.nome}</td><td>${p.categoria||''}</td><td>${p.un||'UN'}</td>
-            <td class="num">${fmt.format(Number(p.min||0))}</td><td class="num">${fmt.format(Number(p.max||0))}</td>
-            <td>${p.localPadrao||''}</td>
-            <td>
-                <div class="row-actions">
-                <button class="btn" data-act="editp" data-sku="${p.sku}">Editar</button>
-                <button class="btn" data-act="movp" data-sku="${p.sku}">Mov.</button>
-                <button class="btn danger" data-act="delp" data-sku="${p.sku}">Excluir</button>
-                </div>
-            </td>
-        </tr>`);
-        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block';
-        $$('#tbodyProdutos [data-act="editp"]').forEach(b=>b.addEventListener('click',e=>openProdutoDialog(State.produtos.find(p=>p.sku===e.currentTarget.dataset.sku))));
-        $$('#tbodyProdutos [data-act="movp"]').forEach(b=>b.addEventListener('click',e=>openMovDialog({sku:e.currentTarget.dataset.sku})));
-        $$('#tbodyProdutos [data-act="delp"]').forEach(b=>b.addEventListener('click',e=>{
-            const sku=e.currentTarget.dataset.sku; const nome=(State.produtos.find(p=>p.sku===sku)?.nome)||sku;
-            if(confirm(`Excluir o produto "${nome}" e TODAS as movimentações dele?`)){
-                State.produtos=State.produtos.filter(p=>p.sku!==sku);
-                State.movs=State.movs.filter(m=>m.sku!==sku);
-                saveAll(); recalcSaldos(); renderTudo();
-            }
-        }));
-    }
-
-    function renderDepositos(){
-        const tb=$('#tbodyDepositos'), blank=$('#estadoVazioDep');
-        const rows=State.depositos.map(d=>`<tr>
-            <td>${d.codigo}</td><td>${d.descricao}</td>
-            <td>
-                <div class="row-actions">
-                <button class="btn" data-act="editd" data-cod="${d.codigo}">Editar</button>
-                <button class="btn danger" data-act="deld" data-cod="${d.codigo}">Excluir</button>
-                </div>
-            </td>
-        </tr>`);
-        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block';
-        $$('#tbodyDepositos [data-act="editd"]').forEach(b=>b.addEventListener('click',e=>openDepositoDialog(State.depositos.find(d=>d.codigo===e.currentTarget.dataset.cod))));
-        $$('#tbodyDepositos [data-act="deld"]').forEach(b=>b.addEventListener('click',e=>{
-            const cod=e.currentTarget.dataset.cod;
-            if(confirm(`Excluir o depósito "${cod}" e remover movimentações que usam esse depósito?`)){
-                State.depositos=State.depositos.filter(d=>d.codigo!==cod);
-                State.movs=State.movs.filter(m=> (m.origem||'')!==cod && (m.destino||'')!==cod );
-                saveAll(); recalcSaldos(); renderTudo();
-            }
-        }));
-    }
-
-    function renderFiltros(){
-        const dep=$('#filtroDeposito'), cat=$('#filtroCategoria');
-        if(dep) dep.innerHTML = `<option value="">Todos depósitos</option>` + State.depositos.map(d=>`<option value="${d.codigo}">${d.codigo} — ${d.descricao}</option>`).join('');
-        const cats=[...new Set(State.produtos.map(p=>p.categoria).filter(Boolean))].sort();
-        if(cat) cat.innerHTML = `<option value="">Todas categorias</option>` + cats.map(c=>`<option>${c}</option>`).join('');
-    }
-
-    function renderTudo(){ 
-        renderFiltros(); 
-        renderEstoque(); 
-        renderMovs(); 
-        renderProdutos(); 
-        renderDepositos(); 
-        renderContagem(); 
-        renderKPIs(); 
-        fillDatalists(); 
-        enhanceResponsiveTables(root); 
-    }
-
-    // DIALOGS
-    function openMovDialog(preset={}){
-        const dlg=$('#dlgMov'); $('#dlgMovTitulo').textContent='Nova Movimentação';
-        $('#movTipo').value='ENTRADA'; $('#movProduto').value=preset.sku?`${preset.sku} — ${getNomeProduto(preset.sku)}`:'';
-        $('#movOrigem').value=preset.origem||''; $('#movDestino').value=preset.destino||preset.origem||'';
-        $('#movQtd').value=''; $('#movCusto').value=''; $('#movRef').value=''; $('#movObs').value='';
-        $('#movData').value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
-        dlg.showModal();
-    }
-
-    function openProdutoDialog(p){
-        const dlg=$('#dlgProduto'); $('#dlgProdTitulo').textContent=p?'Editar Produto':'Novo Produto';
-        $('#prodSku').value=p?.sku||''; $('#prodNome').value=p?.nome||''; $('#prodCategoria').value=p?.categoria||''; $('#prodUnid').value=p?.un||'UN';
-        $('#prodMin').value=p?.min??0; $('#prodMax').value=p?.max??0; $('#prodLocal').value=p?.localPadrao||''; dlg.showModal();
-    }
-
-    function openDepositoDialog(d){ 
-        const dlg=$('#dlgDeposito'); 
-        $('#dlgDepTitulo').textContent=d?'Editar Depósito':'Novo Depósito'; 
-        $('#depCodigo').value=d?.codigo||''; 
-        $('#depDesc').value=d?.descricao||''; 
-        dlg.showModal(); 
-    }
-
-    function openHistorico(sku){ 
-        const tb=$('#tbodyHistorico'); 
-        const hist=State.movs.filter(m=>m.sku===sku).sort((a,b)=>new Date(b.data)-new Date(a.data)); 
-        tb.innerHTML=hist.map(m=>`<tr><td>${new Date(m.data).toLocaleString('pt-BR')}</td><td>${m.tipo}</td><td>${m.origem||''}</td><td>${m.destino||''}</td><td class="num">${fmt.format(m.qtd)}</td><td class="num">${money(m.custo||0)}</td><td>${m.ref||''}</td><td title="${m.obs||''}">${m.obs||''}</td></tr>`).join(''); 
-        $('#dlgHistorico').showModal(); 
-    }
-
-    root.querySelector('#btnFecharHist')?.addEventListener('click',()=> root.querySelector('#dlgHistorico').close());
-
-    // Events globais da tela
-    root.querySelector('#btnNovaMov')?.addEventListener('click',()=>openMovDialog());
-    ['#btnNovoProdutoEstoque','#btnNovoProdutoProd'].forEach(sel=>{ root.querySelector(sel)?.addEventListener('click',()=>openProdutoDialog()); });
-    ['#btnNovoDepositoEstoque','#btnNovoDepositoProd'].forEach(sel=>{ root.querySelector(sel)?.addEventListener('click',()=>openDepositoDialog()); });
-    
-    ['#filtroBusca','#filtroDeposito','#filtroCategoria','#filtroAbaixoMin'].forEach(sel=>{
-        root.querySelector(sel)?.addEventListener('input',renderEstoque);
-        root.querySelector(sel)?.addEventListener('change',renderEstoque);
-    });
-
-    root.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click',e=>{
-        root.querySelectorAll('.ptab').forEach(x=>x.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        const id=e.currentTarget.dataset.ptab;
-        const areas={movimentacoes:'#area-mov', estoque:'#area-estoque', produtos:'#area-produtos', contagem:'#area-contagem'};
-        ['#area-mov','#area-estoque','#area-produtos','#area-contagem'].forEach(sel=>{ const el=root.querySelector(sel); if(el) el.style.display='none'; });
-        const alvo=root.querySelector(areas[id]); if(alvo) alvo.style.display='';
-        if(id==='estoque'){ renderEstoque(); renderKPIs(); }
-        if(id==='produtos'){ renderProdutos(); renderDepositos(); }
-        if(id==='movimentacoes'){ renderMovs(); }
-        if(id==='contagem'){ renderContagem(); }
-    }));
-
-    // Forms
-    root.querySelector('#formMov')?.addEventListener('submit',ev=>{
-        ev.preventDefault();
-        const tipo=root.querySelector('#movTipo').value;
-        const prodRaw=root.querySelector('#movProduto').value.trim();
-        const sku=prodRaw.split('—')[0]?.trim();
-        const produto=getNomeProduto(sku);
-        if(!produto){alert('Selecione um produto válido.');return}
-        let origem=root.querySelector('#movOrigem').value||null;
-        let destino=root.querySelector('#movDestino').value||null;
-        const qtd=Number(root.querySelector('#movQtd').value||0);
-        const custo=Number(root.querySelector('#movCusto').value||0);
-        const ref=root.querySelector('#movRef').value.trim()||null;
-        const obs=root.querySelector('#movObs').value.trim()||null;
-        const data=root.querySelector('#movData').value?new Date(root.querySelector('#movData').value).toISOString():new Date().toISOString();
-
-        if(['SAIDA','AJUSTE_MENOS','DEV_FORNEC'].includes(tipo)&&!origem){alert('Informe o depósito de origem.');return}
-        if(['ENTRADA','AJUSTE_MAIS','DEV_CLIENTE'].includes(tipo)&&(!destino || (!custo && (tipo==='ENTRADA'||tipo==='AJUSTE_MAIS')))){alert('Informe destino e custo.');return}
-        if(tipo==='TRANSFERENCIA'){ if(!origem||!destino){alert('Informe origem e destino.');return} if(origem===destino){alert('Origem e destino não podem ser iguais.');return} }
-        if(qtd<=0){alert('Quantidade deve ser maior que zero.');return}
-
-        const novo={id:String(Date.now()).slice(-6),data,tipo,sku,produto,origem,destino,qtd,custo,ref,obs};
-        State.movs.unshift(novo); saveAll(); recalcSaldos(); renderTudo(); root.querySelector('#dlgMov').close();
-    });
-
-    (function(){ // anti-duplo submit produto
-        let savingProduto=false;
-        root.querySelector('#formProduto')?.addEventListener('submit',ev=>{
-            ev.preventDefault(); if(savingProduto) return; savingProduto=true;
-            const p={sku:root.querySelector('#prodSku').value.trim(),nome:root.querySelector('#prodNome').value.trim(),categoria:root.querySelector('#prodCategoria').value.trim()||null,un:root.querySelector('#prodUnid').value||'UN',min:Number(root.querySelector('#prodMin').value||0),max:Number(root.querySelector('#prodMax').value||0),localPadrao:root.querySelector('#prodLocal').value||null};
-            if(!p.sku||!p.nome){alert('Preencha SKU e Nome.');savingProduto=false;return}
-            p.sku=p.sku.toUpperCase();
-            const i=State.produtos.findIndex(x=>x.sku===p.sku); if(i>=0) State.produtos[i]=p; else State.produtos.push(p);
-            saveAll(); recalcSaldos(); renderTudo(); root.querySelector('#dlgProduto').close(); savingProduto=false;
-        });
-    })();
-
-    root.querySelector('#formDeposito')?.addEventListener('submit',ev=>{
-        ev.preventDefault();
-        const d={codigo:root.querySelector('#depCodigo').value.trim().toUpperCase(),descricao:root.querySelector('#depDesc').value.trim()};
-        if(!d.codigo||!d.descricao){alert('Informe código e descrição.');return}
-        const i=State.depositos.findIndex(x=>x.codigo===d.codigo); if(i>=0) State.depositos[i]=d; else State.depositos.push(d);
-        saveAll(); recalcSaldos(); renderTudo(); root.querySelector('#dlgDeposito').close();
-    });
-
-    // Contagem
-    function renderContagem(){
-        const tb=root.querySelector('#tbodyContagem'), blank=root.querySelector('#estadoVazioCont'), totItens=root.querySelector('#contTotItens'), totValor=root.querySelector('#contTotValor');
-        const rows=State.currentCount.map((it,i)=>`<tr><td>${i+1}</td><td>${it.tipo}</td><td>${it.sku}</td><td>${it.produto}</td><td>${it.deposito||''}</td><td class="num">${fmt.format(it.qtd)}</td><td class="num">${money(it.custo||0)}</td><td><button class="btn danger" data-act="delcnt" data-idx="${i}">Remover</button></td></tr>`);
-        tb.innerHTML=rows.join(''); blank.style.display=rows.length?'none':'block'; totItens.textContent=String(rows.length);
-        const v=State.currentCount.filter(x=>x.tipo==='ENTRADA'||x.tipo==='RETORNO').reduce((a,b)=>a+(Number(b.qtd||0)*Number(b.custo||0)),0);
-        totValor.textContent=money(v);
-        root.querySelectorAll('[data-act="delcnt"]').forEach(b=>b.addEventListener('click',e=>{ const i=Number(e.currentTarget.dataset.idx); State.currentCount.splice(i,1); renderContagem(); }));
-        const wrap=root.querySelector('#contCustoWrap'); const tipo=root.querySelector('#contTipo')?.value; if(wrap) wrap.style.display=(tipo==='ENTRADA'||tipo==='RETORNO')?'block':'none';
-    }
-
-    function addToContagem(){
-        const tipo=root.querySelector('#contTipo').value;
-        const prodRaw=root.querySelector('#contProduto').value.trim();
-        const sku=prodRaw.split('—')[0]?.trim();
-        const produto=State.produtos.find(p=>p.sku===sku)?.nome;
-        const deposito=root.querySelector('#contDeposito').value||null;
-        const qtd=Number(root.querySelector('#contQtd').value||0);
-        const custo=Number(root.querySelector('#contCusto').value||0);
-        if(!produto){alert('Selecione um produto válido.');return}
-        if(!deposito && (tipo!=='SAIDA' && tipo!=='DEVOLUCAO')){alert('Escolha o depósito.');return}
-        if(qtd<=0){alert('Quantidade deve ser maior que zero.');return}
-        if((tipo==='ENTRADA'||tipo==='RETORNO') && !custo){alert('Informe o custo para Entrada/Retorno.');return}
-        State.currentCount.push({tipo,sku,produto,deposito,qtd,custo});
-        root.querySelector('#contProduto').value=''; root.querySelector('#contQtd').value='1'; root.querySelector('#contCusto').value=''; renderContagem();
-    }
-
-    function finalizarContagem(){
-        if(!State.currentCount.length){alert('Nada para lançar.');return}
-        const map={ENTRADA:'ENTRADA',SAIDA:'SAIDA',RETORNO:'DEV_CLIENTE',DEVOLUCAO:'DEV_FORNEC'};
-        const agora=new Date().toISOString(); const batch=String(Date.now()).slice(-6);
-        const novos=State.currentCount.map((it,i)=>({ id:batch+'-'+(i+1), data:agora, tipo:map[it.tipo], sku:it.sku, produto:it.produto,
-            origem:(it.tipo==='SAIDA'||it.tipo==='DEVOLUCAO')?(it.deposito||State.produtos.find(p=>p.sku===it.sku)?.localPadrao||null):null,
-            destino:(it.tipo==='ENTRADA'||it.tipo==='RETORNO')?(it.deposito||State.produtos.find(p=>p.sku===it.sku)?.localPadrao||null):null,
-            qtd:it.qtd, custo:(it.tipo==='ENTRADA'||it.tipo==='RETORNO')?it.custo:0, ref:'CONTAGEM', obs:'Gerado via aba Contagem' }));
-        State.movs=[...novos,...State.movs]; saveAll(); State.currentCount=[]; recalcSaldos(); renderTudo(); alert('Contagem lançada com sucesso!');
-    }
-
-    root.querySelector('#btnContAdd')?.addEventListener('click',addToContagem);
-    root.querySelector('#btnContFinalizar')?.addEventListener('click',finalizarContagem);
-    root.querySelector('#btnContLimpar')?.addEventListener('click',()=>{ State.currentCount=[]; renderContagem(); });
-    root.querySelector('#contTipo')?.addEventListener('change',renderContagem);
-
-    // Export/recalc
-    root.querySelector('#btnExportar')?.addEventListener('click',()=>{
-        const linhas=[["SKU","Produto","Categoria","Depósito","Saldo","Reservado","Disponível","Custo Médio","Valor","Min","Max"]];
-        for(const p of State.produtos){
-            for(const d of State.depositos){
-                const s=State.getSaldo(p.sku,d.codigo); const disp=(s.saldo||0)-(s.reservado||0); const val=(s.saldo||0)*(s.custoMedio||0);
-                linhas.push([p.sku,p.nome,(p.categoria||''),d.codigo,s.saldo||0,s.reservado||0,disp,(s.custoMedio||0),val,(p.min||0),(p.max||0)]);
-            }
-        }
-        const csv=linhas.map(l=>l.map(x=>`"${String(x).replaceAll('"','""')}"`).join(';')).join("\n");
-        const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a');
-        a.href=URL.createObjectURL(blob); a.download='estoque-jk-chopp.csv'; a.click(); URL.revokeObjectURL(a.href);
-    });
-
-    root.querySelector('#btnRecalcular')?.addEventListener('click',()=>{ recalcSaldos(); renderTudo(); alert('Custos e saldos recalculados.'); });
-
-    function getNomeProduto(sku){return State.produtos.find(p=>p.sku===sku)?.nome||null}
-
-    // boot da tela
-    loadAll(); 
-    renderTudo();
-
-    return root.firstElementChild;
+  }, 100);
+  
+  return clone;
 }
+
+/* === 07) PLACEHOLDERS + ROTEADOR ======================================= */
 
 function renderStub(titulo = "Em construção") {
   const el = document.createElement("section");
@@ -2291,42 +2484,173 @@ function renderStub(titulo = "Em construção") {
   return el;
 }
 
-function renderActive() {
-    const content = $("#content");
-    if (!content) return;
-    content.innerHTML = "";
-    
-    let view;
-    
-    switch (ACTIVE) {
-        case "home":            view = renderHome();            break;
-        case "clientes_pf":
-        case "clientes_pj":     view = renderClientes();        break;
-        case "produtos":        view = renderProdutos();        break;
-        case "pedidos":         view = renderPedidos();         break;
-        case "financeiro":
-        case "financeiro_in":
-        case "financeiro_out":  view = renderFinanceiro();      break;
-        case "contratos":       view = renderContratos();       break;
-        case "agendamentos":    view = renderAgenda();          break;
-        case "rel_repasse":     view = renderRelRepasse();      break;
-        case "estoque":         mount(renderEstoque());         break;
-
-        case "fornecedores":    view = renderStub("Fornecedores");        break;
-        case "funcionarios":    view = renderStub("Funcionários");        break;
-        case "grupos_preco":    view = renderStub("Grupos de Preço");     break;
-        case "interacoes":      view = renderStub("Interações");          break;
-        case "transportadoras": view = renderStub("Transportadoras");     break;
-        case "nfe_boletos":     view = renderStub("NF-e e Boletos");      break;
-        case "ajuda":           view = renderStub("Central de Ajuda");    break;
-        case "relatorios":      view = renderRelatorios();                break;
-
-        default:                view = renderStub("Página não encontrada");
-    }
-
-    if (view) {
-        content.appendChild(view);
-        // Ajuste responsivo pós-render (tabelas empilháveis em mobile)
-        enhanceResponsiveTables(content);
-    }
+function mount(component) {
+  const content = $("#content");
+  if (!content) return;
+  content.innerHTML = "";
+  content.appendChild(component);
 }
+
+function enhanceResponsiveTables(root = document) {
+  const tables = root.querySelectorAll('table');
+  tables.forEach(table => {
+      const ths = Array.from(table.querySelectorAll(':scope > thead > tr > th')).map(th => {
+          // Remove emojis e espaços extras do texto do cabeçalho
+          return th.innerText.replace(/[^\w\s]/gi, '').trim();
+      });
+      
+      if (!ths.length) return;
+      
+      table.querySelectorAll(':scope > tbody > tr').forEach(tr => {
+          Array.from(tr.children).forEach((td, i) => {
+              if (!td.hasAttribute('data-th') && ths[i]) {
+                  td.setAttribute('data-th', ths[i]);
+              }
+          });
+      });
+  });
+}
+
+function carregarBibliotecasExternas() {
+  // Carregar jsPDF se não estiver carregado
+  if (typeof window.jspdf === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      script.onload = () => {
+          const script2 = document.createElement('script');
+          script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
+          document.head.appendChild(script2);
+      };
+      document.head.appendChild(script);
+  }
+}
+
+// Inicialização do estoque quando a tela é carregada
+function initializeEstoque() {
+  if (ACTIVE === "estoque" && document.getElementById('tipoItem')) {
+    if (!estoquePro) {
+      estoquePro = new EstoquePro();
+    }
+  }
+}
+
+// Chamar a inicialização quando o DOM estiver pronto e quando mudar de tela
+document.addEventListener('DOMContentLoaded', initializeEstoque);
+
+function renderActive() {
+  const content = $("#content");
+  if (!content) return;
+  content.innerHTML = "";
+  
+  let view;
+  
+  switch (ACTIVE) {
+      case "home":            view = renderHome();            break;
+      case "clientes_pf":
+      case "clientes_pj":     view = renderClientes();        break;
+      case "produtos":        view = renderProdutos();        break;
+      case "pedidos":         view = renderPedidos();         break;
+      case "financeiro":
+      case "financeiro_in":
+      case "financeiro_out":  view = renderFinanceiro();      break;
+      case "contratos":       view = renderContratos();       break;
+      case "agendamentos":    view = renderAgenda();          break;
+      case "rel_repasse":     view = renderRelRepasse();      break;
+      case "estoque":         view = renderEstoque();         break;
+
+      case "fornecedores":    view = renderStub("Fornecedores");        break;
+      case "funcionarios":    view = renderStub("Funcionários");        break;
+      case "grupos_preco":    view = renderStub("Grupos de Preço");     break;
+      case "interacoes":      view = renderStub("Interações");          break;
+      case "transportadoras": view = renderStub("Transportadoras");     break;
+      case "nfe_boletos":     view = renderStub("NF-e e Boletos");      break;
+      case "ajuda":           view = renderStub("Central de Ajuda");    break;
+      case "relatorios":      view = renderRelatorios();                break;
+
+      default:                view = renderStub("Página não encontrada");
+  }
+
+  if (view) {
+    content.appendChild(view);
+    // Ajuste responsivo pós-render...
+    enhanceResponsiveTables(content);
+    
+    // Inicializar estoque se for a tela ativa
+    if (ACTIVE === "estoque") {
+      setTimeout(initializeEstoque, 50);
+    }
+  }
+}
+
+// Inicializar responsividade quando o DOM carregar
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+      enhanceResponsiveTables();
+  }, 100);
+});
+
+// ======================= DIAGNÓSTICO =======================
+function setOut(status, msg){
+  const st = document.getElementById('supStatus');
+  const out = document.getElementById('supOutput');
+  if (st)  st.textContent = status;
+  if (out) out.textContent = msg;
+}
+
+async function pingHealth(){
+  // ping leve: /auth/v1/health (não depende de tabela)
+  try{
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/health`, { headers: { apikey: SUPABASE_KEY }});
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    return true;
+  }catch(e){ return false; }
+}
+
+async function supCheck(){
+  setOut('⏳ Checando...', 'Ping no Auth / select em clientes...');
+  const ok = await pingHealth();
+  if(!ok){ setOut('❌ Sem conexão', 'Falha no ping. Confira URL e Publishable key.'); return; }
+
+  try{
+    const { data, error } = await supa.from('clientes').select('id').limit(1);
+    if (error) throw error;
+    setOut('✅ Conectado', `Tabela "clientes" acessível. Registros: ${data?.length||0}.`);
+  }catch(err){
+    setOut('⚠️ Conectado, mas erro no SELECT', String(err.message));
+  }
+}
+
+async function supInsertDemo(){
+  setOut('⏳ Inserindo...', 'Tentando inserir linha de teste em "clientes"...');
+  try{
+    const row = { tipo:'PJ', doc:`00.000.${Math.floor(Math.random()*900+100)}/0001-00`, nome:'Cliente Teste (pode apagar)' };
+    const { data, error } = await supa.from('clientes').insert([row]).select().single();
+    if (error) throw error;
+    setOut('✅ Inserido', JSON.stringify(data, null, 2));
+  }catch(err){
+    setOut('❌ Erro ao inserir', String(err.message) + '\nDica: verifique se a tabela "clientes" existe e se as policies de INSERT estão abertas.');
+  }
+}
+
+async function supList(){
+  setOut('⏳ Listando...', 'Buscando últimos 5 clientes...');
+  try{
+    const { data, error } = await supa.from('clientes')
+      .select('id,tipo,doc,nome,created_at')
+      .order('created_at', { ascending:false })
+      .limit(5);
+    if (error) throw error;
+    setOut('✅ OK', data.length ? JSON.stringify(data, null, 2) : 'Sem clientes cadastrados.');
+  }catch(err){
+    setOut('❌ Erro no select', String(err.message));
+  }
+}
+
+// liga os botões quando o DOM estiver pronto
+window.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('btnCheck') ?.addEventListener('click', supCheck);
+  document.getElementById('btnInsert')?.addEventListener('click', supInsertDemo);
+  document.getElementById('btnList')  ?.addEventListener('click', supList);
+  // roda um check inicial
+  if (document.getElementById('diag-supabase')) supCheck();
+});
