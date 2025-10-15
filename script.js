@@ -13,7 +13,7 @@
    08) Boot
    ========================================================================== */
 // === Conexão com o Supabase ===
-const SUPABASE_URL = "hhttps://vqklluhzbxngsjpopzxw.supabase.co";     // <- sua Project URL
+const SUPABASE_URL = "https://vqklluhzbxngsjpopzxw.supabase.co";     // <- sua Project URL
 const SUPABASE_KEY = "sb_publishable_gG5EAcSXOWk9aPHX1fxxcg_Sm_TCwMa";  // <- sua Publishable key
 
 if (!window.supabase) {
