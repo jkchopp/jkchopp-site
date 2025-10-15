@@ -2461,14 +2461,14 @@ function renderEstoque() {
   
   const clone = tpl.content.cloneNode(true);
   
-  // Inicializar o sistema de estoque APÓS o template ser adicionado ao DOM
+  // Inicialização básica sem dependências complexas
   setTimeout(() => {
-    if (!estoquePro) {
-      estoquePro = new EstoquePro();
-    } else {
-      // Re-conectar event listeners se já existir
-      estoquePro.setupEventListeners();
-      estoquePro.updateAllDisplays();
+    const form = document.getElementById('movimentacaoForm');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert('Sistema de estoque - Em desenvolvimento');
+      });
     }
   }, 100);
   
