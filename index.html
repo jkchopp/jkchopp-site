@@ -17,885 +17,387 @@
             <div class="logo">JK</div>
             <div class="title">
               <h1>JK CHOPP • Sistema Interno</h1>
-              <small>Gestão de Cadastros, Produtos, Pedidos, Financeiro, Relatórios, Contratos e Agendamentos</small>
+              <small>Gestão Completa de Clientes, Pedidos, Estoque e Financeiro</small>
             </div>
           </div>
         </div>
 
         <div class="row top-actions">
           <button class="btn" id="btnTheme" title="Alternar tema">🌓 Tema</button>
-          <button class="btn" id="btnExport" title="Exportar backup (JSON)">⬇️ Exportar</button>
-          <label class="btn" for="importFile" title="Importar backup (JSON)">⬆️ Importar</label>
+          <button class="btn" id="btnExport" title="Exportar backup">⬇️ Exportar</button>
+          <label class="btn" for="importFile" title="Importar backup">⬆️ Importar</label>
           <input id="importFile" type="file" accept="application/json" class="hidden">
-          <button class="btn" id="btnReset" title="Zerar base (local)">🗑️ Zerar</button>
-          <button class="btn" id="btnPerfil" title="Perfil do usuário">👤 Perfil</button>
+          <button class="btn" id="btnReset" title="Zerar base">🗑️ Zerar</button>
+          <button class="btn" id="btnPerfil" title="Perfil">👤 Perfil</button>
         </div>
-      </div>
-
-      <div class="wrap">
-        <nav class="tabs" id="mainTabs"></nav>
       </div>
     </header>
 
     <main class="wrap">
-      <section id="content"></section>
+      <section id="content">
+        <!-- Conteúdo dinâmico será injetado aqui via JavaScript -->
+      </section>
     </main>
 
-    <footer class="wrap">
-      <div class="footer">
-        <span>v1.0 • Persistência localStorage • Ordenação • Busca • CRUD • Contrato automático p/ <span class="hl">Ponto Fixo</span></span>
-        <span>Feito com ❤️ para JK CHOPP</span>
+    <footer>
+      <div class="wrap footer">
+        <span>v2.0 • Sistema Completo • Persistência LocalStorage • 100% Funcional</span>
+        <span>Desenvolvido para JK CHOPP 🍺</span>
       </div>
     </footer>
   </div>
 
-  <!-- =========================
-       TODOS OS TEMPLATES DO SISTEMA
-       ========================= -->
-
-  <!-- 🏠 INÍCIO (HOME) -->
-  <template id="tpl-home">
-    <div class="grid-home">
-      <section class="card card-stats">
-        <h3>Pedidos — Visão Geral</h3>
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-value" id="homePedidosAbertos">0</span>
-            <span class="stat-label">Abertos / Aguardando pagamento</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value" id="homePedidosConcluidos">0</span>
-            <span class="stat-label">Concluídos</span>
-          </div>
+  <!-- MENU LATERAL -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="logo">JK</div>
+        <div class="title">
+          <h2>JK CHOPP</h2>
+          <small>Sistema Interno</small>
         </div>
-        <div class="row">
-          <button class="btn success" id="goNovoPedido">➕ Novo Pedido</button>
-          <button class="btn" id="goPedidos">📋 Ver todos</button>
-        </div>
-      </section>
-
-      <section class="card">
-        <h3>Agenda — Próximos compromissos</h3>
-        <div class="toolbar">
-          <div class="row">
-            <input id="home_ag_titulo" class="input" placeholder="Título" />
-            <input id="home_ag_data" class="input" type="date" />
-            <input id="home_ag_hora" class="input" type="time" />
-            <button class="btn success" id="homeAddAgenda">➕ Adicionar</button>
-            <button class="btn" id="goAgenda">📅 Abrir Agenda</button>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="table-compact">
-            <thead><tr><th>Data</th><th>Hora</th><th>Título</th><th></th></tr></thead>
-            <tbody id="home_ag_tbody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Cards adicionais para métricas -->
-      <section class="card">
-        <h3>📊 Resumo Financeiro</h3>
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-value" id="homeReceber">R$ 0,00</span>
-            <span class="stat-label">A Receber</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value" id="homePagar">R$ 0,00</span>
-            <span class="stat-label">A Pagar</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="card">
-        <h3>👥 Clientes Ativos</h3>
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-value" id="homeClientesAtivos">0</span>
-            <span class="stat-label">Clientes Ativos</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value" id="homePontosFixos">0</span>
-            <span class="stat-label">Pontos Fixos</span>
-          </div>
-        </div>
-      </section>
+      </div>
+      <button class="btn ghost icon" id="btnCloseMenu" aria-label="Fechar menu">✕</button>
     </div>
-  </template>
 
-  <!-- 👥 CLIENTES -->
-  <template id="tpl-clientes">
-    <div class="grid">
-      <aside class="card">
-        <h3>Cadastro de Cliente</h3>
-        <p class="muted">PF/PJ com máscara dinâmica (CPF/CNPJ), marcação de Ponto Fixo e endereço.</p>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <!-- Menu será preenchido via JavaScript -->
+    </nav>
 
-        <div class="stack">
-          <select id="cli_tipo">
-            <option value="PF">PF</option>
-            <option value="PJ">PJ</option>
-          </select>
-
-          <input class="input" id="cli_nome" placeholder="Nome/Razão Social" />
-          <input class="input" id="cli_doc" placeholder="CPF/CNPJ" />
-          <input class="input" id="cli_fantasia" placeholder="Fantasia (opcional)" />
-          <input class="input" id="cli_contato" placeholder="Contato (tel/whatsapp)" />
-          <input class="input" id="cli_end" placeholder="Endereço" />
-
-          <div class="flex">
-            <label class="pill"><input type="checkbox" id="cli_fixo" /> Ponto Fixo</label>
-            <label class="pill"><input type="checkbox" id="cli_ativo" checked /> Ativo</label>
-            <label class="pill"><input type="checkbox" id="cli_delivery" /> Delivery</label>
-          </div>
-
-          <div class="flex">
-            <button class="btn success" id="btnSalvarCliente">💾 Salvar</button>
-            <button class="btn" id="btnLimparCliente">🧹 Limpar</button>
-          </div>
-
-          <input type="hidden" id="cli_id" />
-          <small class="muted">Ao marcar <b>Ponto Fixo</b>, um contrato padrão poderá ser gerado em <em>Contratos</em>.</small>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">👤</div>
+        <div class="user-details">
+          <strong id="userName">Administrador</strong>
+          <small id="userEmail">admin@jkchopp.com</small>
         </div>
-      </aside>
+      </div>
+      <button class="btn ghost" id="btnLogout">🚪 Sair</button>
+    </div>
+  </aside>
 
-      <section class="card">
-        <div class="toolbar">
+  <!-- MODAL NOVO PEDIDO -->
+  <dialog id="modalNovoPedido">
+    <div class="modal-header">
+      <h2 id="modalPedidoTitle">Novo Pedido</h2>
+      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="stack">
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <select id="ped_cliente" class="input" required>
+            <option value="">Selecione um cliente</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Adicionar Item</label>
           <div class="row">
-            <input class="input" id="buscaClientes" placeholder="Buscar clientes..." />
-            <span class="muted" id="infoClientes"></span>
+            <select id="ped_produto" class="input">
+              <option value="">Selecione um produto</option>
+            </select>
+            <input id="ped_quantidade" type="number" class="input" placeholder="Qtd" min="1" value="1" style="max-width: 100px;" />
+            <button class="btn" type="button" id="btnAddItem">➕ Adicionar</button>
           </div>
         </div>
 
         <div class="table-wrap">
-          <table id="tblClientes">
+          <table id="tblItensPedido">
             <thead>
               <tr>
-                <th data-k="nome">Nome</th>
-                <th data-k="tipo">Tipo</th>
-                <th data-k="doc">Documento</th>
-                <th data-k="contato">Contato</th>
-                <th data-k="fixo">Ponto Fixo</th>
-                <th>Ações</th>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Valor Unit.</th>
+                <th>Total</th>
+                <th width="60">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" class="text-right"><strong>Total do Pedido:</strong></td>
+                <td><strong id="ped_total">R$ 0,00</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <textarea id="ped_observacoes" class="input" rows="3" placeholder="Observações internas sobre o pedido..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" id="btnCancelarPedido">Cancelar</button>
+      <button class="btn success" id="btnFinalizarPedido">💾 Salvar Pedido</button>
+    </div>
+  </dialog>
+
+  <!-- MODAL DETALHES DO PEDIDO -->
+  <dialog id="modalDetalhesPedido">
+    <div class="modal-header">
+      <h2>Detalhes do Pedido <span id="ped_det_codigo"></span></h2>
+      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="stack">
+        <div class="info-grid">
+          <div><strong>Cliente:</strong> <span id="ped_det_cliente"></span></div>
+          <div><strong>Status:</strong> <span id="ped_det_status"></span></div>
+          <div><strong>Data:</strong> <span id="ped_det_data"></span></div>
+          <div><strong>Total:</strong> <span id="ped_det_total"></span></div>
+        </div>
+
+        <h4>Itens do Pedido</h4>
+        <div class="table-wrap">
+          <table id="tblItensPedidoDet">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Quantidade</th>
+                <th>Valor Unit.</th>
+                <th>Total</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
-      </section>
-    </div>
-  </template>
 
-  <!-- 📦 PRODUTOS -->
-  <template id="tpl-produtos">
-    <div class="grid">
-      <aside class="card">
-        <h3>Cadastro de Produto</h3>
-        <p class="muted">Chopeiras, Barris, Cilindros CO₂ e demais itens.</p>
-
-        <div class="stack">
-          <select id="prd_tipo">
-            <option value="Chopeira">Chopeira</option>
-            <option value="Barril">Barril</option>
-            <option value="Cilindro CO2">Cilindro CO₂</option>
-            <option value="Produto">Produto</option>
-            <option value="Outro">Outro</option>
-          </select>
-          <input class="input" id="prd_nome" placeholder="Nome do Produto" />
-          <input class="input" id="prd_codigo" placeholder="Código Interno" />
-          <input class="input" id="prd_preco" placeholder="Preço (R$)" inputmode="decimal" />
-          <label class="pill"><input type="checkbox" id="prd_estoque_ctrl" checked /> Controlar estoque</label>
-
-          <div class="flex">
-            <button class="btn success" id="btnSalvarProduto">💾 Salvar</button>
-            <button class="btn" id="btnLimparProduto">🧹 Limpar</button>
-          </div>
-
-          <input type="hidden" id="prd_id" />
-        </div>
-      </aside>
-
-      <section class="card">
-        <div class="toolbar">
-          <input class="input" id="buscaProdutos" placeholder="Buscar produtos..." />
-          <span class="right muted" id="infoProdutos"></span>
-        </div>
-
-        <table id="tblProdutos">
-          <thead>
-            <tr>
-              <th data-k="nome">Nome</th>
-              <th data-k="tipo">Tipo</th>
-              <th data-k="codigo">Código</th>
-              <th data-k="preco">Preço</th>
-              <th data-k="estoque">Estoque</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
-    </div>
-  </template>
-
-  <!-- 📋 PEDIDOS -->
-  <template id="tpl-pedidos">
-    <div class="card">
-      <div class="toolbar">
-        <div class="row">
-          <button class="btn success" id="btnNovoPedido">➕ Novo Pedido</button>
-          <select id="filtroStatus" class="input">
-            <option value="">Todos</option>
-            <option>Aberto</option>
-            <option>Em Atendimento</option>
-            <option>Concluído</option>
-            <option>Recebido</option>
+        <div class="form-group">
+          <label class="form-label">Alterar Status</label>
+          <select id="ped_det_status_edit" class="input">
+            <option value="aberto">Aberto</option>
+            <option value="andamento">Em Andamento</option>
+            <option value="concluido">Concluído</option>
+            <option value="cancelado">Cancelado</option>
           </select>
         </div>
-        <input class="input" id="buscaPedidos" placeholder="Buscar por cliente ou código..." />
-      </div>
 
-      <table id="tblPedidos">
-        <thead>
-          <tr>
-            <th data-k="codigo">#</th>
-            <th data-k="cliente">Cliente</th>
-            <th data-k="itens">Itens</th>
-            <th data-k="total">Total</th>
-            <th data-k="status">Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-
-      <div class="empty hidden" id="vazioPedidos">Nenhum pedido por aqui...</div>
-    </div>
-  </template>
-
-  <!-- 📄 CONTRATOS -->
-  <template id="tpl-contratos">
-    <div class="card">
-      <div class="toolbar">
-        <button class="btn" id="btnGerarContratoSelecionado">📄 Gerar contrato do cliente (Ponto Fixo)</button>
-        <span class="muted">Use o modelo padrão embutido (você pode substituir quando enviar o seu).</span>
-      </div>
-
-      <table id="tblContratos">
-        <thead>
-          <tr>
-            <th data-k="cliente">Cliente</th>
-            <th data-k="status">Status</th>
-            <th data-k="data">Data</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </template>
-
-  <!-- 💰 FINANCEIRO -->
-  <template id="tpl-financeiro">
-    <div class="grid">
-      <aside class="card">
-        <h3>Título (Boleto/Nota)</h3>
-        <div class="stack">
-          <input class="input" id="fin_doc" placeholder="Documento/NSU" />
-          <input class="input" id="fin_cliente" placeholder="Cliente" />
-          <input class="input" id="fin_valor" placeholder="Valor (R$)" inputmode="decimal" />
-          <select id="fin_tipo" class="input">
-            <option>Receber</option>
-            <option>Pagar</option>
-          </select>
-          <input class="input" id="fin_venc" type="date" />
-
-          <div class="flex">
-            <button class="btn success" id="btnSalvarTitulo">💾 Salvar</button>
-            <button class="btn" id="btnLimparTitulo">🧹 Limpar</button>
-          </div>
-
-          <input type="hidden" id="fin_id" />
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <textarea id="ped_det_observacoes" class="input" rows="2" readonly></textarea>
         </div>
-      </aside>
-
-      <section class="card">
-        <div class="toolbar">
-          <div class="row">
-            <select id="filtroTipoFin" class="input">
-              <option value="">Todos</option>
-              <option>Receber</option>
-              <option>Pagar</option>
-            </select>
-            <input class="input" id="buscaFinanceiro" placeholder="Buscar..." />
-          </div>
-          <div class="row">
-            <span class="pill">Saldo: <b id="finSaldo">R$ 0,00</b></span>
-          </div>
-        </div>
-
-        <table id="tblFinanceiro">
-          <thead>
-            <tr>
-              <th data-k="doc">Doc</th>
-              <th data-k="cliente">Cliente</th>
-              <th data-k="valor">Valor</th>
-              <th data-k="tipo">Tipo</th>
-              <th data-k="venc">Vencimento</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
-    </div>
-  </template>
-
-  <!-- 📅 AGENDAMENTOS -->
-  <template id="tpl-agendamentos">
-    <div class="stack agenda-grid">
-      <section class="card">
-        <div class="toolbar">
-          <div class="row">
-            <input id="ag_titulo" class="input" placeholder="Título" />
-            <input id="ag_data" class="input" type="date" />
-            <input id="ag_hora" class="input" type="time" />
-            <button class="btn success" id="btnAddAgenda">➕ Adicionar</button>
-          </div>
-          <input id="buscaAgenda" class="input" placeholder="Buscar..." />
-        </div>
-
-        <table id="tblAgenda">
-          <thead>
-            <tr>
-              <th data-k="data">Data</th>
-              <th data-k="hora">Hora</th>
-              <th data-k="titulo">Título</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
-
-      <aside class="card calendar-wrap">
-        <h3>Calendário</h3>
-        <div class="cal-header">
-          <button class="btn ghost icon" id="calPrev" aria-label="Mês anterior">‹</button>
-          <div class="cal-title"><span id="calTitle">setembro de 2025</span></div>
-          <button class="btn ghost icon" id="calNext" aria-label="Próximo mês">›</button>
-          <button class="btn ghost pill" id="calToday">Hoje</button>
-        </div>
-
-        <div class="calendar" id="calendar">
-          <div class="cal-weekdays">
-            <span>Seg</span><span>Ter</span><span>Qua</span>
-            <span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
-          </div>
-          <div class="cal-grid" id="calGrid"></div>
-        </div>
-      </aside>
-    </div>
-  </template>
-
-  <!-- 📊 RELATÓRIOS -->
-  <template id="tpl-relatorios">
-    <div class="card">
-      <div class="toolbar">
-        <select id="rel_tipo" class="input">
-          <option value="clientes">Clientes</option>
-          <option value="produtos">Produtos</option>
-          <option value="pedidos">Pedidos</option>
-          <option value="financeiro">Financeiro</option>
-          <option value="estoque">Estoque</option>
-        </select>
-
-        <button class="btn" id="btnGerarRelatorio">📊 Gerar Relatório</button>
-        <button class="btn" id="btnCSV">🧾 Exportar CSV</button>
-      </div>
-
-      <div id="areaRelatorio" class="stack"></div>
-    </div>
-  </template>
-
-  <!-- 💸 RELATÓRIO DE REPASSE -->
-  <template id="tpl-rel-repasse">
-    <section class="relatorio-repasse stack">
-      <div class="repasse-header">
-        <div class="repasse-title">
-          <h2>📊 Relatório de Repasse Financeiro</h2>
-          <button class="btn-print" id="repPrint">📄 Baixar PDF</button>
-        </div>
-        <div class="repasse-periodo">
-          <div class="periodo-item">
-            <div class="periodo-label">Período Inicial</div>
-            <input id="rep_dataIni" class="periodo-value" type="date">
-          </div>
-          <div class="periodo-item">
-            <div class="periodo-label">Período Final</div>
-            <input id="rep_dataFim" class="periodo-value" type="date">
-          </div>
-          <div class="periodo-item">
-            <div class="periodo-label">Data de Pagamento</div>
-            <input id="rep_dataPag" class="periodo-value" type="date">
-          </div>
-        </div>
-      </div>
-
-      <div class="repasse-table-container">
-        <div class="repasse-table-header">
-          <h3>💰 Fechamento de Vendas - Período de Duas Semanas</h3>
-          <button class="btn-add" id="repAddCliente">+ Adicionar Linha</button>
-        </div>
-        <div class="table-wrap">
-          <table class="repasse-table">
-            <thead>
-              <tr>
-                <th class="text-left">Cliente</th>
-                <th class="text-left">Marca do Chopp</th>
-                <th class="text-right">Qtde (L)</th>
-                <th class="text-right">Custo p/L</th>
-                <th class="text-right">Barris</th>
-                <th class="text-right">Custo Total</th>
-                <th class="text-right">Valor Venda</th>
-                <th class="text-right">Parte Marcos</th>
-                <th class="text-right">Parte JK</th>
-                <th class="text-center">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="repTblVendas"></tbody>
-            <tfoot>
-              <tr>
-                <td colspan="5" class="text-right"><strong>TOTAIS</strong></td>
-                <td class="text-right"><strong id="repTotCusto">R$ 0,00</strong></td>
-                <td class="text-right"><strong id="repTotVenda">R$ 0,00</strong></td>
-                <td class="text-right"><strong id="repTotM">R$ 0,00</strong></td>
-                <td class="text-right"><strong id="repTotJ">R$ 0,00</strong></td>
-                <td></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      <div class="repasse-table-container">
-        <div class="repasse-table-header">
-          <h3>💸 Despesas do Período</h3>
-          <button class="btn-add" id="repAddDespesa">+ Adicionar Despesa</button>
-        </div>
-        <div class="table-wrap">
-          <table class="repasse-table">
-            <thead>
-              <tr>
-                <th class="text-left">Descrição</th>
-                <th class="text-right">Valor Total</th>
-                <th class="text-left">Observações</th>
-                <th class="text-right">Parte JK</th>
-                <th class="text-right">Parte Marcos</th>
-                <th class="text-center">Pago?</th>
-                <th class="text-center">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="repTblDespesas"></tbody>
-            <tfoot>
-              <tr>
-                <td colspan="1" class="text-right"><strong>TOTAIS</strong></td>
-                <td class="text-right"><strong id="repTotDespVal">R$ 0,00</strong></td>
-                <td></td>
-                <td class="text-right"><strong id="repTotDespJK">R$ 0,00</strong></td>
-                <td class="text-right"><strong id="repTotDespM">R$ 0,00</strong></td>
-                <td colspan="2"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      <div class="repasse-calculos">
-        <div class="calc-card amber">
-          <h4>💼 Marcos</h4>
-          <div class="calc-line">
-            <span>Parte das Vendas</span>
-            <strong id="resParteM">R$ 0,00</strong>
-          </div>
-          <div class="calc-line">
-            <span>− Despesas Marcos</span>
-            <strong id="resDespM">R$ 0,00</strong>
-          </div>
-          <div class="calc-line calc-total">
-            <span>Total a Receber</span>
-            <strong id="resTotalM" class="positive">R$ 0,00</strong>
-          </div>
-        </div>
-        
-        <div class="calc-card sky">
-          <h4>🏢 JK CHOPP</h4>
-          <div class="calc-line">
-            <span>Parte das Vendas</span>
-            <strong id="resParteJ">R$ 0,00</strong>
-          </div>
-          <div class="calc-line">
-            <span>− Despesas JK</span>
-            <strong id="resDespJ">R$ 0,00</strong>
-          </div>
-          <div class="calc-line calc-total">
-            <span>Saldo Final</span>
-            <strong id="resSaldoJ" class="positive">R$ 0,00</strong>
-          </div>
-        </div>
-        
-        <div class="calc-card green">
-          <h4>📈 Resultado Geral</h4>
-          <div class="calc-line">
-            <span>Vendas Brutas</span>
-            <strong id="resVendas">R$ 0,00</strong>
-          </div>
-          <div class="calc-line">
-            <span>− Custos</span>
-            <strong id="resCustos">R$ 0,00</strong>
-          </div>
-          <div class="calc-line">
-            <span>− Despesas</span>
-            <strong id="resDespesas">R$ 0,00</strong>
-          </div>
-          <div class="calc-line calc-total">
-            <span>Lucro Líquido</span>
-            <strong id="resLucro" class="positive">R$ 0,00</strong>
-          </div>
-        </div>
-      </div>
-    </section>
-  </template>
-
-  <!-- 📦 ESTOQUE (ATUALIZADO) -->
-<template id="tpl-estoque">
-  <div class="screen screen--estoque">
-    <!-- MÉTRICAS -->
-    <section class="dashboard-grid">
-      <article class="metric-card">
-        <div class="metric-header">
-          <div class="metric-info">
-            <h3>BARRIS VAZIOS</h3>
-            <div class="metric-value" id="barrisVazios">0</div>
-            <div class="metric-label">unidades disponíveis</div>
-          </div>
-          <div class="metric-icon">🛢️</div>
-        </div>
-      </article>
-
-      <article class="metric-card">
-        <div class="metric-header">
-          <div class="metric-info">
-            <h3>BARRIS CHEIOS</h3>
-            <div class="metric-value" id="barrisCheios">0</div>
-            <div class="metric-label">unidades em estoque</div>
-          </div>
-          <div class="metric-icon">🍺</div>
-        </div>
-      </article>
-
-      <article class="metric-card">
-        <div class="metric-header">
-          <div class="metric-info">
-            <h3>CHOPEIRAS</h3>
-            <div class="metric-value" id="chopeiras">0</div>
-            <div class="metric-label">equipamentos ativos</div>
-          </div>
-          <div class="metric-icon">🧊</div>
-        </div>
-      </article>
-
-      <article class="metric-card">
-        <div class="metric-header">
-          <div class="metric-info">
-            <h3>CILINDROS CO2</h3>
-            <div class="metric-value" id="cilindrosCO2">0</div>
-            <div class="metric-label">cilindros disponíveis</div>
-          </div>
-          <div class="metric-icon">⚡</div>
-        </div>
-      </article>
-    </section>
-
-    <!-- CONTEÚDO -->
-    <section class="content-grid">
-      <!-- FORM À ESQUERDA -->
-      <article class="card">
-        <h3>Nova Movimentação</h3>
-        <p class="muted">Registre entradas, saídas e transferências</p>
-
-        <form id="movimentacaoForm" class="stack" style="margin-top:12px">
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label" for="tipoItem">Tipo de Item</label>
-              <select id="tipoItem" class="form-select" required>
-                <option value="">Selecione o tipo</option>
-                <option value="barril">Barril</option>
-                <option value="chopeira">Chopeira</option>
-                <option value="cilindro">Cilindro CO2</option>
-              </select>
-            </div>
-
-            <!-- aparece somente quando Tipo de Item = Barril -->
-            <div class="form-group" id="grpEstadoBarril" hidden>
-              <label class="form-label" for="estadoBarril">Estado do Barril</label>
-              <select id="estadoBarril" class="form-select">
-                <option value="cheio">Cheio</option>
-                <option value="vazio">Vazio</option>
-              </select>
-            </div>
-
-            <div class="form-group" id="grpLitragemBarril" hidden>
-              <label class="form-label" for="litragemBarril">Litragem</label>
-              <select id="litragemBarril" class="form-select">
-                <option value="15">15 L</option>
-                <option value="20">20 L</option>
-                <option value="30">30 L</option>
-                <option value="50">50 L</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="tipoMovimento">Tipo de Movimento</label>
-              <select id="tipoMovimento" class="form-select" required>
-                <option value="">Selecione o movimento</option>
-                <option value="entrada">Entrada</option>
-                <option value="saida">Saída</option>
-                <option value="recolha">Recolha</option>
-                <option value="devolucao">Devolução</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="quantidade">Quantidade</label>
-              <input id="quantidade" type="number" class="form-input" min="1" value="1" required />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="cliente">Cliente/Observação</label>
-              <input id="cliente" type="text" class="form-input" placeholder="Nome do cliente ou observação" />
-            </div>
-          </div>
-
-          <div class="flex">
-            <button type="submit" class="btn primary" id="btnRegistrar">Registrar Movimentação</button>
-            <button type="button" class="btn" id="btnRelatorio">📄 Gerar Relatório</button>
-          </div>
-        </form>
-      </article>
-
-      <!-- RESUMO À DIREITA -->
-      <article class="card">
-        <h3>Resumo Rápido</h3>
-        <p class="muted">Estatísticas em tempo real</p>
-
-        <div class="stats-grid" style="margin-top:12px">
-          <div class="stat-item">
-            <span class="stat-label">Movimentações hoje</span>
-            <span class="stat-value" id="movimentacoesHoje">0</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Entradas hoje</span>
-            <span class="stat-value" id="entradasHoje">0</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Saídas hoje</span>
-            <span class="stat-value" id="saidasHoje">0</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Total no sistema</span>
-            <span class="stat-value" id="totalItens">0</span>
-          </div>
-        </div>
-      </article>
-    </section>
-
-    <!-- HISTÓRICO -->
-    <section class="card history-panel">
-      <h3>Histórico de Movimentações</h3>
-      <p class="muted">Acompanhe todas as operações realizadas</p>
-
-      <div class="history-controls">
-        <select id="filtroTipo" class="form-select" style="max-width:260px">
-          <option value="">Todos os movimentos</option>
-          <option value="entrada">Entradas</option>
-          <option value="saida">Saídas</option>
-          <option value="recolha">Recolhas</option>
-          <option value="devolucao">Devoluções</option>
-        </select>
-
-        <select id="filtroItem" class="form-select" style="max-width:240px">
-          <option value="">Todos os itens</option>
-          <option value="barril">Barris</option>
-          <option value="chopeira">Chopeiras</option>
-          <option value="cilindro">Cilindros CO2</option>
-        </select>
-
-        <button class="btn" id="btnLimpar">🗑️ Limpar Histórico</button>
-      </div>
-
-      <div class="history-list" id="historicoContainer">
-        <div class="empty">Nenhuma movimentação registrada ainda</div>
-      </div>
-
-      <div class="pagination" id="paginationContainer" hidden>
-        <button class="btn" id="prevBtn">← Anterior</button>
-        <span class="pagination-info" id="pageInfo">Página 1 de 1</span>
-        <button class="btn" id="nextBtn">Próxima →</button>
-      </div>
-    </section>
-  </div>
-</template>
-
-  <!-- 🛒 FORNECEDORES -->
-  <template id="tpl-fornecedores">
-    <div class="card">
-      <h3>🏢 Fornecedores</h3>
-      <p class="muted">Cadastro de fornecedores e parceiros comerciais.</p>
-      <div class="toolbar">
-        <button class="btn success">➕ Novo Fornecedor</button>
-        <input class="input" placeholder="Buscar fornecedores..." />
-      </div>
-      <div class="empty">
-        <p>🚧 Módulo em desenvolvimento</p>
-        <small>Cadastro completo de fornecedores em breve</small>
       </div>
     </div>
-  </template>
 
-  <!-- 🧑‍💼 FUNCIONÁRIOS -->
-  <template id="tpl-funcionarios">
-    <div class="card">
-      <h3>👥 Funcionários</h3>
-      <p class="muted">Gestão de equipe e colaboradores.</p>
-      <div class="toolbar">
-        <button class="btn success">➕ Novo Funcionário</button>
-        <input class="input" placeholder="Buscar funcionários..." />
-      </div>
-      <div class="empty">
-        <p>🚧 Módulo em desenvolvimento</p>
-        <small>Controle completo de funcionários em breve</small>
-      </div>
+    <div class="modal-footer">
+      <button class="btn danger" id="btnExcluirPedido">🗑️ Excluir Pedido</button>
+      <button class="btn" id="btnFecharDetalhes">Fechar</button>
+      <button class="btn success" id="btnSalvarStatus">💾 Salvar Status</button>
     </div>
-  </template>
+  </dialog>
 
-  <!-- 👥 GRUPOS DE PREÇO -->
-  <template id="tpl-grupos-preco">
-    <div class="card">
-      <h3>💰 Grupos de Preço</h3>
-      <p class="muted">Configuração de tabelas de preços por segmento.</p>
-      <div class="toolbar">
-        <button class="btn success">➕ Novo Grupo</button>
-        <input class="input" placeholder="Buscar grupos..." />
-      </div>
-      <div class="empty">
-        <p>🚧 Módulo em desenvolvimento</p>
-        <small>Sistema de grupos de preço em breve</small>
-      </div>
+  <!-- MODAL PERFIL -->
+  <dialog id="modalPerfil">
+    <div class="modal-header">
+      <h2>👤 Perfil do Usuário</h2>
+      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
     </div>
-  </template>
 
-  <!-- 💬 INTERAÇÕES -->
-  <template id="tpl-interacoes">
-    <div class="card">
-      <h3>💬 Interações</h3>
-      <p class="muted">Histórico de contatos e interações com clientes.</p>
-      <div class="toolbar">
-        <button class="btn success">➕ Nova Interação</button>
-        <input class="input" placeholder="Buscar interações..." />
-      </div>
-      <div class="empty">
-        <p>🚧 Módulo em desenvolvimento</p>
-        <small>CRM completo em breve</small>
-      </div>
-    </div>
-  </template>
-
-  <!-- 🚚 TRANSPORTADORAS -->
-  <template id="tpl-transportadoras">
-    <div class="card">
-      <h3>🚚 Transportadoras</h3>
-      <p class="muted">Cadastro e gestão de empresas de transporte.</p>
-      <div class="toolbar">
-        <button class="btn success">➕ Nova Transportadora</button>
-        <input class="input" placeholder="Buscar transportadoras..." />
-      </div>
-      <div class="empty">
-        <p>🚧 Módulo em desenvolvimento</p>
-        <small>Controle de fretes e transportadoras em breve</small>
-      </div>
-    </div>
-  </template>
-
-  <!-- 🧾 NF-E E BOLETOS -->
-  <template id="tpl-nfe-boletos">
-    <div class="card">
-      <h3>🧾 NF-e e Boletos</h3>
-      <p class="muted">Gestão de documentos fiscais e cobrança.</p>
-      <div class="toolbar">
-        <button class="btn success">➕ Novo Documento</button>
-        <input class="input" placeholder="Buscar documentos..." />
-      </div>
-      <div class="empty">
-        <p>🚧 Módulo em desenvolvimento</p>
-        <small>Integração fiscal completa em breve</small>
-      </div>
-    </div>
-  </template>
-
-  <!-- ❓ AJUDA -->
-  <template id="tpl-ajuda">
-    <div class="card">
-      <h3>❓ Central de Ajuda</h3>
-      <p class="muted">Tutoriais e suporte do sistema.</p>
+    <div class="modal-body">
       <div class="stack">
-        <div class="card">
-          <h4>📖 Como usar o sistema</h4>
-          <p>Guia completo de utilização das funcionalidades.</p>
-          <button class="btn">Abrir Tutorial</button>
+        <div class="form-group">
+          <label class="form-label">Nome Completo</label>
+          <input class="input" id="perf_nome" placeholder="Seu nome completo" />
         </div>
-        <div class="card">
-          <h4>🐛 Reportar Problema</h4>
-          <p>Encontrou um erro? Nos avise!</p>
-          <button class="btn">Reportar Bug</button>
+        
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input class="input" id="perf_email" type="email" placeholder="seu@email.com" />
         </div>
-        <div class="card">
-          <h4>💡 Sugestões</h4>
-          <p>Tem ideias para melhorar o sistema?</p>
-          <button class="btn">Enviar Sugestão</button>
+        
+        <div class="form-group">
+          <label class="form-label">Telefone/WhatsApp</label>
+          <input class="input" id="perf_telefone" placeholder="(11) 99999-9999" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Nova Senha</label>
+          <input class="input" id="perf_senha" type="password" placeholder="Deixe em branco para manter a atual" />
+          <small class="muted">Mínimo 6 caracteres</small>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Confirmar Senha</label>
+          <input class="input" id="perf_confirmar_senha" type="password" placeholder="Repita a nova senha" />
         </div>
       </div>
     </div>
-  </template>
 
-  <!-- =========================
-    DRAWER (MENU LATERAL) + BACKDROP
-    ========================= -->
-  <div id="backdrop" class="backdrop" aria-hidden="true"></div>
-  <aside id="menuDrawer" class="drawer" aria-hidden="true">
-    <div class="drawer-head">
-      <span class="drawer-title">JK CHOPP</span>
-      <button class="drawer-close" id="btnCloseMenu" title="Fechar">✕</button>
+    <div class="modal-footer">
+      <button class="btn" id="btnFecharPerfil">Fechar</button>
+      <button class="btn success" id="btnSalvarPerfil">💾 Salvar Alterações</button>
     </div>
-    <nav id="menuList"></nav>
-  </aside>
-<!-- DIAGNÓSTICO SUPABASE -->
-<section id="diag-supabase" class="card" style="margin:16px 0">
-  <h2 class="title">Diagnóstico Supabase</h2>
-  <div id="supStatus" style="margin:8px 0;font-weight:600">⏳ Aguardando teste…</div>
-  <div class="row gap" style="margin-bottom:10px">
-    <button id="btnCheck"  class="btn">Checar conexão</button>
-    <button id="btnInsert" class="btn-primary">Inserir cliente de teste</button>
-    <button id="btnList"   class="btn">Listar últimos clientes</button>
-  </div>
-  <pre id="supOutput" style="background:#0f1622;border:1px solid #233044;border-radius:12px;padding:12px;white-space:pre-wrap;overflow:auto;max-height:260px">Saída aparecerá aqui…</pre>
-</section>
+  </dialog>
 
-<!-- Bibliotecas externas -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<!-- 2) SEU SCRIPT -->
-<script src="./script.js"></script>
+  <!-- MODAL CONFIRMAÇÃO -->
+  <dialog id="modalConfirm">
+    <div class="modal-header">
+      <h2>Confirmação</h2>
+      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p id="confirmMessage">Tem certeza que deseja prosseguir com esta ação?</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" id="btnConfirmCancel">Cancelar</button>
+      <button class="btn danger" id="btnConfirmOk">Confirmar</button>
+    </div>
+  </dialog>
+
+  <!-- SCRIPTS -->
+  <script src="env.js"></script>
+  <script src="script.js"></script>
+
+  <style>
+    /* Estilos adicionais para garantir compatibilidade */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -320px;
+      width: 320px;
+      height: 100%;
+      background: var(--panel);
+      border-right: 1px solid var(--bd-soft);
+      transition: left 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .sidebar.open {
+      left: 0;
+    }
+    
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--bd-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .sidebar-nav {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .sidebar-footer {
+      padding: 20px;
+      border-top: 1px solid var(--bd-soft);
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    
+    /* Garantir que os modais funcionem em todos os navegadores */
+    dialog {
+      border: 1px solid var(--bd-soft);
+      border-radius: 16px;
+      padding: 0;
+      background: var(--card);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      min-width: 500px;
+      max-width: 90vw;
+    }
+    
+    dialog::backdrop {
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+    }
+    
+    /* Estados para tags de status */
+    .status-aberto { background: #1e3a8a; color: #dbeafe; }
+    .status-andamento { background: #854d0e; color: #fef3c7; }
+    .status-concluido { background: #166534; color: #dcfce7; }
+    .status-cancelado { background: #991b1b; color: #fecaca; }
+    
+    /* Loading states */
+    .btn:disabled {
+      position: relative;
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    
+    .btn:disabled::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: loading 1.5s infinite;
+    }
+    
+    @keyframes loading {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+    
+    /* Melhorias de responsividade */
+    @media (max-width: 768px) {
+      dialog {
+        min-width: auto;
+        width: 95vw;
+        margin: 2.5vw;
+      }
+      
+      .topbar .left .title h1 {
+        font-size: 16px;
+      }
+      
+      .top-actions {
+        justify-content: center;
+        width: 100%;
+        margin-top: 10px;
+      }
+      
+      .top-actions .btn {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .sidebar {
+        width: 100%;
+        left: -100%;
+      }
+      
+      .brand .title h1 {
+        font-size: 14px;
+      }
+      
+      .brand .title small {
+        font-size: 10px;
+      }
+    }
+  </style>
 </body>
 </html>
