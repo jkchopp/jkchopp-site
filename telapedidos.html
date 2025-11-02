@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Pedidos - Agendamento de Entregas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': {
+                            50: '#f0f4ff',
+                            100: '#e0e9ff',
+                            200: '#c7d6ff',
+                            300: '#a5b8ff',
+                            400: '#8191ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            950: '#1e1b4b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        .custom-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        
+        .dark .custom-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .2s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #4f46e5;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        
+        .dark .slider {
+            background-color: #4b5563;
+        }
+        
+        .dark input:checked + .slider {
+            background-color: #6366f1;
+        }
+        
+
+        
+        .theme-toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .theme-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .theme-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e5e7eb;
+            transition: .2s;
+            border-radius: 26px;
+            border: 2px solid #d1d5db;
+        }
+        
+        .theme-slider:before {
+            position: absolute;
+            content: "☀️";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        
+        input:checked + .theme-slider {
+            background-color: #374151;
+            border-color: #4b5563;
+        }
+        
+        input:checked + .theme-slider:before {
+            transform: translateX(22px);
+            content: "🌙";
+        }
+        
+        .transition-smooth {
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-50 dark:bg-gray-900 font-sans transition-smooth">
+    <div class="min-h-full p-4 md:p-6 lg:p-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6 p-6 transition-smooth">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Novo Pedido de Venda</h1>
+                        <p class="text-gray-600 dark:text-gray-300 mt-1">Gerencie pedidos e agendamentos de entrega</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Modo Escuro</span>
+                            <label class="theme-toggle">
+                                <input type="checkbox" id="darkModeToggle">
+                                <span class="theme-slider"></span>
+                            </label>
+                        </div>
+                        <span class="px-3 py-1 bg-navy-100 dark:bg-navy-800 text-navy-700 dark:text-navy-300 rounded-full text-sm font-medium">
+                            Pedido #<span id="orderNumber">001</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Form -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-smooth">
+                <form id="orderForm" class="space-y-0">
+                    <!-- Cliente Selection -->
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-10 h-10 bg-navy-500 dark:bg-navy-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Seleção do Cliente</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cliente *</label>
+                                <select id="clientSelect" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth" required>
+                                    <option value="">Selecione um cliente</option>
+                                    <option value="1">Maria Silva - (11) 99999-9999</option>
+                                    <option value="2">João Santos - (11) 88888-8888</option>
+                                    <option value="3">Ana Costa - (11) 77777-7777</option>
+                                    <option value="4">Pedro Oliveira - (11) 66666-6666</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button type="button" id="scheduleBtn" class="w-full px-6 py-3 bg-navy-500 dark:bg-navy-600 text-white rounded-lg hover:bg-navy-600 dark:hover:bg-navy-700 transition-smooth font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                    📅 Abrir Agendamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scheduling Panel (Hidden by default) -->
+                    <div id="schedulingPanel" class="hidden border-b border-gray-200 dark:border-gray-700">
+                        <div class="p-6 bg-gray-50 dark:bg-gray-800">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-navy-500 dark:bg-navy-600 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Agendamento de Entrega</h3>
+                                </div>
+                                <button type="button" id="closeScheduling" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-smooth">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Delivery and Pickup Times -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Data e Hora da Entrega *</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="date" id="deliveryDate" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth" required>
+                                            <input type="time" id="deliveryTime" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Data e Hora da Recolha (Opcional)</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="date" id="pickupDate" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                            <input type="time" id="pickupTime" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Event Date/Time -->
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data e Hora do Evento</label>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Mesmo dia/horário da entrega</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="sameAsDelivery">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" id="eventDate" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                    <input type="time" id="eventTime" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                </div>
+                            </div>
+
+                            <!-- Address Section -->
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Endereço do Evento</label>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Usar endereço do cliente</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="useClientAddress">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <input type="text" id="eventCep" placeholder="CEP" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-smooth">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <input type="text" id="eventAddress" placeholder="Endereço completo" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-smooth">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recipient Information -->
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Dados de Quem Vai Receber</label>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Mesma pessoa do cadastro</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="sameAsClient">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <input type="text" id="recipientName" placeholder="Nome completo" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-smooth">
+                                    </div>
+                                    <div>
+                                        <input type="tel" id="recipientPhone" placeholder="Telefone" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-smooth">
+                                    </div>
+                                    <div>
+                                        <input type="text" id="recipientCpf" placeholder="CPF" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-smooth">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status do Agendamento</label>
+                                <select id="scheduleStatus" class="w-full md:w-64 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                    <option value="agendado">🟡 Agendado</option>
+                                    <option value="aguardando">🔵 Aguardando Resposta</option>
+                                    <option value="confirmado">🟢 Confirmado</option>
+                                    <option value="cancelado">🔴 Cancelado</option>
+                                </select>
+                            </div>
+
+                            <!-- Save Scheduling Button -->
+                            <div class="flex justify-end">
+                                <button type="button" id="saveScheduling" class="px-8 py-3 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-smooth font-medium">
+                                    ✅ Salvar Agendamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product/Service Selection -->
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-10 h-10 bg-navy-500 dark:bg-navy-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Seleção de Produto/Serviço</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo *</label>
+                                <select id="productServiceType" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth" required>
+                                    <option value="">Selecione o tipo</option>
+                                    <option value="produto">Produto</option>
+                                    <option value="servico">Serviço</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button type="button" id="openProductServiceBtn" class="w-full px-4 py-2 bg-navy-500 dark:bg-navy-600 text-white rounded-md hover:bg-navy-600 dark:hover:bg-navy-700 transition-smooth font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                    Selecionar Itens
+                                </button>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center space-x-2">
+                                    <input type="radio" id="venda" name="saleType" value="venda" class="text-navy-500 focus:ring-navy-500" checked>
+                                    <label for="venda" class="text-sm text-gray-700 dark:text-gray-300">Venda</label>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <input type="radio" id="bonificacao" name="saleType" value="bonificacao" class="text-navy-500 focus:ring-navy-500">
+                                    <label for="bonificacao" class="text-sm text-gray-700 dark:text-gray-300">Bonificação</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected Items Display -->
+                        <div id="selectedItemsDisplay" class="hidden">
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Itens Selecionados:</h4>
+                                <div id="selectedItemsList" class="space-y-2"></div>
+                                
+                                <!-- Equipment Display -->
+                                <div id="equipmentInItemsDisplay" class="hidden">
+                                    <div class="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
+                                        <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Equipamentos de Locação:</h5>
+                                        <div id="equipmentInItemsList" class="space-y-2"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg font-semibold text-gray-900 dark:text-white">Total:</span>
+                                        <span id="totalValue" class="text-lg font-bold text-navy-600 dark:text-navy-400">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button type="button" id="openRentalBtn" class="px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white rounded-md hover:bg-orange-700 dark:hover:bg-orange-800 transition-smooth font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Equipamentos de Locação
+                            </button>
+                            <button type="button" id="openPaymentBtn" class="px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-800 transition-smooth font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Forma de Pagamento
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Product/Service Selection Panel (Hidden by default) -->
+                    <div id="productServicePanel" class="hidden border-b border-gray-200 dark:border-gray-700">
+                        <div class="p-6 bg-gray-50 dark:bg-gray-800">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-navy-500 dark:bg-navy-600 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white" id="productServicePanelTitle">Seleção de Produtos</h3>
+                                </div>
+                                <button type="button" id="closeProductService" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-smooth">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Product Selection -->
+                            <div id="productSelection" class="hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Produto *</label>
+                                        <select id="productSelect" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                            <option value="">Selecione o produto</option>
+                                            <option value="chopp">Chopp</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Marca *</label>
+                                        <select id="brandSelect" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth" disabled>
+                                            <option value="">Selecione a marca</option>
+                                            <option value="oriente" data-price-15="180" data-price-20="220" data-price-30="195" data-price-50="320">Oriente</option>
+                                            <option value="brahma" data-price-15="175" data-price-20="215" data-price-30="190" data-price-50="315">Brahma</option>
+                                            <option value="stella" data-price-15="200" data-price-20="240" data-price-30="220" data-price-50="350">Stella Artois</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Litragem *</label>
+                                        <select id="literageSelect" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth" disabled>
+                                            <option value="">Selecione a litragem</option>
+                                            <option value="15">15L</option>
+                                            <option value="20">20L</option>
+                                            <option value="30">30L</option>
+                                            <option value="50">50L</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantidade *</label>
+                                        <input type="number" id="quantityInput" min="1" value="1" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth" disabled>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Valor Unitário (R$) *</label>
+                                        <input type="number" id="unitPriceInput" step="0.01" min="0" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth" disabled>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total (R$)</label>
+                                        <input type="text" id="totalPriceDisplay" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-white transition-smooth" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-end space-x-2">
+                                    <button type="button" id="addProductBtn" class="px-6 py-2 bg-green-600 dark:bg-green-700 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-800 transition-smooth font-medium text-sm" disabled>
+                                        Adicionar Produto
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Service Selection -->
+                            <div id="serviceSelection" class="hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Serviço *</label>
+                                        <select id="serviceSelect" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                            <option value="">Selecione o serviço</option>
+                                            <option value="instalacao" data-price="150">Instalação de Chopeira</option>
+                                            <option value="manutencao" data-price="100">Manutenção de Equipamentos</option>
+                                            <option value="limpeza" data-price="80">Limpeza de Sistema</option>
+                                            <option value="troca-gas" data-price="50">Troca de Gás CO2</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Valor (R$) *</label>
+                                        <input type="number" id="servicePriceInput" step="0.01" min="0" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth" disabled>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button type="button" id="addServiceBtn" class="w-full px-6 py-2 bg-green-600 dark:bg-green-700 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-800 transition-smooth font-medium text-sm" disabled>
+                                            Adicionar Serviço
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Save Button -->
+                            <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-600">
+                                <button type="button" id="saveProductService" class="px-8 py-3 bg-navy-600 dark:bg-navy-700 text-white rounded-lg hover:bg-navy-700 dark:hover:bg-navy-800 transition-smooth font-medium">
+                                    Salvar Seleção
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Panel (Hidden by default) -->
+                    <div id="paymentPanel" class="hidden border-b border-gray-200 dark:border-gray-700">
+                        <div class="p-6 bg-gray-50 dark:bg-gray-800">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-green-500 dark:bg-green-600 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Forma de Pagamento</h3>
+                                </div>
+                                <button type="button" id="closePayment" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-smooth">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Payment Method Selection -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Selecione a Forma de Pagamento *</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <label class="flex items-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-smooth">
+                                        <input type="radio" name="paymentMethod" value="pix" class="text-green-500 focus:ring-green-500">
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">PIX</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">Instantâneo</div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-smooth">
+                                        <input type="radio" name="paymentMethod" value="debito" class="text-green-500 focus:ring-green-500">
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">Cartão Débito</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">À vista</div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-smooth">
+                                        <input type="radio" name="paymentMethod" value="credito" class="text-green-500 focus:ring-green-500">
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">Cartão Crédito</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">Até 2x sem juros</div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-smooth">
+                                        <input type="radio" name="paymentMethod" value="dinheiro" class="text-green-500 focus:ring-green-500">
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">Dinheiro</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">À vista</div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-smooth">
+                                        <input type="radio" name="paymentMethod" value="boleto" class="text-green-500 focus:ring-green-500">
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">Boleto</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">5 dias úteis</div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-smooth">
+                                        <input type="radio" name="paymentMethod" value="bonificacao" class="text-green-500 focus:ring-green-500">
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">Bonificação</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">Sem cobrança</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- PIX Details -->
+                            <div id="pixDetails" class="hidden mb-6 p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
+                                <h4 class="text-lg font-medium text-green-800 dark:text-green-200 mb-3">Dados PIX</h4>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-green-700 dark:text-green-300">Chave PIX:</span>
+                                        <span class="text-sm font-mono text-green-800 dark:text-green-200">12.345.678/0001-90</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-green-700 dark:text-green-300">Favorecido:</span>
+                                        <span class="text-sm text-green-800 dark:text-green-200">Choperia Express LTDA</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-green-700 dark:text-green-300">Valor:</span>
+                                        <span class="text-sm font-bold text-green-800 dark:text-green-200" id="pixValue">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Credit Card Details -->
+                            <div id="creditDetails" class="hidden mb-6">
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Detalhes do Cartão de Crédito</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Parcelas</label>
+                                        <select id="installments" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                            <option value="1">1x sem juros</option>
+                                            <option value="2">2x sem juros</option>
+                                            <option value="3">3x com juros (2,5%)</option>
+                                            <option value="4">4x com juros (2,5%)</option>
+                                            <option value="5">5x com juros (2,5%)</option>
+                                            <option value="6">6x com juros (2,5%)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Valor da Parcela</label>
+                                        <input type="text" id="installmentValue" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-white transition-smooth" readonly>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Boleto Details -->
+                            <div id="boletoDetails" class="hidden mb-6 p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
+                                <h4 class="text-lg font-medium text-blue-800 dark:text-blue-200 mb-4">Dados do Boleto</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="text-blue-700 dark:text-blue-300">Data de Emissão:</span>
+                                        <span class="text-blue-800 dark:text-blue-200 font-medium" id="boletoEmissionDate"></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-blue-700 dark:text-blue-300">Data de Vencimento:</span>
+                                        <span class="text-blue-800 dark:text-blue-200 font-medium" id="boletoDueDate"></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-blue-700 dark:text-blue-300">Emitente:</span>
+                                        <span class="text-blue-800 dark:text-blue-200 font-medium">Choperia Express LTDA</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-blue-700 dark:text-blue-300">Pagador:</span>
+                                        <span class="text-blue-800 dark:text-blue-200 font-medium" id="boletoPayer"></span>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <span class="text-blue-700 dark:text-blue-300">Valor Total:</span>
+                                        <span class="text-blue-800 dark:text-blue-200 font-bold text-lg" id="boletoValue">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bonificação Notice -->
+                            <div id="bonificacaoNotice" class="hidden mb-6 p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                                <div class="flex items-center space-x-2">
+                                    <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                    </svg>
+                                    <div>
+                                        <h4 class="text-lg font-medium text-yellow-800 dark:text-yellow-200">Bonificação Selecionada</h4>
+                                        <p class="text-sm text-yellow-700 dark:text-yellow-300">Os valores dos produtos foram zerados. Apenas os equipamentos serão locados e devolvidos.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Fees -->
+                            <div class="mb-6">
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Taxas Adicionais</h4>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between p-3 border border-gray-300 dark:border-gray-600 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <input type="checkbox" id="deliveryFee" class="text-green-500 focus:ring-green-500">
+                                            <label for="deliveryFee" class="text-sm font-medium text-gray-900 dark:text-white">Taxa de Entrega</label>
+                                        </div>
+                                        <input type="number" id="deliveryFeeValue" step="0.01" min="0" placeholder="0,00" class="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" disabled>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 border border-gray-300 dark:border-gray-600 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <input type="checkbox" id="boletoFee" class="text-green-500 focus:ring-green-500">
+                                            <label for="boletoFee" class="text-sm font-medium text-gray-900 dark:text-white">Taxa de Boleto</label>
+                                        </div>
+                                        <input type="number" id="boletoFeeValue" step="0.01" min="0" placeholder="0,00" class="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" disabled>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 border border-gray-300 dark:border-gray-600 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <input type="checkbox" id="creditFee" class="text-green-500 focus:ring-green-500">
+                                            <label for="creditFee" class="text-sm font-medium text-gray-900 dark:text-white">Taxa de Crédito</label>
+                                        </div>
+                                        <input type="number" id="creditFeeValue" step="0.01" min="0" placeholder="0,00" class="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" disabled>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Summary -->
+                            <div class="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Resumo do Pagamento</h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Subtotal:</span>
+                                        <span class="text-gray-900 dark:text-white" id="paymentSubtotal">R$ 0,00</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Taxas:</span>
+                                        <span class="text-gray-900 dark:text-white" id="paymentFees">R$ 0,00</span>
+                                    </div>
+                                    <div class="border-t border-gray-300 dark:border-gray-600 pt-2">
+                                        <div class="flex justify-between">
+                                            <span class="text-lg font-bold text-gray-900 dark:text-white">Total:</span>
+                                            <span class="text-lg font-bold text-green-600 dark:text-green-400" id="paymentTotal">R$ 0,00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Save Button -->
+                            <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-600">
+                                <button type="button" id="savePayment" class="px-8 py-3 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-smooth font-medium">
+                                    Salvar Pagamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rental Equipment Panel (Hidden by default) -->
+                    <div id="rentalPanel" class="hidden border-b border-gray-200 dark:border-gray-700">
+                        <div class="p-6 bg-gray-50 dark:bg-gray-800">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-orange-500 dark:bg-orange-600 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Equipamentos de Locação</h3>
+                                </div>
+                                <button type="button" id="closeRental" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-smooth">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Auto-added Barrels -->
+                            <div class="mb-6">
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Barris (Adicionados Automaticamente)</h4>
+                                <div id="autoBarrelsList" class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm">Os barris serão adicionados automaticamente conforme os produtos selecionados.</p>
+                                </div>
+                            </div>
+
+                            <!-- Chopeiras -->
+                            <div class="mb-6">
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Chopeiras</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de Chopeira</label>
+                                        <select id="chopeiraSelect" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                            <option value="">Selecione a chopeira</option>
+                                            <option value="chopeira-1-via">Chopeira 1 Via</option>
+                                            <option value="chopeira-2-vias">Chopeira 2 Vias</option>
+                                            <option value="chopeira-3-vias">Chopeira 3 Vias</option>
+                                            <option value="chopeira-4-vias">Chopeira 4 Vias</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantidade</label>
+                                        <input type="number" id="chopeiraQuantity" min="0" value="0" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                    </div>
+                                </div>
+                                <button type="button" id="addChopeiraBtn" class="mt-2 px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white rounded-md hover:bg-orange-700 dark:hover:bg-orange-800 transition-smooth font-medium text-sm">
+                                    Adicionar Chopeira
+                                </button>
+                            </div>
+
+                            <!-- Cilindros -->
+                            <div class="mb-6">
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Cilindros de CO2</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de Cilindro</label>
+                                        <select id="cilindroSelect" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 custom-select bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                            <option value="">Selecione o cilindro</option>
+                                            <option value="cilindro-2kg">Cilindro 2kg</option>
+                                            <option value="cilindro-4kg">Cilindro 4kg</option>
+                                            <option value="cilindro-6kg">Cilindro 6kg</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantidade</label>
+                                        <input type="number" id="cilindroQuantity" min="0" value="0" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-navy-500 focus:border-navy-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-smooth">
+                                    </div>
+                                </div>
+                                <button type="button" id="addCilindroBtn" class="mt-2 px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white rounded-md hover:bg-orange-700 dark:hover:bg-orange-800 transition-smooth font-medium text-sm">
+                                    Adicionar Cilindro
+                                </button>
+                            </div>
+
+                            <!-- Selected Equipment Display -->
+                            <div id="selectedEquipmentDisplay" class="mb-6">
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Equipamentos Selecionados</h4>
+                                <div id="selectedEquipmentList" class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 space-y-2">
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm">Nenhum equipamento adicional selecionado.</p>
+                                </div>
+                            </div>
+
+                            <!-- Save Button -->
+                            <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-600">
+                                <button type="button" id="saveRental" class="px-8 py-3 bg-orange-600 dark:bg-orange-700 text-white rounded-lg hover:bg-orange-700 dark:hover:bg-orange-800 transition-smooth font-medium">
+                                    Salvar Equipamentos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="p-6 bg-gray-100 dark:bg-gray-800 transition-smooth">
+                        <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                            <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Dados salvos automaticamente</span>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <button type="button" id="deleteBtn" class="px-4 py-2 bg-red-600 dark:bg-red-700 text-white rounded-md hover:bg-red-700 dark:hover:bg-red-800 text-sm font-medium">
+                                    Excluir
+                                </button>
+                                <button type="button" id="editBtn" class="px-4 py-2 bg-yellow-600 dark:bg-yellow-700 text-white rounded-md hover:bg-yellow-700 dark:hover:bg-yellow-800 text-sm font-medium">
+                                    Editar
+                                </button>
+                                <button type="submit" id="saveBtn" class="px-6 py-2 bg-navy-600 dark:bg-navy-700 text-white rounded-md hover:bg-navy-700 dark:hover:bg-navy-800 text-sm font-medium">
+                                    Salvar Pedido
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success Message -->
+            <div id="successMessage" class="hidden mt-6 p-4 bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg transition-smooth">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-green-800 dark:text-green-200 font-medium">Pedido salvo com sucesso!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div id="receiptModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-full overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Recibo de Pedido e Locação</h2>
+                    <div class="flex space-x-2">
+                        <button id="downloadPDF" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-smooth font-medium">
+                            📄 Salvar PDF
+                        </button>
+                        <button id="closeReceipt" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-smooth">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Receipt Content -->
+                <div id="receiptContent" class="bg-white text-black p-8 border border-gray-300" style="width: 210mm; min-height: 297mm; margin: 0 auto; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4;">
+                    <!-- Header -->
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="flex items-center space-x-4">
+                            <!-- Logo -->
+                            <div class="w-16 h-16 bg-navy-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-navy-600">Choperia Express LTDA</h1>
+                                <p class="text-sm text-gray-600">CNPJ: 12.345.678/0001-90</p>
+                                <p class="text-sm text-gray-600">Telefone: (11) 99999-0000</p>
+                                <p class="text-sm text-gray-600">Email: contato@choperiaexpress.com.br</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <h2 class="text-xl font-bold text-gray-800">RECIBO DE PEDIDO</h2>
+                            <p class="text-sm text-gray-600">Nº <span id="receiptOrderNumber">001</span></p>
+                            <p class="text-sm text-gray-600">Data: <span id="receiptDate"></span></p>
+                        </div>
+                    </div>
+
+                    <!-- Client Information -->
+                    <div class="mb-6 p-4 border border-gray-300 rounded">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3">DADOS DO CLIENTE</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p><strong>Nome/Razão Social:</strong> <span id="receiptClientName"></span></p>
+                                <p><strong>Documento:</strong> <span id="receiptClientDoc"></span></p>
+                                <p><strong>Telefone:</strong> <span id="receiptClientPhone"></span></p>
+                            </div>
+                            <div>
+                                <p><strong>Responsável pelo Recebimento:</strong></p>
+                                <p><span id="receiptRecipientName"></span></p>
+                                <p><strong>CPF:</strong> <span id="receiptRecipientCpf"></span></p>
+                                <p><strong>Telefone:</strong> <span id="receiptRecipientPhone"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delivery Information -->
+                    <div class="mb-6 p-4 border border-gray-300 rounded">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3">DADOS DA ENTREGA</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p><strong>Endereço:</strong> <span id="receiptAddress"></span></p>
+                                <p><strong>CEP:</strong> <span id="receiptCep"></span></p>
+                            </div>
+                            <div>
+                                <p><strong>Data da Entrega:</strong> <span id="receiptDeliveryDate"></span></p>
+                                <p><strong>Horário:</strong> <span id="receiptDeliveryTime"></span></p>
+                                <p><strong>Data do Evento:</strong> <span id="receiptEventDate"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Items -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3">ITENS DO PEDIDO</h3>
+                        <table class="w-full border-collapse border border-gray-300">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="border border-gray-300 p-2 text-left">Descrição</th>
+                                    <th class="border border-gray-300 p-2 text-center">Qtd</th>
+                                    <th class="border border-gray-300 p-2 text-right">Valor Unit.</th>
+                                    <th class="border border-gray-300 p-2 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receiptItemsTable">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Equipment -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3">EQUIPAMENTOS LOCADOS</h3>
+                        <table class="w-full border-collapse border border-gray-300">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="border border-gray-300 p-2 text-left">Equipamento</th>
+                                    <th class="border border-gray-300 p-2 text-center">Quantidade</th>
+                                    <th class="border border-gray-300 p-2 text-center">Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receiptEquipmentTable">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Payment Information -->
+                    <div class="mb-6 p-4 border border-gray-300 rounded">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3">FORMA DE PAGAMENTO</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p><strong>Método:</strong> <span id="receiptPaymentMethod"></span></p>
+                                <p><strong>Subtotal:</strong> <span id="receiptSubtotal"></span></p>
+                                <p><strong>Taxas:</strong> <span id="receiptFees"></span></p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-green-600"><strong>TOTAL: <span id="receiptTotal"></span></strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms -->
+                    <div class="mb-8 p-4 border border-gray-300 rounded">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3">TERMOS E CONDIÇÕES</h3>
+                        <div class="text-sm space-y-2">
+                            <p>• Os equipamentos locados devem ser devolvidos nas mesmas condições de entrega.</p>
+                            <p>• O cliente é responsável por danos ou perdas dos equipamentos durante o período de locação.</p>
+                            <p>• O pagamento deve ser efetuado conforme a forma acordada no prazo estabelecido.</p>
+                            <p>• A recolha dos equipamentos será realizada conforme agendamento prévio.</p>
+                        </div>
+                    </div>
+
+                    <!-- Signatures -->
+                    <div class="grid grid-cols-2 gap-8 mt-16">
+                        <div class="text-center">
+                            <div class="border-t border-gray-400 pt-2">
+                                <p class="font-bold">CHOPERIA EXPRESS LTDA</p>
+                                <p class="text-sm">Responsável pela Entrega</p>
+                                <p class="text-sm">CPF: 123.456.789-00</p>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="border-t border-gray-400 pt-2">
+                                <p class="font-bold">CLIENTE</p>
+                                <p class="text-sm">Assinatura do Responsável</p>
+                                <p class="text-sm">CPF: <span id="receiptSignatureCpf"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="text-center text-xs text-gray-500 mt-8 pt-4 border-t border-gray-300">
+                        <p>Este documento foi gerado eletronicamente e possui validade legal.</p>
+                        <p>Choperia Express LTDA - Todos os direitos reservados.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+
+    <script>
+        // Client data simulation
+        const clientsData = {
+            '1': {
+                name: 'Maria Silva',
+                phone: '(11) 99999-9999',
+                cpf: '123.456.789-00',
+                address: 'Rua das Flores, 123 - São Paulo, SP',
+                cep: '01234-567'
+            },
+            '2': {
+                name: 'João Santos',
+                phone: '(11) 88888-8888',
+                cpf: '987.654.321-00',
+                address: 'Av. Paulista, 456 - São Paulo, SP',
+                cep: '01310-100'
+            },
+            '3': {
+                name: 'Ana Costa',
+                phone: '(11) 77777-7777',
+                cpf: '456.789.123-00',
+                address: 'Rua Augusta, 789 - São Paulo, SP',
+                cep: '01305-000'
+            },
+            '4': {
+                name: 'Pedro Oliveira',
+                phone: '(11) 66666-6666',
+                cpf: '321.654.987-00',
+                address: 'Rua Oscar Freire, 321 - São Paulo, SP',
+                cep: '01426-001'
+            }
+        };
+
+        // DOM Elements
+        const clientSelect = document.getElementById('clientSelect');
+        const scheduleBtn = document.getElementById('scheduleBtn');
+        const schedulingPanel = document.getElementById('schedulingPanel');
+        const closeScheduling = document.getElementById('closeScheduling');
+        const orderForm = document.getElementById('orderForm');
+        const successMessage = document.getElementById('successMessage');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+
+        // Toggle elements
+        const sameAsDelivery = document.getElementById('sameAsDelivery');
+        const useClientAddress = document.getElementById('useClientAddress');
+        const sameAsClient = document.getElementById('sameAsClient');
+
+        // Form elements
+        const deliveryDate = document.getElementById('deliveryDate');
+        const deliveryTime = document.getElementById('deliveryTime');
+        const eventDate = document.getElementById('eventDate');
+        const eventTime = document.getElementById('eventTime');
+        const eventCep = document.getElementById('eventCep');
+        const eventAddress = document.getElementById('eventAddress');
+        const recipientName = document.getElementById('recipientName');
+        const recipientPhone = document.getElementById('recipientPhone');
+        const recipientCpf = document.getElementById('recipientCpf');
+
+        // Enable schedule button when client is selected
+        clientSelect.addEventListener('change', function() {
+            scheduleBtn.disabled = !this.value;
+            if (this.value) {
+                scheduleBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                scheduleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        // Open scheduling panel
+        scheduleBtn.addEventListener('click', function() {
+            schedulingPanel.classList.remove('hidden');
+            schedulingPanel.classList.add('slide-down');
+            this.textContent = '📅 Agendamento Aberto';
+            this.classList.add('bg-green-500', 'hover:bg-green-600');
+            this.classList.remove('bg-navy-500', 'hover:bg-navy-600');
+        });
+
+        // Close scheduling panel
+        closeScheduling.addEventListener('click', function() {
+            schedulingPanel.classList.add('hidden');
+            scheduleBtn.textContent = '📅 Abrir Agendamento';
+            scheduleBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            scheduleBtn.classList.add('bg-navy-500', 'hover:bg-navy-600');
+        });
+
+        // Same as delivery toggle
+        sameAsDelivery.addEventListener('change', function() {
+            if (this.checked) {
+                eventDate.value = deliveryDate.value;
+                eventTime.value = deliveryTime.value;
+                eventDate.disabled = true;
+                eventTime.disabled = true;
+                eventDate.classList.add('bg-gray-100');
+                eventTime.classList.add('bg-gray-100');
+            } else {
+                eventDate.disabled = false;
+                eventTime.disabled = false;
+                eventDate.classList.remove('bg-gray-100');
+                eventTime.classList.remove('bg-gray-100');
+            }
+        });
+
+        // Update event date/time when delivery changes
+        deliveryDate.addEventListener('change', function() {
+            if (sameAsDelivery.checked) {
+                eventDate.value = this.value;
+            }
+        });
+
+        deliveryTime.addEventListener('change', function() {
+            if (sameAsDelivery.checked) {
+                eventTime.value = this.value;
+            }
+        });
+
+        // Use client address toggle
+        useClientAddress.addEventListener('change', function() {
+            const selectedClient = clientSelect.value;
+            if (this.checked && selectedClient && clientsData[selectedClient]) {
+                const client = clientsData[selectedClient];
+                eventCep.value = client.cep;
+                eventAddress.value = client.address;
+                eventCep.disabled = true;
+                eventAddress.disabled = true;
+                eventCep.classList.add('bg-gray-100');
+                eventAddress.classList.add('bg-gray-100');
+            } else {
+                eventCep.disabled = false;
+                eventAddress.disabled = false;
+                eventCep.classList.remove('bg-gray-100');
+                eventAddress.classList.remove('bg-gray-100');
+            }
+        });
+
+        // Same as client toggle
+        sameAsClient.addEventListener('change', function() {
+            const selectedClient = clientSelect.value;
+            if (this.checked && selectedClient && clientsData[selectedClient]) {
+                const client = clientsData[selectedClient];
+                recipientName.value = client.name;
+                recipientPhone.value = client.phone;
+                recipientCpf.value = client.cpf;
+                recipientName.disabled = true;
+                recipientPhone.disabled = true;
+                recipientCpf.disabled = true;
+                recipientName.classList.add('bg-gray-100');
+                recipientPhone.classList.add('bg-gray-100');
+                recipientCpf.classList.add('bg-gray-100');
+            } else {
+                recipientName.disabled = false;
+                recipientPhone.disabled = false;
+                recipientCpf.disabled = false;
+                recipientName.classList.remove('bg-gray-100');
+                recipientPhone.classList.remove('bg-gray-100');
+                recipientCpf.classList.remove('bg-gray-100');
+            }
+        });
+
+        // Update toggles when client changes
+        clientSelect.addEventListener('change', function() {
+            // Reset toggles
+            useClientAddress.checked = false;
+            sameAsClient.checked = false;
+            
+            // Clear fields
+            eventCep.value = '';
+            eventAddress.value = '';
+            recipientName.value = '';
+            recipientPhone.value = '';
+            recipientCpf.value = '';
+            
+            // Enable fields
+            eventCep.disabled = false;
+            eventAddress.disabled = false;
+            recipientName.disabled = false;
+            recipientPhone.disabled = false;
+            recipientCpf.disabled = false;
+            
+            // Remove disabled styling
+            eventCep.classList.remove('bg-gray-100');
+            eventAddress.classList.remove('bg-gray-100');
+            recipientName.classList.remove('bg-gray-100');
+            recipientPhone.classList.remove('bg-gray-100');
+            recipientCpf.classList.remove('bg-gray-100');
+        });
+
+        // Save scheduling
+        document.getElementById('saveScheduling').addEventListener('click', function() {
+            // Validate required fields
+            if (!deliveryDate.value || !deliveryTime.value) {
+                alert('Por favor, preencha a data e hora da entrega.');
+                return;
+            }
+            
+            // Save to localStorage
+            saveFormData();
+            
+            // Close panel
+            schedulingPanel.classList.add('hidden');
+            scheduleBtn.textContent = '✅ Agendamento Salvo';
+            scheduleBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            scheduleBtn.classList.remove('bg-navy-500', 'hover:bg-navy-600');
+            
+            // Show success message
+            showSuccessMessage('Agendamento salvo com sucesso!');
+        });
+
+        // Form submission
+        orderForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!clientSelect.value) {
+                alert('Por favor, selecione um cliente.');
+                return;
+            }
+            
+            if (selectedItems.length === 0) {
+                alert('Por favor, adicione pelo menos um produto ou serviço.');
+                return;
+            }
+            
+            if (!selectedPaymentMethod) {
+                alert('Por favor, selecione uma forma de pagamento.');
+                return;
+            }
+            
+            saveFormData();
+            showSuccessMessage('Pedido salvo com sucesso!');
+            
+            // Generate receipt
+            generateReceipt();
+            
+            // Generate new order number
+            const currentNumber = parseInt(document.getElementById('orderNumber').textContent);
+            document.getElementById('orderNumber').textContent = String(currentNumber + 1).padStart(3, '0');
+        });
+
+        // Edit button
+        document.getElementById('editBtn').addEventListener('click', function() {
+            // Enable all form fields for editing
+            const inputs = orderForm.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (!input.disabled) {
+                    input.removeAttribute('readonly');
+                }
+            });
+            showSuccessMessage('Modo de edição ativado!');
+        });
+
+        // Delete button
+        document.getElementById('deleteBtn').addEventListener('click', function() {
+            if (confirm('Tem certeza que deseja excluir este pedido?')) {
+                // Clear form
+                orderForm.reset();
+                schedulingPanel.classList.add('hidden');
+                scheduleBtn.disabled = true;
+                scheduleBtn.textContent = '📅 Abrir Agendamento';
+                scheduleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                scheduleBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                scheduleBtn.classList.add('bg-navy-500', 'hover:bg-navy-600');
+                
+                // Clear localStorage
+                localStorage.removeItem('orderFormData');
+                
+                showSuccessMessage('Pedido excluído com sucesso!');
+            }
+        });
+
+        // Auto-save functionality
+        function saveFormData() {
+            const formData = {
+                clientId: clientSelect.value,
+                deliveryDate: deliveryDate.value,
+                deliveryTime: deliveryTime.value,
+                pickupDate: document.getElementById('pickupDate').value,
+                pickupTime: document.getElementById('pickupTime').value,
+                eventDate: eventDate.value,
+                eventTime: eventTime.value,
+                eventCep: eventCep.value,
+                eventAddress: eventAddress.value,
+                recipientName: recipientName.value,
+                recipientPhone: recipientPhone.value,
+                recipientCpf: recipientCpf.value,
+                scheduleStatus: document.getElementById('scheduleStatus').value,
+                sameAsDelivery: sameAsDelivery.checked,
+                useClientAddress: useClientAddress.checked,
+                sameAsClient: sameAsClient.checked,
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('orderFormData', JSON.stringify(formData));
+        }
+
+        // Load saved data
+        function loadFormData() {
+            const savedData = localStorage.getItem('orderFormData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                
+                clientSelect.value = data.clientId || '';
+                deliveryDate.value = data.deliveryDate || '';
+                deliveryTime.value = data.deliveryTime || '';
+                document.getElementById('pickupDate').value = data.pickupDate || '';
+                document.getElementById('pickupTime').value = data.pickupTime || '';
+                eventDate.value = data.eventDate || '';
+                eventTime.value = data.eventTime || '';
+                eventCep.value = data.eventCep || '';
+                eventAddress.value = data.eventAddress || '';
+                recipientName.value = data.recipientName || '';
+                recipientPhone.value = data.recipientPhone || '';
+                recipientCpf.value = data.recipientCpf || '';
+                document.getElementById('scheduleStatus').value = data.scheduleStatus || 'agendado';
+                sameAsDelivery.checked = data.sameAsDelivery || false;
+                useClientAddress.checked = data.useClientAddress || false;
+                sameAsClient.checked = data.sameAsClient || false;
+                
+                // Update UI based on loaded data
+                if (clientSelect.value) {
+                    scheduleBtn.disabled = false;
+                    scheduleBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        // Show success message
+        function showSuccessMessage(message) {
+            successMessage.querySelector('span').textContent = message;
+            successMessage.classList.remove('hidden');
+            setTimeout(() => {
+                successMessage.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Auto-save on input changes
+        const autoSaveInputs = orderForm.querySelectorAll('input, select');
+        autoSaveInputs.forEach(input => {
+            input.addEventListener('change', saveFormData);
+        });
+
+        // Dark mode functionality
+        function initDarkMode() {
+            const savedTheme = localStorage.getItem('darkMode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'true' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+                darkModeToggle.checked = true;
+            } else {
+                document.documentElement.classList.remove('dark');
+                darkModeToggle.checked = false;
+            }
+        }
+
+        darkModeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('darkMode', 'false');
+            }
+        });
+
+        // Initialize dark mode
+        initDarkMode();
+
+        // Load data on page load
+        loadFormData();
+
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        deliveryDate.min = today;
+        document.getElementById('pickupDate').min = today;
+        eventDate.min = today;
+
+        // Product/Service functionality
+        const productServiceType = document.getElementById('productServiceType');
+        const openProductServiceBtn = document.getElementById('openProductServiceBtn');
+        const productServicePanel = document.getElementById('productServicePanel');
+        const closeProductService = document.getElementById('closeProductService');
+        const productServicePanelTitle = document.getElementById('productServicePanelTitle');
+        const productSelection = document.getElementById('productSelection');
+        const serviceSelection = document.getElementById('serviceSelection');
+        const openRentalBtn = document.getElementById('openRentalBtn');
+        const rentalPanel = document.getElementById('rentalPanel');
+        const closeRental = document.getElementById('closeRental');
+
+        // Product form elements
+        const productSelect = document.getElementById('productSelect');
+        const brandSelect = document.getElementById('brandSelect');
+        const literageSelect = document.getElementById('literageSelect');
+        const quantityInput = document.getElementById('quantityInput');
+        const unitPriceInput = document.getElementById('unitPriceInput');
+        const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+        const addProductBtn = document.getElementById('addProductBtn');
+
+        // Service form elements
+        const serviceSelect = document.getElementById('serviceSelect');
+        const servicePriceInput = document.getElementById('servicePriceInput');
+        const addServiceBtn = document.getElementById('addServiceBtn');
+
+        // Rental form elements
+        const chopeiraSelect = document.getElementById('chopeiraSelect');
+        const chopeiraQuantity = document.getElementById('chopeiraQuantity');
+        const addChopeiraBtn = document.getElementById('addChopeiraBtn');
+        const cilindroSelect = document.getElementById('cilindroSelect');
+        const cilindroQuantity = document.getElementById('cilindroQuantity');
+        const addCilindroBtn = document.getElementById('addCilindroBtn');
+
+        // Data storage
+        let selectedItems = [];
+        let selectedEquipment = [];
+        let totalOrderValue = 0;
+
+        // Enable product/service selection when type is selected
+        productServiceType.addEventListener('change', function() {
+            openProductServiceBtn.disabled = !this.value;
+            if (this.value) {
+                openProductServiceBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                openRentalBtn.disabled = false;
+                openRentalBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                openPaymentBtn.disabled = false;
+                openPaymentBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                openProductServiceBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                openRentalBtn.disabled = true;
+                openRentalBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                openPaymentBtn.disabled = true;
+                openPaymentBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        // Open product/service panel
+        openProductServiceBtn.addEventListener('click', function() {
+            const type = productServiceType.value;
+            productServicePanel.classList.remove('hidden');
+            
+            if (type === 'produto') {
+                productServicePanelTitle.textContent = 'Seleção de Produtos';
+                productSelection.classList.remove('hidden');
+                serviceSelection.classList.add('hidden');
+            } else if (type === 'servico') {
+                productServicePanelTitle.textContent = 'Seleção de Serviços';
+                productSelection.classList.add('hidden');
+                serviceSelection.classList.remove('hidden');
+            }
+        });
+
+        // Close product/service panel
+        closeProductService.addEventListener('click', function() {
+            productServicePanel.classList.add('hidden');
+        });
+
+        // Product selection logic
+        productSelect.addEventListener('change', function() {
+            if (this.value === 'chopp') {
+                brandSelect.disabled = false;
+            } else {
+                brandSelect.disabled = true;
+                brandSelect.value = '';
+                resetProductForm();
+            }
+        });
+
+        brandSelect.addEventListener('change', function() {
+            if (this.value) {
+                literageSelect.disabled = false;
+            } else {
+                literageSelect.disabled = true;
+                literageSelect.value = '';
+                resetProductForm();
+            }
+        });
+
+        literageSelect.addEventListener('change', function() {
+            if (this.value) {
+                quantityInput.disabled = false;
+                unitPriceInput.disabled = false;
+                updateUnitPrice();
+                calculateTotal();
+            } else {
+                quantityInput.disabled = true;
+                unitPriceInput.disabled = true;
+                addProductBtn.disabled = true;
+            }
+        });
+
+        quantityInput.addEventListener('input', calculateTotal);
+        unitPriceInput.addEventListener('input', calculateTotal);
+
+        function updateUnitPrice() {
+            const brand = brandSelect.value;
+            const literage = literageSelect.value;
+            
+            if (brand && literage) {
+                const selectedOption = brandSelect.querySelector(`option[value="${brand}"]`);
+                const price = selectedOption.getAttribute(`data-price-${literage}`);
+                unitPriceInput.value = price;
+                calculateTotal();
+            }
+        }
+
+        function calculateTotal() {
+            const quantity = parseInt(quantityInput.value) || 0;
+            const unitPrice = parseFloat(unitPriceInput.value) || 0;
+            const total = quantity * unitPrice;
+            
+            totalPriceDisplay.value = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            
+            addProductBtn.disabled = !(quantity > 0 && unitPrice > 0 && brandSelect.value && literageSelect.value);
+        }
+
+        function resetProductForm() {
+            quantityInput.disabled = true;
+            unitPriceInput.disabled = true;
+            addProductBtn.disabled = true;
+            unitPriceInput.value = '';
+            totalPriceDisplay.value = '';
+        }
+
+        // Add product
+        addProductBtn.addEventListener('click', function() {
+            const product = {
+                id: Date.now(),
+                type: 'produto',
+                name: `Chopp ${brandSelect.options[brandSelect.selectedIndex].text}`,
+                literage: literageSelect.value + 'L',
+                quantity: parseInt(quantityInput.value),
+                unitPrice: parseFloat(unitPriceInput.value),
+                total: parseInt(quantityInput.value) * parseFloat(unitPriceInput.value)
+            };
+            
+            selectedItems.push(product);
+            updateSelectedItemsDisplay();
+            resetProductInputs();
+            
+            // Auto-add barrels to rental
+            addAutoBarrels(product);
+        });
+
+        // Service selection logic
+        serviceSelect.addEventListener('change', function() {
+            if (this.value) {
+                const selectedOption = this.options[this.selectedIndex];
+                const price = selectedOption.getAttribute('data-price');
+                servicePriceInput.value = price;
+                servicePriceInput.disabled = false;
+                addServiceBtn.disabled = false;
+            } else {
+                servicePriceInput.value = '';
+                servicePriceInput.disabled = true;
+                addServiceBtn.disabled = true;
+            }
+        });
+
+        // Add service
+        addServiceBtn.addEventListener('click', function() {
+            const service = {
+                id: Date.now(),
+                type: 'servico',
+                name: serviceSelect.options[serviceSelect.selectedIndex].text,
+                price: parseFloat(servicePriceInput.value),
+                total: parseFloat(servicePriceInput.value)
+            };
+            
+            selectedItems.push(service);
+            updateSelectedItemsDisplay();
+            resetServiceInputs();
+        });
+
+        function resetProductInputs() {
+            productSelect.value = '';
+            brandSelect.value = '';
+            literageSelect.value = '';
+            quantityInput.value = '1';
+            unitPriceInput.value = '';
+            totalPriceDisplay.value = '';
+            
+            brandSelect.disabled = true;
+            literageSelect.disabled = true;
+            quantityInput.disabled = true;
+            unitPriceInput.disabled = true;
+            addProductBtn.disabled = true;
+        }
+
+        function resetServiceInputs() {
+            serviceSelect.value = '';
+            servicePriceInput.value = '';
+            servicePriceInput.disabled = true;
+            addServiceBtn.disabled = true;
+        }
+
+        function updateSelectedItemsDisplay() {
+            const display = document.getElementById('selectedItemsDisplay');
+            const list = document.getElementById('selectedItemsList');
+            const totalElement = document.getElementById('totalValue');
+            const equipmentDisplay = document.getElementById('equipmentInItemsDisplay');
+            const equipmentList = document.getElementById('equipmentInItemsList');
+            
+            // Show/hide main display
+            if (selectedItems.length === 0 && selectedEquipment.length === 0) {
+                display.classList.add('hidden');
+                return;
+            }
+            
+            display.classList.remove('hidden');
+            
+            // Update items list
+            list.innerHTML = '';
+            totalOrderValue = 0;
+            
+            selectedItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex justify-between items-center p-3 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500';
+                
+                let itemText = '';
+                if (item.type === 'produto') {
+                    itemText = `${item.name} ${item.literage} | ${item.quantity} barris | R$ ${item.unitPrice.toFixed(2).replace('.', ',')} cada`;
+                } else {
+                    itemText = `${item.name} | R$ ${item.price.toFixed(2).replace('.', ',')}`;
+                }
+                
+                itemDiv.innerHTML = `
+                    <div>
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">${itemText}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-bold text-navy-600 dark:text-navy-400">R$ ${item.total.toFixed(2).replace('.', ',')}</span>
+                        <button onclick="removeItem(${item.id})" class="text-red-500 hover:text-red-700 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                
+                list.appendChild(itemDiv);
+                totalOrderValue += item.total;
+            });
+            
+            // Update equipment list
+            if (selectedEquipment.length > 0) {
+                equipmentDisplay.classList.remove('hidden');
+                equipmentList.innerHTML = '';
+                
+                selectedEquipment.forEach(equipment => {
+                    const equipDiv = document.createElement('div');
+                    equipDiv.className = 'flex justify-between items-center p-2 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500';
+                    
+                    let equipmentText = `${equipment.name} x ${equipment.quantity}`;
+                    if (equipment.autoAdded) {
+                        equipmentText += ' (Automático)';
+                    }
+                    
+                    equipDiv.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs px-2 py-1 rounded ${equipment.autoAdded ? 'bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300' : 'bg-orange-100 dark:bg-orange-800 text-orange-700 dark:text-orange-300'}">
+                                ${equipment.type === 'barril' ? '🛢️' : equipment.type === 'chopeira' ? '🍺' : '⚡'}
+                            </span>
+                            <span class="text-sm text-gray-900 dark:text-white">${equipmentText}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            ${equipment.autoAdded ? 
+                                '<span class="text-xs text-blue-600 dark:text-blue-400">Auto</span>' : 
+                                `<button onclick="removeEquipmentFromItems(${equipment.id})" class="text-red-500 hover:text-red-700 text-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>`
+                            }
+                        </div>
+                    `;
+                    
+                    equipmentList.appendChild(equipDiv);
+                });
+            } else {
+                equipmentDisplay.classList.add('hidden');
+            }
+            
+            totalElement.textContent = `R$ ${totalOrderValue.toFixed(2).replace('.', ',')}`;
+        }
+
+        // Remove item function (global scope)
+        window.removeItem = function(id) {
+            selectedItems = selectedItems.filter(item => item.id !== id);
+            updateSelectedItemsDisplay();
+            updateAutoBarrels();
+        };
+
+        // Save product/service selection
+        document.getElementById('saveProductService').addEventListener('click', function() {
+            productServicePanel.classList.add('hidden');
+            showSuccessMessage('Seleção salva com sucesso!');
+        });
+
+        // Rental equipment functionality
+        openRentalBtn.addEventListener('click', function() {
+            rentalPanel.classList.remove('hidden');
+            updateAutoBarrels();
+        });
+
+        closeRental.addEventListener('click', function() {
+            rentalPanel.classList.add('hidden');
+        });
+
+        // Add chopeira
+        addChopeiraBtn.addEventListener('click', function() {
+            const type = chopeiraSelect.value;
+            const quantity = parseInt(chopeiraQuantity.value);
+            
+            if (type && quantity > 0) {
+                const equipment = {
+                    id: Date.now(),
+                    type: 'chopeira',
+                    name: chopeiraSelect.options[chopeiraSelect.selectedIndex].text,
+                    quantity: quantity,
+                    autoAdded: false
+                };
+                
+                selectedEquipment.push(equipment);
+                updateSelectedEquipmentDisplay();
+                updateSelectedItemsDisplay();
+                
+                chopeiraSelect.value = '';
+                chopeiraQuantity.value = '0';
+            }
+        });
+
+        // Add cilindro
+        addCilindroBtn.addEventListener('click', function() {
+            const type = cilindroSelect.value;
+            const quantity = parseInt(cilindroQuantity.value);
+            
+            if (type && quantity > 0) {
+                const equipment = {
+                    id: Date.now(),
+                    type: 'cilindro',
+                    name: cilindroSelect.options[cilindroSelect.selectedIndex].text,
+                    quantity: quantity,
+                    autoAdded: false
+                };
+                
+                selectedEquipment.push(equipment);
+                updateSelectedEquipmentDisplay();
+                updateSelectedItemsDisplay();
+                
+                cilindroSelect.value = '';
+                cilindroQuantity.value = '0';
+            }
+        });
+
+        function addAutoBarrels(product) {
+            // Remove existing auto barrels for this product type
+            selectedEquipment = selectedEquipment.filter(eq => eq.autoAdded !== true || eq.productId !== product.id);
+            
+            // Add new barrels
+            const barrel = {
+                id: Date.now(),
+                type: 'barril',
+                name: `Barril ${product.literage}`,
+                quantity: product.quantity,
+                autoAdded: true,
+                productId: product.id
+            };
+            
+            selectedEquipment.push(barrel);
+            updateAutoBarrels();
+        }
+
+        function updateAutoBarrels() {
+            const autoBarrelsList = document.getElementById('autoBarrelsList');
+            const autoBarrels = selectedEquipment.filter(eq => eq.autoAdded === true);
+            
+            if (autoBarrels.length === 0) {
+                autoBarrelsList.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Os barris serão adicionados automaticamente conforme os produtos selecionados.</p>';
+                return;
+            }
+            
+            autoBarrelsList.innerHTML = '';
+            autoBarrels.forEach(barrel => {
+                const barrelDiv = document.createElement('div');
+                barrelDiv.className = 'flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-600 rounded mb-2';
+                barrelDiv.innerHTML = `
+                    <span class="text-sm text-gray-900 dark:text-white">${barrel.name} x ${barrel.quantity}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Auto</span>
+                `;
+                autoBarrelsList.appendChild(barrelDiv);
+            });
+        }
+
+        function updateSelectedEquipmentDisplay() {
+            const list = document.getElementById('selectedEquipmentList');
+            const manualEquipment = selectedEquipment.filter(eq => !eq.autoAdded);
+            
+            if (manualEquipment.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Nenhum equipamento adicional selecionado.</p>';
+                return;
+            }
+            
+            list.innerHTML = '';
+            manualEquipment.forEach(equipment => {
+                const equipDiv = document.createElement('div');
+                equipDiv.className = 'flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-600 rounded';
+                equipDiv.innerHTML = `
+                    <span class="text-sm text-gray-900 dark:text-white">${equipment.name} x ${equipment.quantity}</span>
+                    <button onclick="removeEquipment(${equipment.id})" class="text-red-500 hover:text-red-700 text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                `;
+                list.appendChild(equipDiv);
+            });
+        }
+
+        // Remove equipment function (global scope)
+        window.removeEquipment = function(id) {
+            selectedEquipment = selectedEquipment.filter(eq => eq.id !== id);
+            updateSelectedEquipmentDisplay();
+        };
+
+        // Remove equipment from main items display (global scope)
+        window.removeEquipmentFromItems = function(id) {
+            selectedEquipment = selectedEquipment.filter(eq => eq.id !== id);
+            updateSelectedItemsDisplay();
+            updateSelectedEquipmentDisplay();
+        };
+
+        // Save rental equipment
+        document.getElementById('saveRental').addEventListener('click', function() {
+            rentalPanel.classList.add('hidden');
+            showSuccessMessage('Equipamentos salvos com sucesso!');
+        });
+
+        // Payment functionality
+        const openPaymentBtn = document.getElementById('openPaymentBtn');
+        const paymentPanel = document.getElementById('paymentPanel');
+        const closePayment = document.getElementById('closePayment');
+        const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+        const pixDetails = document.getElementById('pixDetails');
+        const creditDetails = document.getElementById('creditDetails');
+        const boletoDetails = document.getElementById('boletoDetails');
+        const bonificacaoNotice = document.getElementById('bonificacaoNotice');
+        const installments = document.getElementById('installments');
+        const installmentValue = document.getElementById('installmentValue');
+        
+        // Fee checkboxes
+        const deliveryFee = document.getElementById('deliveryFee');
+        const boletoFee = document.getElementById('boletoFee');
+        const creditFee = document.getElementById('creditFee');
+        const deliveryFeeValue = document.getElementById('deliveryFeeValue');
+        const boletoFeeValue = document.getElementById('boletoFeeValue');
+        const creditFeeValue = document.getElementById('creditFeeValue');
+
+        let selectedPaymentMethod = '';
+        let paymentData = {
+            subtotal: 0,
+            fees: 0,
+            total: 0
+        };
+
+        // Open payment panel
+        openPaymentBtn.addEventListener('click', function() {
+            paymentPanel.classList.remove('hidden');
+            // Initialize payment data with current order total
+            paymentData.subtotal = totalOrderValue;
+            paymentData.fees = 0;
+            paymentData.total = totalOrderValue;
+            updatePaymentSummary();
+        });
+
+        // Close payment panel
+        closePayment.addEventListener('click', function() {
+            paymentPanel.classList.add('hidden');
+        });
+
+        // Payment method selection
+        paymentMethods.forEach(method => {
+            method.addEventListener('change', function() {
+                selectedPaymentMethod = this.value;
+                hideAllPaymentDetails();
+                
+                switch(this.value) {
+                    case 'pix':
+                        pixDetails.classList.remove('hidden');
+                        updatePixDetails();
+                        break;
+                    case 'credito':
+                        creditDetails.classList.remove('hidden');
+                        updateCreditDetails();
+                        break;
+                    case 'boleto':
+                        boletoDetails.classList.remove('hidden');
+                        updateBoletoDetails();
+                        break;
+                    case 'bonificacao':
+                        bonificacaoNotice.classList.remove('hidden');
+                        break;
+                }
+                updatePaymentSummary();
+            });
+        });
+
+        function hideAllPaymentDetails() {
+            pixDetails.classList.add('hidden');
+            creditDetails.classList.add('hidden');
+            boletoDetails.classList.add('hidden');
+            bonificacaoNotice.classList.add('hidden');
+        }
+
+        function updatePixDetails() {
+            document.getElementById('pixValue').textContent = formatCurrency(paymentData.total);
+        }
+
+        function updateCreditDetails() {
+            calculateInstallments();
+        }
+
+        function updateBoletoDetails() {
+            const today = new Date();
+            const dueDate = new Date(today);
+            dueDate.setDate(today.getDate() + 5);
+            
+            document.getElementById('boletoEmissionDate').textContent = formatDate(today);
+            document.getElementById('boletoDueDate').textContent = formatDate(dueDate);
+            document.getElementById('boletoValue').textContent = formatCurrency(paymentData.total);
+            
+            const selectedClient = clientSelect.value;
+            if (selectedClient && clientsData[selectedClient]) {
+                document.getElementById('boletoPayer').textContent = clientsData[selectedClient].name;
+            }
+        }
+
+        // Installments calculation
+        installments.addEventListener('change', calculateInstallments);
+
+        function calculateInstallments() {
+            const installmentCount = parseInt(installments.value);
+            let total = paymentData.total;
+            
+            if (installmentCount > 2) {
+                // Add 2.5% interest for more than 2 installments
+                total = total * 1.025;
+            }
+            
+            const installmentAmount = total / installmentCount;
+            installmentValue.value = formatCurrency(installmentAmount);
+        }
+
+        // Fee management
+        deliveryFee.addEventListener('change', function() {
+            deliveryFeeValue.disabled = !this.checked;
+            if (!this.checked) deliveryFeeValue.value = '';
+            updatePaymentSummary();
+        });
+
+        boletoFee.addEventListener('change', function() {
+            boletoFeeValue.disabled = !this.checked;
+            if (!this.checked) boletoFeeValue.value = '';
+            updatePaymentSummary();
+        });
+
+        creditFee.addEventListener('change', function() {
+            creditFeeValue.disabled = !this.checked;
+            if (!this.checked) creditFeeValue.value = '';
+            updatePaymentSummary();
+        });
+
+        // Update payment summary when fee values change
+        [deliveryFeeValue, boletoFeeValue, creditFeeValue].forEach(input => {
+            input.addEventListener('input', updatePaymentSummary);
+        });
+
+        function updatePaymentSummary() {
+            // Calculate subtotal (from selected items)
+            paymentData.subtotal = selectedPaymentMethod === 'bonificacao' ? 0 : totalOrderValue;
+            
+            // Calculate fees
+            paymentData.fees = 0;
+            if (deliveryFee.checked && deliveryFeeValue.value) {
+                paymentData.fees += parseFloat(deliveryFeeValue.value) || 0;
+            }
+            if (boletoFee.checked && boletoFeeValue.value) {
+                paymentData.fees += parseFloat(boletoFeeValue.value) || 0;
+            }
+            if (creditFee.checked && creditFeeValue.value) {
+                paymentData.fees += parseFloat(creditFeeValue.value) || 0;
+            }
+            
+            // Calculate total
+            paymentData.total = paymentData.subtotal + paymentData.fees;
+            
+            // Update display
+            document.getElementById('paymentSubtotal').textContent = formatCurrency(paymentData.subtotal);
+            document.getElementById('paymentFees').textContent = formatCurrency(paymentData.fees);
+            document.getElementById('paymentTotal').textContent = formatCurrency(paymentData.total);
+            
+            // Update main order total display
+            updateMainOrderTotal();
+            
+            // Update method-specific displays
+            if (selectedPaymentMethod === 'pix') {
+                updatePixDetails();
+            } else if (selectedPaymentMethod === 'credito') {
+                calculateInstallments();
+            } else if (selectedPaymentMethod === 'boleto') {
+                document.getElementById('boletoValue').textContent = formatCurrency(paymentData.total);
+            }
+        }
+
+        function updateMainOrderTotal() {
+            const totalElement = document.getElementById('totalValue');
+            if (totalElement) {
+                // Show total with fees included
+                const finalTotal = selectedPaymentMethod === 'bonificacao' ? 0 : paymentData.total;
+                totalElement.textContent = formatCurrency(finalTotal);
+                
+                // Add visual indicator if fees are applied
+                if (paymentData.fees > 0 && selectedPaymentMethod !== 'bonificacao') {
+                    totalElement.innerHTML = `
+                        ${formatCurrency(finalTotal)}
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block">
+                            (Subtotal: ${formatCurrency(paymentData.subtotal)} + Taxas: ${formatCurrency(paymentData.fees)})
+                        </span>
+                    `;
+                }
+            }
+        }
+
+        // Save payment
+        document.getElementById('savePayment').addEventListener('click', function() {
+            if (!selectedPaymentMethod) {
+                alert('Por favor, selecione uma forma de pagamento.');
+                return;
+            }
+            
+            // Update main total display with final values
+            updateMainOrderTotal();
+            
+            paymentPanel.classList.add('hidden');
+            showSuccessMessage('Forma de pagamento salva com sucesso!');
+        });
+
+        // Receipt functionality
+        const receiptModal = document.getElementById('receiptModal');
+        const closeReceipt = document.getElementById('closeReceipt');
+        const downloadPDF = document.getElementById('downloadPDF');
+
+        // Close receipt modal
+        closeReceipt.addEventListener('click', function() {
+            receiptModal.classList.add('hidden');
+        });
+
+        // Generate receipt when order is saved
+        function generateReceipt() {
+            // Update receipt data
+            document.getElementById('receiptOrderNumber').textContent = document.getElementById('orderNumber').textContent;
+            document.getElementById('receiptDate').textContent = formatDate(new Date());
+            
+            // Client data
+            const selectedClient = clientSelect.value;
+            if (selectedClient && clientsData[selectedClient]) {
+                const client = clientsData[selectedClient];
+                document.getElementById('receiptClientName').textContent = client.name;
+                document.getElementById('receiptClientDoc').textContent = client.cpf;
+                document.getElementById('receiptClientPhone').textContent = client.phone;
+            }
+            
+            // Recipient data
+            document.getElementById('receiptRecipientName').textContent = recipientName.value || 'Não informado';
+            document.getElementById('receiptRecipientCpf').textContent = recipientCpf.value || 'Não informado';
+            document.getElementById('receiptRecipientPhone').textContent = recipientPhone.value || 'Não informado';
+            document.getElementById('receiptSignatureCpf').textContent = recipientCpf.value || 'Não informado';
+            
+            // Delivery data
+            document.getElementById('receiptAddress').textContent = eventAddress.value || 'Não informado';
+            document.getElementById('receiptCep').textContent = eventCep.value || 'Não informado';
+            document.getElementById('receiptDeliveryDate').textContent = deliveryDate.value ? formatDate(new Date(deliveryDate.value)) : 'Não informado';
+            document.getElementById('receiptDeliveryTime').textContent = deliveryTime.value || 'Não informado';
+            document.getElementById('receiptEventDate').textContent = eventDate.value ? formatDate(new Date(eventDate.value)) : 'Não informado';
+            
+            // Items table
+            const itemsTable = document.getElementById('receiptItemsTable');
+            itemsTable.innerHTML = '';
+            selectedItems.forEach(item => {
+                const row = document.createElement('tr');
+                if (item.type === 'produto') {
+                    row.innerHTML = `
+                        <td class="border border-gray-300 p-2">${item.name} ${item.literage}</td>
+                        <td class="border border-gray-300 p-2 text-center">${item.quantity}</td>
+                        <td class="border border-gray-300 p-2 text-right">${formatCurrency(item.unitPrice)}</td>
+                        <td class="border border-gray-300 p-2 text-right">${formatCurrency(item.total)}</td>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <td class="border border-gray-300 p-2">${item.name}</td>
+                        <td class="border border-gray-300 p-2 text-center">1</td>
+                        <td class="border border-gray-300 p-2 text-right">${formatCurrency(item.price)}</td>
+                        <td class="border border-gray-300 p-2 text-right">${formatCurrency(item.total)}</td>
+                    `;
+                }
+                itemsTable.appendChild(row);
+            });
+            
+            // Equipment table
+            const equipmentTable = document.getElementById('receiptEquipmentTable');
+            equipmentTable.innerHTML = '';
+            selectedEquipment.forEach(equipment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="border border-gray-300 p-2">${equipment.name}</td>
+                    <td class="border border-gray-300 p-2 text-center">${equipment.quantity}</td>
+                    <td class="border border-gray-300 p-2 text-center">${equipment.autoAdded ? 'Automático' : 'Manual'}</td>
+                `;
+                equipmentTable.appendChild(row);
+            });
+            
+            // Payment data
+            const paymentMethodNames = {
+                'pix': 'PIX',
+                'debito': 'Cartão de Débito',
+                'credito': 'Cartão de Crédito',
+                'dinheiro': 'Dinheiro',
+                'boleto': 'Boleto Bancário',
+                'bonificacao': 'Bonificação'
+            };
+            
+            document.getElementById('receiptPaymentMethod').textContent = paymentMethodNames[selectedPaymentMethod] || 'Não informado';
+            document.getElementById('receiptSubtotal').textContent = formatCurrency(paymentData.subtotal);
+            document.getElementById('receiptFees').textContent = formatCurrency(paymentData.fees);
+            document.getElementById('receiptTotal').textContent = formatCurrency(paymentData.total);
+            
+            // Show receipt modal
+            receiptModal.classList.remove('hidden');
+        }
+
+        // Download PDF functionality
+        downloadPDF.addEventListener('click', function() {
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank');
+            const receiptContent = document.getElementById('receiptContent').innerHTML;
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Recibo de Pedido - ${document.getElementById('receiptOrderNumber').textContent}</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            font-size: 12px; 
+                            line-height: 1.4; 
+                            margin: 0; 
+                            padding: 20px;
+                            color: black;
+                        }
+                        .bg-navy-600 { background-color: #4338ca; }
+                        .text-navy-600 { color: #4338ca; }
+                        .text-green-600 { color: #059669; }
+                        .text-white { color: white; }
+                        .text-gray-600 { color: #6b7280; }
+                        .text-gray-800 { color: #1f2937; }
+                        .text-gray-500 { color: #6b7280; }
+                        .bg-gray-100 { background-color: #f3f4f6; }
+                        .border { border: 1px solid #d1d5db; }
+                        .border-gray-300 { border-color: #d1d5db; }
+                        .border-gray-400 { border-color: #9ca3af; }
+                        .border-t { border-top: 1px solid #d1d5db; }
+                        .border-collapse { border-collapse: collapse; }
+                        .rounded { border-radius: 0.375rem; }
+                        .rounded-lg { border-radius: 0.5rem; }
+                        .p-2 { padding: 0.5rem; }
+                        .p-4 { padding: 1rem; }
+                        .p-8 { padding: 2rem; }
+                        .pt-2 { padding-top: 0.5rem; }
+                        .pt-4 { padding-top: 1rem; }
+                        .mb-3 { margin-bottom: 0.75rem; }
+                        .mb-6 { margin-bottom: 1.5rem; }
+                        .mb-8 { margin-bottom: 2rem; }
+                        .mt-8 { margin-top: 2rem; }
+                        .mt-16 { margin-top: 4rem; }
+                        .space-y-2 > * + * { margin-top: 0.5rem; }
+                        .flex { display: flex; }
+                        .items-center { align-items: center; }
+                        .items-start { align-items: flex-start; }
+                        .justify-between { justify-content: space-between; }
+                        .space-x-4 > * + * { margin-left: 1rem; }
+                        .grid { display: grid; }
+                        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                        .gap-4 { gap: 1rem; }
+                        .gap-8 { gap: 2rem; }
+                        .w-full { width: 100%; }
+                        .w-16 { width: 4rem; }
+                        .h-16 { height: 4rem; }
+                        .text-center { text-align: center; }
+                        .text-right { text-right: right; }
+                        .text-left { text-align: left; }
+                        .text-sm { font-size: 0.875rem; }
+                        .text-lg { font-size: 1.125rem; }
+                        .text-xl { font-size: 1.25rem; }
+                        .text-2xl { font-size: 1.5rem; }
+                        .text-xs { font-size: 0.75rem; }
+                        .font-bold { font-weight: 700; }
+                        .font-medium { font-weight: 500; }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${receiptContent}
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.focus();
+            
+            // Wait for content to load then print
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        });
+
+        // Utility functions
+        function formatCurrency(value) {
+            return `R$ ${value.toFixed(2).replace('.', ',')}`;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/env.js"></script>
+<script>
+  // cliente compartilhado em toda página
+  window.supabase = supabase.createClient(
+    window.SUPABASE_URL,
+    window.SUPABASE_ANON_KEY
+  );
+
+  // ajudinha para avisar se algo estiver faltando
+  if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+    alert('⚠️ Configure a URL e a Publishable key no env.js');
+  }
+</script>
+
+<!-- seu(s) script(s) da página por último -->
+<script src="/script.js"></script>
+
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98eb93b85393877d',t:'MTc2MDQ5MjA5Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -5,258 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>JK CHOPP — Sistema Interno</title>
   <link rel="stylesheet" href="style.css" />
-</head>
-
-<body data-theme="dark">
-  <div class="app">
-    <header>
-      <div class="wrap topbar">
-        <div class="left">
-          <button class="hamburger" id="btnMenu" title="Abrir menu">☰</button>
-          <div class="brand">
-            <div class="logo">JK</div>
-            <div class="title">
-              <h1>JK CHOPP • Sistema Interno</h1>
-              <small>Gestão Completa de Clientes, Pedidos, Estoque e Financeiro</small>
-            </div>
-          </div>
-        </div>
-
-        <div class="row top-actions">
-          <button class="btn" id="btnTheme" title="Alternar tema">🌓 Tema</button>
-          <button class="btn" id="btnExport" title="Exportar backup">⬇️ Exportar</button>
-          <label class="btn" for="importFile" title="Importar backup">⬆️ Importar</label>
-          <input id="importFile" type="file" accept="application/json" class="hidden">
-          <button class="btn" id="btnReset" title="Zerar base">🗑️ Zerar</button>
-          <button class="btn" id="btnPerfil" title="Perfil">👤 Perfil</button>
-        </div>
-      </div>
-    </header>
-
-    <main class="wrap">
-      <section id="content">
-        <!-- Conteúdo dinâmico será injetado aqui via JavaScript -->
-      </section>
-    </main>
-
-    <footer>
-      <div class="wrap footer">
-        <span>v2.0 • Sistema Completo • Persistência LocalStorage • 100% Funcional</span>
-        <span>Desenvolvido para JK CHOPP 🍺</span>
-      </div>
-    </footer>
-  </div>
-
-  <!-- MENU LATERAL -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="brand">
-        <div class="logo">JK</div>
-        <div class="title">
-          <h2>JK CHOPP</h2>
-          <small>Sistema Interno</small>
-        </div>
-      </div>
-      <button class="btn ghost icon" id="btnCloseMenu" aria-label="Fechar menu">✕</button>
-    </div>
-
-    <nav class="sidebar-nav" id="sidebarNav">
-      <!-- Menu será preenchido via JavaScript -->
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="user-info">
-        <div class="user-avatar">👤</div>
-        <div class="user-details">
-          <strong id="userName">Administrador</strong>
-          <small id="userEmail">admin@jkchopp.com</small>
-        </div>
-      </div>
-      <button class="btn ghost" id="btnLogout">🚪 Sair</button>
-    </div>
-  </aside>
-
-  <!-- MODAL NOVO PEDIDO -->
-  <dialog id="modalNovoPedido">
-    <div class="modal-header">
-      <h2 id="modalPedidoTitle">Novo Pedido</h2>
-      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="stack">
-        <div class="form-group">
-          <label class="form-label">Cliente</label>
-          <select id="ped_cliente" class="input" required>
-            <option value="">Selecione um cliente</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Adicionar Item</label>
-          <div class="row">
-            <select id="ped_produto" class="input">
-              <option value="">Selecione um produto</option>
-            </select>
-            <input id="ped_quantidade" type="number" class="input" placeholder="Qtd" min="1" value="1" style="max-width: 100px;" />
-            <button class="btn" type="button" id="btnAddItem">➕ Adicionar</button>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table id="tblItensPedido">
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th>Qtd</th>
-                <th>Valor Unit.</th>
-                <th>Total</th>
-                <th width="60">Ações</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-              <tr>
-                <td colspan="3" class="text-right"><strong>Total do Pedido:</strong></td>
-                <td><strong id="ped_total">R$ 0,00</strong></td>
-                <td></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Observações</label>
-          <textarea id="ped_observacoes" class="input" rows="3" placeholder="Observações internas sobre o pedido..."></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn" id="btnCancelarPedido">Cancelar</button>
-      <button class="btn success" id="btnFinalizarPedido">💾 Salvar Pedido</button>
-    </div>
-  </dialog>
-
-  <!-- MODAL DETALHES DO PEDIDO -->
-  <dialog id="modalDetalhesPedido">
-    <div class="modal-header">
-      <h2>Detalhes do Pedido <span id="ped_det_codigo"></span></h2>
-      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="stack">
-        <div class="info-grid">
-          <div><strong>Cliente:</strong> <span id="ped_det_cliente"></span></div>
-          <div><strong>Status:</strong> <span id="ped_det_status"></span></div>
-          <div><strong>Data:</strong> <span id="ped_det_data"></span></div>
-          <div><strong>Total:</strong> <span id="ped_det_total"></span></div>
-        </div>
-
-        <h4>Itens do Pedido</h4>
-        <div class="table-wrap">
-          <table id="tblItensPedidoDet">
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th>Quantidade</th>
-                <th>Valor Unit.</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Alterar Status</label>
-          <select id="ped_det_status_edit" class="input">
-            <option value="aberto">Aberto</option>
-            <option value="andamento">Em Andamento</option>
-            <option value="concluido">Concluído</option>
-            <option value="cancelado">Cancelado</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Observações</label>
-          <textarea id="ped_det_observacoes" class="input" rows="2" readonly></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn danger" id="btnExcluirPedido">🗑️ Excluir Pedido</button>
-      <button class="btn" id="btnFecharDetalhes">Fechar</button>
-      <button class="btn success" id="btnSalvarStatus">💾 Salvar Status</button>
-    </div>
-  </dialog>
-
-  <!-- MODAL PERFIL -->
-  <dialog id="modalPerfil">
-    <div class="modal-header">
-      <h2>👤 Perfil do Usuário</h2>
-      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="stack">
-        <div class="form-group">
-          <label class="form-label">Nome Completo</label>
-          <input class="input" id="perf_nome" placeholder="Seu nome completo" />
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">E-mail</label>
-          <input class="input" id="perf_email" type="email" placeholder="seu@email.com" />
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Telefone/WhatsApp</label>
-          <input class="input" id="perf_telefone" placeholder="(11) 99999-9999" />
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Nova Senha</label>
-          <input class="input" id="perf_senha" type="password" placeholder="Deixe em branco para manter a atual" />
-          <small class="muted">Mínimo 6 caracteres</small>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Confirmar Senha</label>
-          <input class="input" id="perf_confirmar_senha" type="password" placeholder="Repita a nova senha" />
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn" id="btnFecharPerfil">Fechar</button>
-      <button class="btn success" id="btnSalvarPerfil">💾 Salvar Alterações</button>
-    </div>
-  </dialog>
-
-  <!-- MODAL CONFIRMAÇÃO -->
-  <dialog id="modalConfirm">
-    <div class="modal-header">
-      <h2>Confirmação</h2>
-      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <p id="confirmMessage">Tem certeza que deseja prosseguir com esta ação?</p>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn" id="btnConfirmCancel">Cancelar</button>
-      <button class="btn danger" id="btnConfirmOk">Confirmar</button>
-    </div>
-  </dialog>
-
-  <!-- SCRIPTS -->
-  <script src="env.js"></script>
-  <script src="script.js"></script>
-
   <style>
     /* Estilos adicionais para garantir compatibilidade */
     .sidebar {
@@ -398,6 +146,630 @@
         font-size: 10px;
       }
     }
+
+    /* Estilos para o novo sistema de pedidos */
+    .novo-pedido-agendamento {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .pedido-header {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid var(--bd-soft);
+    }
+
+    .form-section {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border: 1px solid var(--bd-soft);
+    }
+
+    .form-section.hidden {
+      display: none;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--bd-soft);
+    }
+
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-grid .span-2 {
+      grid-column: span 2;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-switch .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--input);
+      transition: .2s;
+      border-radius: 24px;
+    }
+
+    .toggle-switch .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .slider {
+      background-color: var(--brand);
+    }
+
+    .toggle-switch input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Selected Items */
+    .selected-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--bd-soft);
+      margin-bottom: 8px;
+    }
+
+    .selected-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .item-total {
+      font-weight: 600;
+      color: var(--brand);
+    }
+
+    .auto-badge {
+      background: var(--info);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .equipment-icon {
+      font-size: 16px;
+    }
+
+    /* Payment Methods */
+    .payment-methods-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .payment-method {
+      display: block;
+      cursor: pointer;
+    }
+
+    .payment-method input {
+      display: none;
+    }
+
+    .payment-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border: 2px solid var(--bd-soft);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .payment-method input:checked + .payment-content {
+      border-color: var(--brand);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .payment-icon {
+      font-size: 24px;
+    }
+
+    .payment-name {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .payment-desc {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Payment Details */
+    .payment-details {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid var(--success);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+
+    .payment-details h5 {
+      margin: 0 0 12px 0;
+      color: var(--success);
+    }
+
+    .details-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .details-grid > div {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--bd-soft);
+    }
+
+    .details-grid > div:last-child {
+      border-bottom: none;
+    }
+
+    /* Fees */
+    .fees-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .fee-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--bd-soft);
+      border-radius: 8px;
+    }
+
+    .fee-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .fee-input {
+      width: 120px;
+      text-align: right;
+    }
+
+    /* Payment Summary */
+    .payment-summary {
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      border: 1px solid var(--bd-soft);
+    }
+
+    .payment-summary h5 {
+      margin: 0 0 16px 0;
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .summary-grid > div {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--bd-soft);
+    }
+
+    .summary-grid .total {
+      border-top: 2px solid var(--bd-soft);
+      border-bottom: none;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--brand);
+      margin-top: 8px;
+      padding-top: 12px;
+    }
+
+    /* Notices */
+    .notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+
+    .notice.warning {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid var(--warning);
+    }
+
+    .notice-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .notice h5 {
+      margin: 0 0 4px 0;
+      color: var(--warning);
+    }
+
+    .notice p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    /* Auto Barrels */
+    .auto-barrels {
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid var(--bd-soft);
+    }
+
+    .auto-barrel-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--bg);
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .auto-barrel-item:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Equipment List */
+    .equipment-list {
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid var(--bd-soft);
+      min-height: 60px;
+    }
+
+    /* Status Badges */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status.agendado { background: #fef3c7; color: #92400e; }
+    .status.aguardando { background: #dbeafe; color: #1e40af; }
+    .status.confirmado { background: #dcfce7; color: #166534; }
+    .status.concluido { background: #dcfce7; color: #166534; }
+    .status.cancelado { background: #fee2e2; color: #991b1b; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-grid .span-2 {
+        grid-column: span 1;
+      }
+      
+      .payment-methods-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .selected-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .selected-item-actions {
+        align-self: flex-end;
+      }
+      
+      .fee-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .fee-input {
+        width: 100%;
+      }
+    }
   </style>
+</head>
+
+<body data-theme="dark">
+  <div class="app">
+    <header>
+      <div class="wrap topbar">
+        <div class="left">
+          <button class="hamburger" id="btnMenu" title="Abrir menu">☰</button>
+          <div class="brand">
+            <div class="logo">JK</div>
+            <div class="title">
+              <h1>JK CHOPP • Sistema Interno</h1>
+              <small>Gestão Completa de Clientes, Pedidos, Estoque e Financeiro</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="row top-actions">
+          <button class="btn" id="btnTheme" title="Alternar tema">🌓 Tema</button>
+          <button class="btn" id="btnExport" title="Exportar backup">⬇️ Exportar</button>
+          <label class="btn" for="importFile" title="Importar backup">⬆️ Importar</label>
+          <input id="importFile" type="file" accept="application/json" class="hidden">
+          <button class="btn" id="btnReset" title="Zerar base">🗑️ Zerar</button>
+          <button class="btn" id="btnPerfil" title="Perfil">👤 Perfil</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section id="content">
+        <!-- Conteúdo dinâmico será injetado aqui via JavaScript -->
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap footer">
+        <span>v2.0 • Sistema Completo • Persistência LocalStorage • 100% Funcional</span>
+        <span>Desenvolvido para JK CHOPP 🍺</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- MENU LATERAL -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="logo">JK</div>
+        <div class="title">
+          <h2>JK CHOPP</h2>
+          <small>Sistema Interno</small>
+        </div>
+      </div>
+      <button class="btn ghost icon" id="btnCloseMenu" aria-label="Fechar menu">✕</button>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+      <!-- Menu será preenchido via JavaScript -->
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">👤</div>
+        <div class="user-details">
+          <strong id="userName">Administrador</strong>
+          <small id="userEmail">admin@jkchopp.com</small>
+        </div>
+      </div>
+      <button class="btn ghost" id="btnLogout">🚪 Sair</button>
+    </div>
+  </aside>
+
+  <!-- MODAL NOVO PEDIDO (AGENDAMENTO) -->
+  <dialog id="modalNovoPedido">
+    <div class="modal-header">
+      <h2 id="modalPedidoTitle">📋 Novo Pedido - Agendamento de Entrega</h2>
+      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+      <div id="novoPedidoContent">
+        <!-- Conteúdo do novo pedido será injetado aqui -->
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" id="btnCancelarPedido">Cancelar</button>
+      <button class="btn success" id="btnFinalizarPedido">💾 Salvar Pedido</button>
+    </div>
+  </dialog>
+
+  <!-- MODAL DETALHES DO PEDIDO -->
+  <dialog id="modalDetalhesPedido">
+    <div class="modal-header">
+      <h2>Detalhes do Pedido <span id="ped_det_codigo"></span></h2>
+      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="stack">
+        <div class="info-grid">
+          <div><strong>Cliente:</strong> <span id="ped_det_cliente"></span></div>
+          <div><strong>Status:</strong> <span id="ped_det_status"></span></div>
+          <div><strong>Data:</strong> <span id="ped_det_data"></span></div>
+          <div><strong>Total:</strong> <span id="ped_det_total"></span></div>
+        </div>
+
+        <h4>Itens do Pedido</h4>
+        <div class="table-wrap">
+          <table id="tblItensPedidoDet">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Quantidade</th>
+                <th>Valor Unit.</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Alterar Status</label>
+          <select id="ped_det_status_edit" class="input">
+            <option value="aberto">Aberto</option>
+            <option value="andamento">Em Andamento</option>
+            <option value="concluido">Concluído</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <textarea id="ped_det_observacoes" class="input" rows="2" readonly></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn danger" id="btnExcluirPedido">🗑️ Excluir Pedido</button>
+      <button class="btn" id="btnFecharDetalhes">Fechar</button>
+      <button class="btn success" id="btnSalvarStatus">💾 Salvar Status</button>
+    </div>
+  </dialog>
+
+  <!-- MODAL PERFIL -->
+  <dialog id="modalPerfil">
+    <div class="modal-header">
+      <h2>👤 Perfil do Usuário</h2>
+      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="stack">
+        <div class="form-group">
+          <label class="form-label">Nome Completo</label>
+          <input class="input" id="perf_nome" placeholder="Seu nome completo" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input class="input" id="perf_email" type="email" placeholder="seu@email.com" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Telefone/WhatsApp</label>
+          <input class="input" id="perf_telefone" placeholder="(11) 99999-9999" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Nova Senha</label>
+          <input class="input" id="perf_senha" type="password" placeholder="Deixe em branco para manter a atual" />
+          <small class="muted">Mínimo 6 caracteres</small>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Confirmar Senha</label>
+          <input class="input" id="perf_confirmar_senha" type="password" placeholder="Repita a nova senha" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" id="btnFecharPerfil">Fechar</button>
+      <button class="btn success" id="btnSalvarPerfil">💾 Salvar Alterações</button>
+    </div>
+  </dialog>
+
+  <!-- MODAL CONFIRMAÇÃO -->
+  <dialog id="modalConfirm">
+    <div class="modal-header">
+      <h2>Confirmação</h2>
+      <button class="btn ghost icon close" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p id="confirmMessage">Tem certeza que deseja prosseguir com esta ação?</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" id="btnConfirmCancel">Cancelar</button>
+      <button class="btn danger" id="btnConfirmOk">Confirmar</button>
+    </div>
+  </dialog>
+
+  <!-- SCRIPTS -->
+  <!-- 1) Biblioteca do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 2) Suas chaves + createClient -->
+  <script src="./env.js"></script>
+
+  <!-- 3) Seu app (traz de volta a interface e navegação) -->
+  <script src="./script.js"></script>
+
+  <!-- 4) (opcional) teste rápido da conexão -->
+  <!--
+  <script>
+  (async () => {
+    const { data, error } = await supabase.from('pessoas').select('id').limit(1);
+    if (error) console.error(error); else console.log('OK', data);
+  })();
+  </script>
+  -->
 </body>
 </html>

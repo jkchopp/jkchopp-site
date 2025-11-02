@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Estoque - Premium</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        :root {
+            /* Tema Claro - Azul Naval Sofisticado */
+            --primary-50: #f0f9ff;
+            --primary-100: #e0f2fe;
+            --primary-200: #bae6fd;
+            --primary-300: #7dd3fc;
+            --primary-400: #38bdf8;
+            --primary-500: #0ea5e9;
+            --primary-600: #0284c7;
+            --primary-700: #0369a1;
+            --primary-800: #075985;
+            --primary-900: #0c4a6e;
+            --primary-950: #082f49;
+            
+            --navy-50: #f8fafc;
+            --navy-100: #f1f5f9;
+            --navy-200: #e2e8f0;
+            --navy-300: #cbd5e1;
+            --navy-400: #94a3b8;
+            --navy-500: #64748b;
+            --navy-600: #475569;
+            --navy-700: #334155;
+            --navy-800: #1e293b;
+            --navy-900: #0f172a;
+            
+            --bg-primary: #ffffff;
+            --bg-secondary: var(--navy-50);
+            --bg-tertiary: var(--navy-100);
+            --text-primary: var(--navy-900);
+            --text-secondary: var(--navy-600);
+            --text-tertiary: var(--navy-500);
+            --border-primary: var(--navy-200);
+            --border-secondary: var(--navy-300);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        [data-theme="dark"] {
+            /* Tema Escuro - Azul Naval Profundo */
+            --bg-primary: var(--navy-900);
+            --bg-secondary: var(--navy-800);
+            --bg-tertiary: var(--navy-700);
+            --text-primary: var(--navy-50);
+            --text-secondary: var(--navy-300);
+            --text-tertiary: var(--navy-400);
+            --border-primary: var(--navy-700);
+            --border-secondary: var(--navy-600);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Sofisticado */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-primary);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .brand-text h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.025em;
+        }
+
+        .brand-text p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary-500);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            padding: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+
+        .theme-toggle:hover {
+            background: var(--border-primary);
+            transform: translateY(-1px);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-500), var(--primary-600));
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .metric-info h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            opacity: 0.8;
+        }
+
+        .icon-barril-vazio { background: linear-gradient(135deg, var(--primary-100), var(--primary-200)); color: var(--primary-700); }
+        .icon-barril-cheio { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #16a34a; }
+        .icon-chopeira { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706; }
+        .icon-cilindro { background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #be185d; }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .panel {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .panel-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .panel-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .panel-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .panel-content {
+            padding: 2rem;
+        }
+
+        /* Form Styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input,
+        .form-select {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            font-size: 0.875rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgb(14 165 233 / 0.1);
+            background: var(--bg-primary);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-primary);
+            transform: translateY(-1px);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* History Section */
+        .history-panel {
+            grid-column: 1 / -1;
+            margin-top: 2rem;
+        }
+
+        .history-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .history-stats {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            border: 1px solid var(--border-primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* History Items */
+        .history-list {
+            space-y: 0.5rem;
+        }
+
+        .history-item {
+            padding: 1rem;
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .history-item:hover {
+            background: var(--bg-tertiary);
+            transform: translateX(4px);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .history-type {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .history-date {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .history-details {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .history-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .history-quantity {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary-600);
+        }
+
+        .history-client {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            text-align: right;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-entrada { background: #dcfce7; color: #166534; }
+        .status-saida { background: #fef2f2; color: #dc2626; }
+        .status-recolha { background: #fef3c7; color: #d97706; }
+        .status-devolucao { background: #e0e7ff; color: #4338ca; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-tertiary);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .pagination-info {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .content-grid {
+                gap: 1rem;
+            }
+
+            .panel-content {
+                padding: 1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .history-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .history-details {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .history-client {
+                text-align: left;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-content {
+                padding: 0.75rem;
+            }
+
+            .brand-text h1 {
+                font-size: 1.25rem;
+            }
+
+            .main-content {
+                padding: 0.75rem;
+            }
+
+            .metric-card {
+                padding: 1rem;
+            }
+
+            .metric-value {
+                font-size: 2rem;
+            }
+
+            .panel-header {
+                padding: 1rem;
+            }
+
+            .panel-content {
+                padding: 1rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-primary);
+            border-radius: 50%;
+            border-top-color: var(--primary-500);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Success Animation */
+        .success-feedback {
+            background: #dcfce7 !important;
+            color: #166534 !important;
+            transform: scale(1.02);
+        }
+
+        /* Smooth Transitions */
+        * {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <div class="brand">
+                    <div class="brand-icon">📦</div>
+                    <div class="brand-text">
+                        <h1>EstoqueSync Pro</h1>
+                        <p>Sistema Inteligente de Controle</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="sync-status">
+                        <div class="sync-indicator"></div>
+                        <span id="syncStatus">Sincronizado</span>
+                    </div>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+                        <span id="themeIcon">🌙</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-info">
+                            <h3>Barris Vazios</h3>
+                            <div class="metric-value" id="barrisVazios">0</div>
+                            <div class="metric-label">unidades disponíveis</div>
+                        </div>
+                        <div class="metric-icon icon-barril-vazio">🛢️</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-info">
+                            <h3>Barris Cheios</h3>
+                            <div class="metric-value" id="barrisCheios">0</div>
+                            <div class="metric-label">unidades em estoque</div>
+                        </div>
+                        <div class="metric-icon icon-barril-cheio">🍺</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-info">
+                            <h3>Chopeiras</h3>
+                            <div class="metric-value" id="chopeiras">0</div>
+                            <div class="metric-label">equipamentos ativos</div>
+                        </div>
+                        <div class="metric-icon icon-chopeira">🚰</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-info">
+                            <h3>Cilindros CO2</h3>
+                            <div class="metric-value" id="cilindrosCO2">0</div>
+                            <div class="metric-label">cilindros disponíveis</div>
+                        </div>
+                        <div class="metric-icon icon-cilindro">⚡</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Nova Movimentação</h2>
+                        <p class="panel-subtitle">Registre entradas, saídas e transferências</p>
+                    </div>
+                    <div class="panel-content">
+                        <form id="movimentacaoForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label" for="tipoItem">Tipo de Item</label>
+                                    <select class="form-select" id="tipoItem" required>
+                                        <option value="">Selecione o tipo</option>
+                                        <option value="barril">Barril</option>
+                                        <option value="chopeira">Chopeira</option>
+                                        <option value="cilindro">Cilindro CO2</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" id="estadoBarrilGroup" style="display: none;">
+                                    <label class="form-label" for="estadoBarril">Estado do Barril</label>
+                                    <select class="form-select" id="estadoBarril">
+                                        <option value="vazio">Vazio</option>
+                                        <option value="cheio">Cheio</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" id="litragemBarrilGroup" style="display: none;">
+                                    <label class="form-label" for="litragemBarril">Litragem</label>
+                                    <select class="form-select" id="litragemBarril">
+                                        <option value="15">15 Litros</option>
+                                        <option value="20">20 Litros</option>
+                                        <option value="30">30 Litros</option>
+                                        <option value="50">50 Litros</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="tipoMovimento">Tipo de Movimento</label>
+                                    <select class="form-select" id="tipoMovimento" required>
+                                        <option value="">Selecione o movimento</option>
+                                        <option value="entrada">Entrada</option>
+                                        <option value="saida">Saída</option>
+                                        <option value="recolha">Recolha</option>
+                                        <option value="devolucao">Devolução</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="quantidade">Quantidade</label>
+                                    <input class="form-input" type="number" id="quantidade" min="1" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="cliente">Cliente/Observação</label>
+                                    <input class="form-input" type="text" id="cliente" placeholder="Nome do cliente">
+                                </div>
+                            </div>
+
+                            <div class="button-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <span id="submitText">Registrar Movimentação</span>
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="gerarRelatorio()">
+                                    📄 Gerar Relatório
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Resumo Rápido</h2>
+                        <p class="panel-subtitle">Estatísticas em tempo real</p>
+                    </div>
+                    <div class="panel-content">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">Movimentações hoje</span>
+                                <span class="stat-value" id="movimentacoesHoje">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Entradas hoje</span>
+                                <span class="stat-value" id="entradasHoje">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Saídas hoje</span>
+                                <span class="stat-value" id="saidasHoje">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Total no sistema</span>
+                                <span class="stat-value" id="totalItens">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel history-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Histórico de Movimentações</h2>
+                    <p class="panel-subtitle">Acompanhe todas as operações realizadas</p>
+                </div>
+                <div class="panel-content">
+                    <div class="history-controls">
+                        <select id="filtroTipo" class="form-select">
+                            <option value="">Todos os movimentos</option>
+                            <option value="entrada">Entradas</option>
+                            <option value="saida">Saídas</option>
+                            <option value="recolha">Recolhas</option>
+                            <option value="devolucao">Devoluções</option>
+                        </select>
+                        <select id="filtroItem" class="form-select">
+                            <option value="">Todos os itens</option>
+                            <option value="barril">Barris</option>
+                            <option value="chopeira">Chopeiras</option>
+                            <option value="cilindro">Cilindros CO2</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="limparHistorico()">
+                            🗑️ Limpar Histórico
+                        </button>
+                    </div>
+
+                    <div class="history-list" id="historicoContainer">
+                        <div class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <p>Nenhuma movimentação registrada ainda</p>
+                        </div>
+                    </div>
+
+                    <div class="pagination" id="paginationContainer" style="display: none;">
+                        <button class="btn btn-secondary" onclick="previousPage()" id="prevBtn">← Anterior</button>
+                        <span class="pagination-info" id="pageInfo">Página 1 de 1</span>
+                        <button class="btn btn-secondary" onclick="nextPage()" id="nextBtn">Próxima →</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sistema de Sincronização em Nuvem Simulado
+        class CloudSync {
+            constructor() {
+                this.syncKey = 'estoque_sync_' + (localStorage.getItem('sync_id') || this.generateSyncId());
+                localStorage.setItem('sync_id', this.syncKey.replace('estoque_sync_', ''));
+                this.lastSync = Date.now();
+                this.syncInterval = 5000; // 5 segundos
+                this.startSync();
+            }
+
+            generateSyncId() {
+                return Math.random().toString(36).substr(2, 9);
+            }
+
+            async saveToCloud(data) {
+                try {
+                    // Simula salvamento em nuvem usando localStorage compartilhado
+                    const cloudData = {
+                        data: data,
+                        timestamp: Date.now(),
+                        version: (this.getCloudData()?.version || 0) + 1
+                    };
+                    localStorage.setItem(this.syncKey, JSON.stringify(cloudData));
+                    this.updateSyncStatus('Sincronizado', true);
+                    return true;
+                } catch (error) {
+                    this.updateSyncStatus('Erro na sincronização', false);
+                    return false;
+                }
+            }
+
+            getCloudData() {
+                try {
+                    const data = localStorage.getItem(this.syncKey);
+                    return data ? JSON.parse(data) : null;
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            updateSyncStatus(message, success = true) {
+                const statusElement = document.getElementById('syncStatus');
+                const indicator = document.querySelector('.sync-indicator');
+                
+                if (statusElement) {
+                    statusElement.textContent = message;
+                }
+                
+                if (indicator) {
+                    indicator.style.background = success ? 'var(--primary-500)' : '#ef4444';
+                }
+            }
+
+            startSync() {
+                setInterval(() => {
+                    this.updateSyncStatus('Sincronizando...', true);
+                    setTimeout(() => {
+                        this.updateSyncStatus('Sincronizado', true);
+                    }, 1000);
+                }, this.syncInterval);
+            }
+        }
+
+        // Sistema Principal de Estoque
+        class EstoquePro {
+            constructor() {
+                this.cloudSync = new CloudSync();
+                this.currentPage = 1;
+                this.itemsPerPage = 8;
+                this.filteredHistorico = [];
+                this.loadData();
+                this.updateAllDisplays();
+                this.initializeTheme();
+                this.setupEventListeners();
+            }
+
+            loadData() {
+                // Tentar carregar da nuvem primeiro
+                const cloudData = this.cloudSync.getCloudData();
+                
+                if (cloudData && cloudData.data) {
+                    this.estoque = cloudData.data.estoque;
+                    this.historico = cloudData.data.historico || [];
+                } else {
+                    // Fallback para dados locais
+                    const localData = localStorage.getItem('estoque_local');
+                    if (localData) {
+                        const parsed = JSON.parse(localData);
+                        this.estoque = parsed.estoque;
+                        this.historico = parsed.historico || [];
+                    } else {
+                        this.initializeEmptyData();
+                    }
+                }
+            }
+
+            initializeEmptyData() {
+                this.estoque = {
+                    barrisVazios: { '15L': 0, '20L': 0, '30L': 0, '50L': 0 },
+                    barrisCheios: { '15L': 0, '20L': 0, '30L': 0, '50L': 0 },
+                    chopeiras: 0,
+                    cilindrosCO2: 0
+                };
+                this.historico = [];
+            }
+
+            async saveData() {
+                const data = {
+                    estoque: this.estoque,
+                    historico: this.historico,
+                    lastUpdate: Date.now()
+                };
+
+                // Salvar localmente
+                localStorage.setItem('estoque_local', JSON.stringify(data));
+                
+                // Salvar na nuvem
+                await this.cloudSync.saveToCloud(data);
+            }
+
+            registrarMovimentacao(tipoItem, estadoBarril, tipoMovimento, quantidade, cliente, litragem) {
+                const timestamp = new Date();
+                let itemKey = '';
+                let subKey = '';
+                let descricaoItem = '';
+
+                // Determinar chaves e descrição
+                if (tipoItem === 'barril') {
+                    itemKey = estadoBarril === 'vazio' ? 'barrisVazios' : 'barrisCheios';
+                    subKey = `${litragem}L`;
+                    descricaoItem = `Barril ${estadoBarril} ${litragem}L`;
+                } else if (tipoItem === 'chopeira') {
+                    itemKey = 'chopeiras';
+                    descricaoItem = 'Chopeira';
+                } else if (tipoItem === 'cilindro') {
+                    itemKey = 'cilindrosCO2';
+                    descricaoItem = 'Cilindro CO2';
+                }
+
+                // Calcular mudança no estoque
+                let mudanca = 0;
+                if (tipoMovimento === 'entrada' || tipoMovimento === 'recolha') {
+                    mudanca = quantidade;
+                } else if (tipoMovimento === 'saida' || tipoMovimento === 'devolucao') {
+                    mudanca = -quantidade;
+                }
+
+                // Verificar estoque disponível
+                let estoqueAtual = 0;
+                if (tipoItem === 'barril') {
+                    estoqueAtual = this.estoque[itemKey][subKey];
+                } else {
+                    estoqueAtual = this.estoque[itemKey];
+                }
+
+                if (mudanca < 0 && estoqueAtual < Math.abs(mudanca)) {
+                    this.showNotification(`Estoque insuficiente! Disponível: ${estoqueAtual}`, 'error');
+                    return false;
+                }
+
+                // Atualizar estoque
+                if (tipoItem === 'barril') {
+                    this.estoque[itemKey][subKey] = Math.max(0, this.estoque[itemKey][subKey] + mudanca);
+                } else {
+                    this.estoque[itemKey] = Math.max(0, this.estoque[itemKey] + mudanca);
+                }
+
+                // Adicionar ao histórico
+                const movimentacao = {
+                    id: Date.now(),
+                    timestamp: timestamp.toISOString(),
+                    tipoItem: descricaoItem,
+                    tipoMovimento,
+                    quantidade,
+                    cliente: cliente || 'Não informado',
+                    estoqueAnterior: estoqueAtual,
+                    estoqueAtual: tipoItem === 'barril' ? this.estoque[itemKey][subKey] : this.estoque[itemKey]
+                };
+
+                this.historico.unshift(movimentacao);
+                
+                // Manter apenas os últimos 200 registros
+                if (this.historico.length > 200) {
+                    this.historico = this.historico.slice(0, 200);
+                }
+
+                this.saveData();
+                this.updateAllDisplays();
+                this.showNotification('Movimentação registrada com sucesso!', 'success');
+                
+                return true;
+            }
+
+            showNotification(message, type = 'success') {
+                const submitBtn = document.querySelector('#movimentacaoForm button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                if (type === 'success') {
+                    submitBtn.innerHTML = '✅ ' + message;
+                    submitBtn.classList.add('success-feedback');
+                } else {
+                    submitBtn.innerHTML = '❌ ' + message;
+                    submitBtn.style.background = '#ef4444';
+                }
+
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.classList.remove('success-feedback');
+                    submitBtn.style.background = '';
+                }, 3000);
+            }
+
+            updateAllDisplays() {
+                this.updateMetrics();
+                this.updateStats();
+                this.updateHistorico();
+            }
+
+            updateMetrics() {
+                const totalBarrisVazios = Object.values(this.estoque.barrisVazios).reduce((a, b) => a + b, 0);
+                const totalBarrisCheios = Object.values(this.estoque.barrisCheios).reduce((a, b) => a + b, 0);
+                
+                document.getElementById('barrisVazios').textContent = totalBarrisVazios;
+                document.getElementById('barrisCheios').textContent = totalBarrisCheios;
+                document.getElementById('chopeiras').textContent = this.estoque.chopeiras;
+                document.getElementById('cilindrosCO2').textContent = this.estoque.cilindrosCO2;
+            }
+
+            updateStats() {
+                const hoje = new Date().toDateString();
+                
+                const movimentacoesHoje = this.historico.filter(item => {
+                    return new Date(item.timestamp).toDateString() === hoje;
+                }).length;
+
+                const entradasHoje = this.historico.filter(item => {
+                    const itemDate = new Date(item.timestamp).toDateString();
+                    return itemDate === hoje && (item.tipoMovimento === 'entrada' || item.tipoMovimento === 'recolha');
+                }).length;
+
+                const saidasHoje = this.historico.filter(item => {
+                    const itemDate = new Date(item.timestamp).toDateString();
+                    return itemDate === hoje && (item.tipoMovimento === 'saida' || item.tipoMovimento === 'devolucao');
+                }).length;
+
+                const totalItens = Object.values(this.estoque.barrisVazios).reduce((a, b) => a + b, 0) +
+                                 Object.values(this.estoque.barrisCheios).reduce((a, b) => a + b, 0) +
+                                 this.estoque.chopeiras + this.estoque.cilindrosCO2;
+
+                document.getElementById('movimentacoesHoje').textContent = movimentacoesHoje;
+                document.getElementById('entradasHoje').textContent = entradasHoje;
+                document.getElementById('saidasHoje').textContent = saidasHoje;
+                document.getElementById('totalItens').textContent = totalItens;
+            }
+
+            filterHistorico() {
+                const filtroTipo = document.getElementById('filtroTipo').value;
+                const filtroItem = document.getElementById('filtroItem').value;
+
+                this.filteredHistorico = this.historico.filter(item => {
+                    const matchTipo = !filtroTipo || item.tipoMovimento === filtroTipo;
+                    const matchItem = !filtroItem || item.tipoItem.toLowerCase().includes(filtroItem);
+                    return matchTipo && matchItem;
+                });
+
+                this.currentPage = 1;
+                this.updateHistorico();
+            }
+
+            updateHistorico() {
+                const container = document.getElementById('historicoContainer');
+                
+                if (this.historico.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <p>Nenhuma movimentação registrada ainda</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Se não há filtros, usar histórico completo
+                if (this.filteredHistorico.length === 0 && 
+                    !document.getElementById('filtroTipo').value && 
+                    !document.getElementById('filtroItem').value) {
+                    this.filteredHistorico = [...this.historico];
+                }
+
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+                const itemsToShow = this.filteredHistorico.slice(startIndex, endIndex);
+
+                if (itemsToShow.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🔍</div>
+                            <p>Nenhuma movimentação encontrada com os filtros aplicados</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const tipoTexto = {
+                    'entrada': 'Entrada',
+                    'saida': 'Saída',
+                    'recolha': 'Recolha',
+                    'devolucao': 'Devolução'
+                };
+
+                const html = itemsToShow.map(item => {
+                    const date = new Date(item.timestamp);
+                    const dateStr = date.toLocaleDateString('pt-BR', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: '2-digit' 
+                    }) + ' ' + date.toLocaleTimeString('pt-BR', {
+                        hour: '2-digit', 
+                        minute: '2-digit'
+                    });
+                    
+                    return `
+                        <div class="history-item">
+                            <div class="history-header">
+                                <span class="status-badge status-${item.tipoMovimento}">
+                                    ${tipoTexto[item.tipoMovimento]}
+                                </span>
+                                <span class="history-date">${dateStr}</span>
+                            </div>
+                            <div class="history-details">
+                                <div class="history-description">
+                                    <strong>${item.tipoItem}</strong><br>
+                                    <small>Estoque: ${item.estoqueAnterior} → ${item.estoqueAtual}</small>
+                                </div>
+                                <div class="history-quantity">+${item.quantidade}</div>
+                                <div class="history-client">${item.cliente}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = html;
+                this.updatePagination();
+            }
+
+            updatePagination() {
+                const totalPages = Math.ceil(this.filteredHistorico.length / this.itemsPerPage);
+                const paginationContainer = document.getElementById('paginationContainer');
+                
+                if (totalPages <= 1) {
+                    paginationContainer.style.display = 'none';
+                    return;
+                }
+
+                paginationContainer.style.display = 'flex';
+                document.getElementById('pageInfo').textContent = `Página ${this.currentPage} de ${totalPages}`;
+                document.getElementById('prevBtn').disabled = this.currentPage === 1;
+                document.getElementById('nextBtn').disabled = this.currentPage === totalPages;
+            }
+
+            initializeTheme() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                this.updateThemeIcon(savedTheme);
+            }
+
+            updateThemeIcon(theme) {
+                const themeIcon = document.getElementById('themeIcon');
+                themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+
+            setupEventListeners() {
+                // Tipo de item change
+                document.getElementById('tipoItem').addEventListener('change', (e) => {
+                    const estadoGroup = document.getElementById('estadoBarrilGroup');
+                    const litragemGroup = document.getElementById('litragemBarrilGroup');
+                    
+                    if (e.target.value === 'barril') {
+                        estadoGroup.style.display = 'block';
+                        litragemGroup.style.display = 'block';
+                    } else {
+                        estadoGroup.style.display = 'none';
+                        litragemGroup.style.display = 'none';
+                    }
+                });
+
+                // Form submit
+                document.getElementById('movimentacaoForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const tipoItem = document.getElementById('tipoItem').value;
+                    const estadoBarril = document.getElementById('estadoBarril').value;
+                    const tipoMovimento = document.getElementById('tipoMovimento').value;
+                    const quantidade = parseInt(document.getElementById('quantidade').value);
+                    const cliente = document.getElementById('cliente').value;
+                    const litragem = document.getElementById('litragemBarril').value;
+
+                    if (this.registrarMovimentacao(tipoItem, estadoBarril, tipoMovimento, quantidade, cliente, litragem)) {
+                        e.target.reset();
+                        document.getElementById('estadoBarrilGroup').style.display = 'none';
+                        document.getElementById('litragemBarrilGroup').style.display = 'none';
+                    }
+                });
+
+                // Filtros
+                document.getElementById('filtroTipo').addEventListener('change', () => {
+                    this.filterHistorico();
+                });
+
+                document.getElementById('filtroItem').addEventListener('change', () => {
+                    this.filterHistorico();
+                });
+            }
+
+            limparHistorico() {
+                if (confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.')) {
+                    this.historico = [];
+                    this.filteredHistorico = [];
+                    this.currentPage = 1;
+                    this.saveData();
+                    this.updateAllDisplays();
+                    this.showNotification('Histórico limpo com sucesso!', 'success');
+                }
+            }
+        }
+
+        // Inicializar sistema
+        const estoquePro = new EstoquePro();
+
+        // Funções globais
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            estoquePro.updateThemeIcon(newTheme);
+        }
+
+        function gerarRelatorio() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Cabeçalho elegante
+            doc.setFontSize(20);
+            doc.setTextColor(15, 23, 42);
+            doc.text('EstoqueSync Pro - Relatório Executivo', 20, 25);
+
+            doc.setFontSize(12);
+            doc.setTextColor(100, 116, 139);
+            const dataAtual = new Date().toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            doc.text(`Gerado em: ${dataAtual}`, 20, 35);
+
+            // Linha elegante
+            doc.setDrawColor(14, 165, 233);
+            doc.setLineWidth(0.5);
+            doc.line(20, 42, 190, 42);
+
+            // Resumo executivo
+            doc.setFontSize(16);
+            doc.setTextColor(15, 23, 42);
+            doc.text('Resumo Executivo', 20, 55);
+
+            const totalBarrisVazios = Object.values(estoquePro.estoque.barrisVazios).reduce((a, b) => a + b, 0);
+            const totalBarrisCheios = Object.values(estoquePro.estoque.barrisCheios).reduce((a, b) => a + b, 0);
+
+            const resumoData = [
+                ['Categoria', 'Quantidade', 'Status'],
+                ['Barris Vazios', totalBarrisVazios.toString(), totalBarrisVazios > 10 ? 'Adequado' : 'Baixo'],
+                ['Barris Cheios', totalBarrisCheios.toString(), totalBarrisCheios > 5 ? 'Adequado' : 'Crítico'],
+                ['Chopeiras', estoquePro.estoque.chopeiras.toString(), estoquePro.estoque.chopeiras > 0 ? 'Disponível' : 'Indisponível'],
+                ['Cilindros CO2', estoquePro.estoque.cilindrosCO2.toString(), estoquePro.estoque.cilindrosCO2 > 2 ? 'Adequado' : 'Baixo']
+            ];
+
+            doc.autoTable({
+                startY: 65,
+                head: [resumoData[0]],
+                body: resumoData.slice(1),
+                theme: 'striped',
+                headStyles: { 
+                    fillColor: [14, 165, 233],
+                    textColor: [255, 255, 255],
+                    fontSize: 12,
+                    fontStyle: 'bold'
+                },
+                bodyStyles: {
+                    fontSize: 11,
+                    textColor: [51, 65, 85]
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 250, 252]
+                }
+            });
+
+            // Movimentações recentes
+            let yPos = doc.lastAutoTable.finalY + 20;
+            doc.setFontSize(16);
+            doc.text('Movimentações Recentes', 20, yPos);
+
+            if (estoquePro.historico.length > 0) {
+                const historicoData = [
+                    ['Data/Hora', 'Operação', 'Item', 'Qtd', 'Responsável']
+                ];
+
+                const tipoTexto = {
+                    'entrada': 'Entrada',
+                    'saida': 'Saída', 
+                    'recolha': 'Recolha',
+                    'devolucao': 'Devolução'
+                };
+
+                estoquePro.historico.slice(0, 20).forEach(item => {
+                    const date = new Date(item.timestamp);
+                    const dateStr = date.toLocaleDateString('pt-BR') + ' ' + 
+                                   date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                    historicoData.push([
+                        dateStr,
+                        tipoTexto[item.tipoMovimento],
+                        item.tipoItem,
+                        item.quantidade.toString(),
+                        item.cliente.substring(0, 20) + (item.cliente.length > 20 ? '...' : '')
+                    ]);
+                });
+
+                doc.autoTable({
+                    startY: yPos + 10,
+                    head: [historicoData[0]],
+                    body: historicoData.slice(1),
+                    theme: 'grid',
+                    headStyles: { 
+                        fillColor: [14, 165, 233],
+                        textColor: [255, 255, 255],
+                        fontSize: 10
+                    },
+                    bodyStyles: {
+                        fontSize: 9,
+                        textColor: [51, 65, 85]
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 35 },
+                        1: { cellWidth: 25 },
+                        2: { cellWidth: 40 },
+                        3: { cellWidth: 15 },
+                        4: { cellWidth: 35 }
+                    }
+                });
+            }
+
+            // Rodapé
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(100, 116, 139);
+                doc.text(`EstoqueSync Pro - Página ${i} de ${pageCount}`, 20, 285);
+                doc.text('Relatório confidencial - Uso interno', 150, 285);
+            }
+
+            const nomeArquivo = `estoque-pro-${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(nomeArquivo);
+        }
+
+        function limparHistorico() {
+            estoquePro.limparHistorico();
+        }
+
+        function previousPage() {
+            if (estoquePro.currentPage > 1) {
+                estoquePro.currentPage--;
+                estoquePro.updateHistorico();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(estoquePro.filteredHistorico.length / estoquePro.itemsPerPage);
+            if (estoquePro.currentPage < totalPages) {
+                estoquePro.currentPage++;
+                estoquePro.updateHistorico();
+            }
+        }
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/env.js"></script>
+<script>
+  // cliente compartilhado em toda página
+  window.supabase = supabase.createClient(
+    window.SUPABASE_URL,
+    window.SUPABASE_ANON_KEY
+  );
+
+  // ajudinha para avisar se algo estiver faltando
+  if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+    alert('⚠️ Configure a URL e a Publishable key no env.js');
+  }
+</script>
+
+<!-- seu(s) script(s) da página por último -->
+<script src="/script.js"></script>
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98eb92ce05df3472',t:'MTc2MDQ5MjA2MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

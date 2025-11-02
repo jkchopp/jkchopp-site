@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Financeiro Empresarial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            200: '#bcccdc',
+                            300: '#9fb3c8',
+                            400: '#829ab1',
+                            500: '#627d98',
+                            600: '#486581',
+                            700: '#334e68',
+                            800: '#243b53',
+                            900: '#102a43'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark .glass-effect {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .animate-slide-up {
+            animation: slideUp 0.4s ease-out;
+        }
+        .animate-scale-in {
+            animation: scaleIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .gradient-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .dark .gradient-card {
+            background: linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .dark .hover-lift:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+        .theme-toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dark .theme-toggle {
+            background: linear-gradient(45deg, #1e293b, #0f172a);
+        }
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .dark .theme-toggle::before {
+            transform: translateX(30px);
+            background: #1e293b;
+        }
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+        .dark .sidebar-gradient {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        }
+        .main-gradient {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%);
+        }
+        .dark .main-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .dark .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+        .nav-item-active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body class="h-full main-gradient transition-all duration-500">
+    <div class="min-h-full flex">
+        <!-- Sidebar -->
+        <div class="w-72 sidebar-gradient shadow-2xl border-r border-navy-200/30 dark:border-navy-700/30 transition-all duration-500">
+            <div class="p-8 border-b border-navy-200/20 dark:border-navy-700/20">
+                <div class="flex flex-col items-center space-y-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-navy-600 to-navy-800 rounded-2xl flex items-center justify-center shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-navy-800 to-navy-600 dark:from-white dark:to-navy-200 bg-clip-text text-transparent">FinanceiroERP</h1>
+                        <p class="text-sm text-navy-600 dark:text-navy-400 mt-1">Sistema Empresarial</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm text-navy-600 dark:text-navy-400">☀️</span>
+                        <div id="themeToggle" class="theme-toggle"></div>
+                        <span class="text-sm text-navy-600 dark:text-navy-400">🌙</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="p-6 space-y-3">
+                <div class="mb-6">
+                    <p class="text-xs font-semibold text-navy-500 dark:text-navy-400 uppercase tracking-wider mb-3">Menu Principal</p>
+                </div>
+                
+                <button class="nav-item w-full text-left px-6 py-4 rounded-xl nav-item-active text-white shadow-lg transform transition-all duration-300 hover:scale-105" data-section="dashboard">
+                    <span class="flex items-center">
+                        <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Dashboard</p>
+                            <p class="text-xs opacity-80">Visão geral</p>
+                        </div>
+                    </span>
+                </button>
+                
+                <button class="nav-item w-full text-left px-6 py-4 rounded-xl text-navy-700 dark:text-navy-300 hover:bg-white/10 dark:hover:bg-black/10 transition-all duration-300 hover:scale-105 hover-lift" data-section="transactions">
+                    <span class="flex items-center">
+                        <div class="w-10 h-10 bg-navy-100 dark:bg-navy-700 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-navy-600 dark:text-navy-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Transações</p>
+                            <p class="text-xs opacity-70">Entradas e saídas</p>
+                        </div>
+                    </span>
+                </button>
+                
+                <button class="nav-item w-full text-left px-6 py-4 rounded-xl text-navy-700 dark:text-navy-300 hover:bg-white/10 dark:hover:bg-black/10 transition-all duration-300 hover:scale-105 hover-lift" data-section="accounts-payable">
+                    <span class="flex items-center">
+                        <div class="w-10 h-10 bg-navy-100 dark:bg-navy-700 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-navy-600 dark:text-navy-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Contas a Pagar</p>
+                            <p class="text-xs opacity-70">Gastos fixos e variáveis</p>
+                        </div>
+                    </span>
+                </button>
+                
+                <button class="nav-item w-full text-left px-6 py-4 rounded-xl text-navy-700 dark:text-navy-300 hover:bg-white/10 dark:hover:bg-black/10 transition-all duration-300 hover:scale-105 hover-lift" data-section="bills">
+                    <span class="flex items-center">
+                        <div class="w-10 h-10 bg-navy-100 dark:bg-navy-700 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-navy-600 dark:text-navy-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a2 2 0 002 2h8a2 2 0 002-2V3a2 2 0 012 2v6h-3a3 3 0 00-3 3v3H6a2 2 0 01-2-2V5zm8 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Contas & Boletos</p>
+                            <p class="text-xs opacity-70">Gestão de pagamentos</p>
+                        </div>
+                    </span>
+                </button>
+                
+                <button class="nav-item w-full text-left px-6 py-4 rounded-xl text-navy-700 dark:text-navy-300 hover:bg-white/10 dark:hover:bg-black/10 transition-all duration-300 hover:scale-105 hover-lift" data-section="investments">
+                    <span class="flex items-center">
+                        <div class="w-10 h-10 bg-navy-100 dark:bg-navy-700 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-navy-600 dark:text-navy-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Investimentos</p>
+                            <p class="text-xs opacity-70">Ativos e compras</p>
+                        </div>
+                    </span>
+                </button>
+                
+                <button class="nav-item w-full text-left px-6 py-4 rounded-xl text-navy-700 dark:text-navy-300 hover:bg-white/10 dark:hover:bg-black/10 transition-all duration-300 hover:scale-105 hover-lift" data-section="reports">
+                    <span class="flex items-center">
+                        <div class="w-10 h-10 bg-navy-100 dark:bg-navy-700 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-navy-600 dark:text-navy-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a2 2 0 002 2h8a2 2 0 002-2V3a2 2 0 012 2v6h-3a3 3 0 00-3 3v3H6a2 2 0 01-2-2V5zm8 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Relatórios</p>
+                            <p class="text-xs opacity-70">Análises e métricas</p>
+                        </div>
+                    </span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Header -->
+            <header class="glass-effect backdrop-blur-xl border-b border-navy-200/30 dark:border-navy-700/30 p-8">
+                <div class="flex items-center justify-between">
+                    <div class="animate-fade-in">
+                        <h2 id="pageTitle" class="text-3xl font-bold bg-gradient-to-r from-navy-800 to-navy-600 dark:from-white dark:to-navy-200 bg-clip-text text-transparent">Dashboard Financeiro</h2>
+                        <p class="text-navy-600 dark:text-navy-400 mt-1">Bem-vindo ao seu painel de controle</p>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <div class="text-right animate-slide-up">
+                            <p class="text-sm text-navy-600 dark:text-navy-400 font-medium">Saldo Total</p>
+                            <p id="totalBalance" class="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">R$ 0,00</p>
+                        </div>
+                        <div class="w-12 h-12 bg-gradient-to-br from-navy-600 to-navy-800 rounded-xl flex items-center justify-center shadow-lg animate-scale-in">
+                            <span class="text-white font-bold text-lg">👤</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="p-6">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="section animate-fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+                        <!-- Cards de Resumo -->
+                        <div class="gradient-card rounded-2xl card-shadow p-8 hover-lift animate-fade-in">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-navy-600 dark:text-navy-400 text-sm font-medium uppercase tracking-wide">Receitas</p>
+                                    <p id="totalRevenue" class="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">R$ 0,00</p>
+                                    <p class="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center">
+                                        <span class="mr-1">↗️</span> +12.5% este mês
+                                    </p>
+                                </div>
+                                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="gradient-card rounded-2xl card-shadow p-8 hover-lift animate-fade-in" style="animation-delay: 0.1s">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-navy-600 dark:text-navy-400 text-sm font-medium uppercase tracking-wide">Despesas</p>
+                                    <p id="totalExpenses" class="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">R$ 0,00</p>
+                                    <p class="text-xs text-red-600 dark:text-red-400 mt-1 flex items-center">
+                                        <span class="mr-1">↘️</span> -8.2% este mês
+                                    </p>
+                                </div>
+                                <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="gradient-card rounded-2xl card-shadow p-8 hover-lift animate-fade-in" style="animation-delay: 0.2s">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-navy-600 dark:text-navy-400 text-sm font-medium uppercase tracking-wide">Lucro/Prejuízo</p>
+                                    <p id="netProfit" class="text-3xl font-bold mt-2">R$ 0,00</p>
+                                    <p class="text-xs mt-1 flex items-center">
+                                        <span class="mr-1">📈</span> Margem: 24.8%
+                                    </p>
+                                </div>
+                                <div class="w-16 h-16 bg-gradient-to-br from-navy-500 to-navy-700 rounded-2xl flex items-center justify-center shadow-lg">
+                                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="gradient-card rounded-2xl card-shadow p-8 hover-lift animate-fade-in" style="animation-delay: 0.3s">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-navy-600 dark:text-navy-400 text-sm font-medium uppercase tracking-wide">Patrimônio</p>
+                                    <p id="totalAssets" class="text-3xl font-bold text-navy-700 dark:text-navy-300 mt-2">R$ 0,00</p>
+                                    <p class="text-xs text-navy-600 dark:text-navy-400 mt-1 flex items-center">
+                                        <span class="mr-1">💎</span> Ativos totais
+                                    </p>
+                                </div>
+                                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico e Ações Rápidas -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 gradient-card rounded-2xl card-shadow p-8 hover-lift animate-slide-up">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-navy-800 dark:text-white">Fluxo de Caixa</h3>
+                                    <p class="text-navy-600 dark:text-navy-400 text-sm mt-1">Análise dos últimos 6 meses</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="px-3 py-1 bg-navy-100 dark:bg-navy-700 text-navy-600 dark:text-navy-300 rounded-lg text-sm hover:bg-navy-200 dark:hover:bg-navy-600 transition-colors">6M</button>
+                                    <button class="px-3 py-1 bg-navy-600 text-white rounded-lg text-sm">1A</button>
+                                </div>
+                            </div>
+                            <div class="chart-container bg-gradient-to-br from-navy-50 to-slate-100 dark:from-navy-900 dark:to-slate-800 rounded-xl p-4">
+                                <canvas id="cashFlowChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="gradient-card rounded-2xl card-shadow p-8 hover-lift animate-slide-up" style="animation-delay: 0.2s">
+                            <div class="mb-6">
+                                <h3 class="text-xl font-bold text-navy-800 dark:text-white">Ações Rápidas</h3>
+                                <p class="text-navy-600 dark:text-navy-400 text-sm mt-1">Operações frequentes</p>
+                            </div>
+                            <div class="space-y-4">
+                                <button class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center" onclick="showAddTransaction('income')">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Nova Receita
+                                </button>
+                                <button class="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center" onclick="showAddTransaction('expense')">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Nova Despesa
+                                </button>
+                                <button class="w-full bg-gradient-to-r from-navy-600 to-blue-600 hover:from-navy-700 hover:to-blue-700 text-white py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center" onclick="showSection('bills')">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                                    </svg>
+                                    Gerenciar Boletos
+                                </button>
+                                <button class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center" onclick="showSection('investments')">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                                    </svg>
+                                    Novo Investimento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Section -->
+                <div id="transactions" class="section hidden animate-fade-in">
+                    <div class="bg-white dark:bg-navy-800 rounded-xl shadow-lg border border-navy-200 dark:border-navy-700">
+                        <div class="p-6 border-b border-navy-200 dark:border-navy-700">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <h3 class="text-xl font-semibold text-navy-800 dark:text-white">Transações</h3>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <select id="transactionFilter" class="px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                                        <option value="all">Todas</option>
+                                        <option value="income">Receitas</option>
+                                        <option value="expense">Despesas</option>
+                                        <option value="fixed">Fixas</option>
+                                        <option value="variable">Variáveis</option>
+                                    </select>
+                                    <button class="bg-navy-600 hover:bg-navy-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="showAddTransactionModal()">
+                                        + Nova Transação
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="border-b border-navy-200 dark:border-navy-700">
+                                            <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Data</th>
+                                            <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Descrição</th>
+                                            <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Categoria</th>
+                                            <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Tipo</th>
+                                            <th class="text-right py-3 text-navy-600 dark:text-navy-300 font-medium">Valor</th>
+                                            <th class="text-center py-3 text-navy-600 dark:text-navy-300 font-medium">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactionsTable">
+                                        <!-- Transações serão inseridas aqui -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accounts Payable Section -->
+                <div id="accounts-payable" class="section hidden animate-fade-in">
+                    <div class="space-y-6">
+                        <!-- Header com filtros -->
+                        <div class="gradient-card rounded-2xl card-shadow p-6">
+                            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-navy-800 dark:text-white">Contas a Pagar</h3>
+                                    <p class="text-navy-600 dark:text-navy-400 mt-1">Gerencie seus gastos fixos e variáveis</p>
+                                </div>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <select id="accountsFilter" class="px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                                        <option value="all">Todas as contas</option>
+                                        <option value="fixed">Gastos fixos</option>
+                                        <option value="variable">Gastos variáveis</option>
+                                        <option value="pending">Pendentes</option>
+                                        <option value="paid">Pagas</option>
+                                    </select>
+                                    <button class="bg-gradient-to-r from-navy-600 to-blue-600 hover:from-navy-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg" onclick="showAddAccountModal()">
+                                        + Nova Conta
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumo das contas -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="gradient-card rounded-2xl card-shadow p-6 hover-lift">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-navy-600 dark:text-navy-400 text-sm font-medium uppercase tracking-wide">Gastos Fixos</p>
+                                        <p id="totalFixedAccounts" class="text-2xl font-bold text-red-600 dark:text-red-400 mt-2">R$ 0,00</p>
+                                        <p class="text-xs text-navy-600 dark:text-navy-400 mt-1">Mensais</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="gradient-card rounded-2xl card-shadow p-6 hover-lift">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-navy-600 dark:text-navy-400 text-sm font-medium uppercase tracking-wide">Gastos Variáveis</p>
+                                        <p id="totalVariableAccounts" class="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-2">R$ 0,00</p>
+                                        <p class="text-xs text-navy-600 dark:text-navy-400 mt-1">Este mês</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="gradient-card rounded-2xl card-shadow p-6 hover-lift">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-navy-600 dark:text-navy-400 text-sm font-medium uppercase tracking-wide">Pendentes</p>
+                                        <p id="totalPendingAccounts" class="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-2">R$ 0,00</p>
+                                        <p class="text-xs text-navy-600 dark:text-navy-400 mt-1">A vencer</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de contas -->
+                        <div class="gradient-card rounded-2xl card-shadow">
+                            <div class="p-6 border-b border-navy-200/30 dark:border-navy-700/30">
+                                <h4 class="text-xl font-semibold text-navy-800 dark:text-white">Lista de Contas</h4>
+                            </div>
+                            <div class="p-6">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead>
+                                            <tr class="border-b border-navy-200 dark:border-navy-700">
+                                                <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Descrição</th>
+                                                <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Tipo</th>
+                                                <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Valor</th>
+                                                <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Frequência</th>
+                                                <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Próximo Venc.</th>
+                                                <th class="text-left py-3 text-navy-600 dark:text-navy-300 font-medium">Status</th>
+                                                <th class="text-center py-3 text-navy-600 dark:text-navy-300 font-medium">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="accountsPayableTable">
+                                            <!-- Contas serão inseridas aqui -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bills Section -->
+                <div id="bills" class="section hidden animate-fade-in">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Contas a Pagar -->
+                        <div class="bg-white dark:bg-navy-800 rounded-xl shadow-lg border border-navy-200 dark:border-navy-700">
+                            <div class="p-6 border-b border-navy-200 dark:border-navy-700">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-xl font-semibold text-navy-800 dark:text-white">Contas a Pagar</h3>
+                                    <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="showAddBillModal('payable')">
+                                        + Nova Conta
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div id="payableBills" class="space-y-3">
+                                    <!-- Contas a pagar serão inseridas aqui -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contas a Receber -->
+                        <div class="bg-white dark:bg-navy-800 rounded-xl shadow-lg border border-navy-200 dark:border-navy-700">
+                            <div class="p-6 border-b border-navy-200 dark:border-navy-700">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-xl font-semibold text-navy-800 dark:text-white">Contas a Receber</h3>
+                                    <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="showAddBillModal('receivable')">
+                                        + Nova Conta
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div id="receivableBills" class="space-y-3">
+                                    <!-- Contas a receber serão inseridas aqui -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Investments Section -->
+                <div id="investments" class="section hidden animate-fade-in">
+                    <div class="bg-white dark:bg-navy-800 rounded-xl shadow-lg border border-navy-200 dark:border-navy-700">
+                        <div class="p-6 border-b border-navy-200 dark:border-navy-700">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-xl font-semibold text-navy-800 dark:text-white">Investimentos & Compras</h3>
+                                <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors" onclick="showAddInvestmentModal()">
+                                    + Novo Investimento
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="investmentsList">
+                                <!-- Investimentos serão inseridos aqui -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div id="reports" class="section hidden animate-fade-in">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-navy-800 rounded-xl shadow-lg p-6 border border-navy-200 dark:border-navy-700">
+                            <h3 class="text-lg font-semibold text-navy-800 dark:text-white mb-4">Relatório Mensal</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between">
+                                    <span class="text-navy-600 dark:text-navy-300">Total de Receitas:</span>
+                                    <span id="monthlyRevenue" class="font-semibold text-green-600">R$ 0,00</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-navy-600 dark:text-navy-300">Total de Despesas:</span>
+                                    <span id="monthlyExpenses" class="font-semibold text-red-600">R$ 0,00</span>
+                                </div>
+                                <div class="flex justify-between border-t border-navy-200 dark:border-navy-700 pt-4">
+                                    <span class="text-navy-800 dark:text-white font-semibold">Resultado:</span>
+                                    <span id="monthlyResult" class="font-bold">R$ 0,00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-navy-800 rounded-xl shadow-lg p-6 border border-navy-200 dark:border-navy-700">
+                            <h3 class="text-lg font-semibold text-navy-800 dark:text-white mb-4">Controle de Gastos</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-navy-600 dark:text-navy-300">Gastos Fixos:</span>
+                                    <span id="fixedExpenses" class="font-semibold">R$ 0,00</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-navy-600 dark:text-navy-300">Gastos Variáveis:</span>
+                                    <span id="variableExpenses" class="font-semibold">R$ 0,00</span>
+                                </div>
+                                <div class="w-full bg-navy-200 dark:bg-navy-700 rounded-full h-2">
+                                    <div id="expenseProgress" class="bg-navy-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-navy-800 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div class="p-6 border-b border-navy-200 dark:border-navy-700">
+                <h3 class="text-xl font-semibold text-navy-800 dark:text-white">Nova Transação</h3>
+            </div>
+            <form id="transactionForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Tipo</label>
+                    <select id="transactionType" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                        <option value="income">Receita</option>
+                        <option value="expense">Despesa</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Descrição</label>
+                    <input type="text" id="transactionDescription" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Valor</label>
+                    <input type="number" id="transactionAmount" step="0.01" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Categoria</label>
+                    <select id="transactionCategory" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                        <option value="fixed">Fixa</option>
+                        <option value="variable">Variável</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Data</label>
+                    <input type="date" id="transactionDate" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('transactionModal')" class="flex-1 px-4 py-2 border border-navy-300 dark:border-navy-600 text-navy-700 dark:text-navy-300 rounded-lg hover:bg-navy-50 dark:hover:bg-navy-700 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-navy-600 hover:bg-navy-700 text-white rounded-lg transition-colors">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bill Modal -->
+    <div id="billModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-navy-800 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div class="p-6 border-b border-navy-200 dark:border-navy-700">
+                <h3 class="text-xl font-semibold text-navy-800 dark:text-white">Nova Conta</h3>
+            </div>
+            <form id="billForm" class="p-6 space-y-4">
+                <input type="hidden" id="billType">
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Descrição</label>
+                    <input type="text" id="billDescription" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Valor</label>
+                    <input type="number" id="billAmount" step="0.01" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Data de Vencimento</label>
+                    <input type="date" id="billDueDate" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Método de Pagamento</label>
+                    <select id="billPaymentMethod" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                        <option value="boleto">Boleto</option>
+                        <option value="pix">PIX</option>
+                        <option value="cartao">Cartão</option>
+                        <option value="dinheiro">Dinheiro</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('billModal')" class="flex-1 px-4 py-2 border border-navy-300 dark:border-navy-600 text-navy-700 dark:text-navy-300 rounded-lg hover:bg-navy-50 dark:hover:bg-navy-700 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-navy-600 hover:bg-navy-700 text-white rounded-lg transition-colors">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Account Modal -->
+    <div id="accountModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-navy-800 rounded-xl shadow-2xl w-full max-w-lg mx-4">
+            <div class="p-6 border-b border-navy-200 dark:border-navy-700">
+                <h3 class="text-xl font-semibold text-navy-800 dark:text-white">Nova Conta a Pagar</h3>
+            </div>
+            <form id="accountForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Descrição</label>
+                        <input type="text" id="accountDescription" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" placeholder="Ex: Aluguel, Energia, etc." required>
+                    </div>
+                    <div>
+                        <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Tipo de Gasto</label>
+                        <select id="accountExpenseType" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                            <option value="fixed">Gasto Fixo</option>
+                            <option value="variable">Gasto Variável</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Valor</label>
+                        <input type="number" id="accountAmount" step="0.01" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" placeholder="0,00" required>
+                    </div>
+                    <div>
+                        <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Frequência</label>
+                        <select id="accountFrequency" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                            <option value="daily">Diário</option>
+                            <option value="weekly">Semanal</option>
+                            <option value="monthly" selected>Mensal</option>
+                            <option value="yearly">Anual</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Tipo de Dias</label>
+                        <select id="accountDayType" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                            <option value="calendar">Dias Corridos</option>
+                            <option value="business">Dias Úteis</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Primeiro Vencimento</label>
+                        <input type="date" id="accountFirstDue" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Categoria</label>
+                    <select id="accountCategory" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                        <option value="housing">🏠 Moradia</option>
+                        <option value="utilities">⚡ Utilidades</option>
+                        <option value="transport">🚗 Transporte</option>
+                        <option value="food">🍽️ Alimentação</option>
+                        <option value="health">🏥 Saúde</option>
+                        <option value="education">📚 Educação</option>
+                        <option value="entertainment">🎬 Entretenimento</option>
+                        <option value="shopping">🛍️ Compras</option>
+                        <option value="services">🔧 Serviços</option>
+                        <option value="other">📋 Outros</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Observações</label>
+                    <textarea id="accountNotes" rows="2" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" placeholder="Informações adicionais (opcional)"></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('accountModal')" class="flex-1 px-4 py-2 border border-navy-300 dark:border-navy-600 text-navy-700 dark:text-navy-300 rounded-lg hover:bg-navy-50 dark:hover:bg-navy-700 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-navy-600 to-blue-600 hover:from-navy-700 hover:to-blue-700 text-white rounded-lg transition-all duration-300">
+                        Salvar Conta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Investment Modal -->
+    <div id="investmentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-navy-800 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div class="p-6 border-b border-navy-200 dark:border-navy-700">
+                <h3 class="text-xl font-semibold text-navy-800 dark:text-white">Novo Investimento</h3>
+            </div>
+            <form id="investmentForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Tipo</label>
+                    <select id="investmentType" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white">
+                        <option value="investment">Investimento</option>
+                        <option value="purchase">Compra de Ativo</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Descrição</label>
+                    <input type="text" id="investmentDescription" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Valor Investido</label>
+                    <input type="number" id="investmentAmount" step="0.01" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Valor Atual</label>
+                    <input type="number" id="investmentCurrentValue" step="0.01" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div>
+                    <label class="block text-navy-700 dark:text-navy-300 text-sm font-medium mb-2">Data</label>
+                    <input type="date" id="investmentDate" class="w-full px-4 py-2 border border-navy-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700 text-navy-800 dark:text-white" required>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('investmentModal')" class="flex-1 px-4 py-2 border border-navy-300 dark:border-navy-600 text-navy-700 dark:text-navy-300 rounded-lg hover:bg-navy-50 dark:hover:bg-navy-700 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-navy-600 hover:bg-navy-700 text-white rounded-lg transition-colors">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de armazenamento local simulando banco de dados
+        class FinanceDB {
+            constructor() {
+                this.data = this.loadData();
+            }
+
+            loadData() {
+                const saved = localStorage.getItem('financeData');
+                return saved ? JSON.parse(saved) : {
+                    transactions: [],
+                    bills: [],
+                    investments: [],
+                    accounts: [],
+                    settings: { theme: 'light' }
+                };
+            }
+
+            saveData() {
+                localStorage.setItem('financeData', JSON.stringify(this.data));
+            }
+
+            addTransaction(transaction) {
+                transaction.id = Date.now();
+                this.data.transactions.push(transaction);
+                this.saveData();
+                return transaction;
+            }
+
+            addBill(bill) {
+                bill.id = Date.now();
+                bill.status = 'pending';
+                this.data.bills.push(bill);
+                this.saveData();
+                return bill;
+            }
+
+            addInvestment(investment) {
+                investment.id = Date.now();
+                this.data.investments.push(investment);
+                this.saveData();
+                return investment;
+            }
+
+            addAccount(account) {
+                account.id = Date.now();
+                account.status = 'active';
+                account.nextDue = this.calculateNextDue(account.firstDue, account.frequency, account.dayType);
+                this.data.accounts.push(account);
+                this.saveData();
+                return account;
+            }
+
+            calculateNextDue(startDate, frequency, dayType) {
+                const start = new Date(startDate);
+                const now = new Date();
+                let nextDue = new Date(start);
+
+                // Se a data inicial já passou, calcular próxima ocorrência
+                if (start < now) {
+                    switch (frequency) {
+                        case 'daily':
+                            while (nextDue < now) {
+                                nextDue.setDate(nextDue.getDate() + 1);
+                                if (dayType === 'business') {
+                                    // Pular fins de semana
+                                    while (nextDue.getDay() === 0 || nextDue.getDay() === 6) {
+                                        nextDue.setDate(nextDue.getDate() + 1);
+                                    }
+                                }
+                            }
+                            break;
+                        case 'weekly':
+                            while (nextDue < now) {
+                                nextDue.setDate(nextDue.getDate() + 7);
+                            }
+                            break;
+                        case 'monthly':
+                            while (nextDue < now) {
+                                nextDue.setMonth(nextDue.getMonth() + 1);
+                            }
+                            break;
+                        case 'yearly':
+                            while (nextDue < now) {
+                                nextDue.setFullYear(nextDue.getFullYear() + 1);
+                            }
+                            break;
+                    }
+                }
+
+                return nextDue.toISOString().split('T')[0];
+            }
+
+            payAccount(id) {
+                const account = this.data.accounts.find(a => a.id === id);
+                if (account) {
+                    // Adicionar como transação
+                    const transaction = {
+                        type: 'expense',
+                        description: account.description,
+                        amount: account.amount,
+                        category: account.expenseType,
+                        date: new Date().toISOString().split('T')[0]
+                    };
+                    this.addTransaction(transaction);
+
+                    // Calcular próximo vencimento
+                    account.nextDue = this.calculateNextDue(account.nextDue, account.frequency, account.dayType);
+                    this.saveData();
+                }
+            }
+
+            updateBillStatus(id, status) {
+                const bill = this.data.bills.find(b => b.id === id);
+                if (bill) {
+                    bill.status = status;
+                    if (status === 'paid') {
+                        // Adicionar como transação
+                        const transaction = {
+                            type: bill.type === 'payable' ? 'expense' : 'income',
+                            description: bill.description,
+                            amount: bill.amount,
+                            category: 'fixed',
+                            date: new Date().toISOString().split('T')[0]
+                        };
+                        this.addTransaction(transaction);
+                    }
+                    this.saveData();
+                }
+            }
+
+            deleteItem(type, id) {
+                this.data[type] = this.data[type].filter(item => item.id !== id);
+                this.saveData();
+            }
+        }
+
+        const db = new FinanceDB();
+
+        // Gerenciamento de tema
+        function initTheme() {
+            const theme = db.data.settings.theme || 'light';
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            document.documentElement.classList.toggle('dark', !isDark);
+            db.data.settings.theme = isDark ? 'light' : 'dark';
+            db.saveData();
+        }
+
+        // Navegação
+        function showSection(sectionName) {
+            // Esconder todas as seções
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Mostrar seção selecionada
+            document.getElementById(sectionName).classList.remove('hidden');
+            
+            // Atualizar navegação
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('nav-item-active', 'text-white', 'shadow-lg');
+                item.classList.add('text-navy-700', 'dark:text-navy-300', 'hover:bg-white/10', 'dark:hover:bg-black/10');
+            });
+            
+            const activeItem = document.querySelector(`[data-section="${sectionName}"]`);
+            if (activeItem) {
+                activeItem.classList.add('nav-item-active', 'text-white', 'shadow-lg');
+                activeItem.classList.remove('text-navy-700', 'dark:text-navy-300', 'hover:bg-white/10', 'dark:hover:bg-black/10');
+            }
+            
+            // Atualizar título
+            const titles = {
+                dashboard: 'Dashboard Financeiro',
+                transactions: 'Transações',
+                'accounts-payable': 'Contas a Pagar',
+                bills: 'Contas & Boletos',
+                investments: 'Investimentos',
+                reports: 'Relatórios'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionName];
+            
+            // Atualizar dados específicos da seção
+            if (sectionName === 'transactions') {
+                updateTransactionsTable();
+            } else if (sectionName === 'accounts-payable') {
+                updateAccountsPayableDisplay();
+            } else if (sectionName === 'bills') {
+                updateBillsDisplay();
+            } else if (sectionName === 'investments') {
+                updateInvestmentsDisplay();
+            } else if (sectionName === 'reports') {
+                updateReports();
+            }
+        }
+
+        // Modais
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.getElementById(modalId).classList.add('flex');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.getElementById(modalId).classList.remove('flex');
+        }
+
+        function showAddTransactionModal() {
+            document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+            showModal('transactionModal');
+        }
+
+        function showAddTransaction(type) {
+            document.getElementById('transactionType').value = type;
+            showAddTransactionModal();
+        }
+
+        function showAddBillModal(type) {
+            document.getElementById('billType').value = type;
+            showModal('billModal');
+        }
+
+        function showAddInvestmentModal() {
+            document.getElementById('investmentDate').value = new Date().toISOString().split('T')[0];
+            showModal('investmentModal');
+        }
+
+        function showAddAccountModal() {
+            document.getElementById('accountFirstDue').value = new Date().toISOString().split('T')[0];
+            showModal('accountModal');
+        }
+
+        // Formatação de moeda
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+
+        // Cálculos financeiros
+        function calculateTotals() {
+            const transactions = db.data.transactions;
+            const investments = db.data.investments;
+            
+            const totalRevenue = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            
+            const totalExpenses = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            
+            const totalAssets = investments
+                .reduce((sum, i) => sum + parseFloat(i.currentValue || i.amount), 0);
+            
+            const netProfit = totalRevenue - totalExpenses;
+            const totalBalance = netProfit + totalAssets;
+            
+            return {
+                totalRevenue,
+                totalExpenses,
+                netProfit,
+                totalAssets,
+                totalBalance
+            };
+        }
+
+        // Atualizar dashboard
+        function updateDashboard() {
+            const totals = calculateTotals();
+            
+            document.getElementById('totalRevenue').textContent = formatCurrency(totals.totalRevenue);
+            document.getElementById('totalExpenses').textContent = formatCurrency(totals.totalExpenses);
+            document.getElementById('totalAssets').textContent = formatCurrency(totals.totalAssets);
+            document.getElementById('totalBalance').textContent = formatCurrency(totals.totalBalance);
+            
+            const netProfitElement = document.getElementById('netProfit');
+            netProfitElement.textContent = formatCurrency(totals.netProfit);
+            netProfitElement.className = `text-2xl font-bold ${totals.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+        }
+
+        // Atualizar tabela de transações
+        function updateTransactionsTable() {
+            const tbody = document.getElementById('transactionsTable');
+            const filter = document.getElementById('transactionFilter').value;
+            
+            let transactions = db.data.transactions;
+            if (filter !== 'all') {
+                transactions = transactions.filter(t => t.type === filter || t.category === filter);
+            }
+            
+            tbody.innerHTML = transactions.map(transaction => `
+                <tr class="border-b border-navy-100 dark:border-navy-700 hover:bg-navy-50 dark:hover:bg-navy-700 transition-colors">
+                    <td class="py-3 text-navy-800 dark:text-white">${new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
+                    <td class="py-3 text-navy-800 dark:text-white">${transaction.description}</td>
+                    <td class="py-3">
+                        <span class="px-2 py-1 rounded-full text-xs ${transaction.category === 'fixed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'}">
+                            ${transaction.category === 'fixed' ? 'Fixa' : 'Variável'}
+                        </span>
+                    </td>
+                    <td class="py-3">
+                        <span class="px-2 py-1 rounded-full text-xs ${transaction.type === 'income' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
+                            ${transaction.type === 'income' ? 'Receita' : 'Despesa'}
+                        </span>
+                    </td>
+                    <td class="py-3 text-right font-semibold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}">
+                        ${formatCurrency(transaction.amount)}
+                    </td>
+                    <td class="py-3 text-center">
+                        <button onclick="deleteTransaction(${transaction.id})" class="text-red-600 hover:text-red-800 transition-colors">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Atualizar exibição de contas
+        function updateBillsDisplay() {
+            const payableBills = document.getElementById('payableBills');
+            const receivableBills = document.getElementById('receivableBills');
+            
+            const payable = db.data.bills.filter(b => b.type === 'payable');
+            const receivable = db.data.bills.filter(b => b.type === 'receivable');
+            
+            payableBills.innerHTML = payable.map(bill => `
+                <div class="p-4 border border-navy-200 dark:border-navy-700 rounded-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-semibold text-navy-800 dark:text-white">${bill.description}</h4>
+                            <p class="text-sm text-navy-600 dark:text-navy-300">Vencimento: ${new Date(bill.dueDate).toLocaleDateString('pt-BR')}</p>
+                            <p class="text-sm text-navy-600 dark:text-navy-300">Método: ${bill.paymentMethod.toUpperCase()}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-red-600">${formatCurrency(bill.amount)}</p>
+                            <div class="flex gap-2 mt-2">
+                                ${bill.status === 'pending' ? `
+                                    <button onclick="payBill(${bill.id})" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">
+                                        Pagar
+                                    </button>
+                                ` : `
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs rounded">
+                                        Pago
+                                    </span>
+                                `}
+                                <button onclick="deleteBill(${bill.id})" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
+                                    Excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-navy-600 dark:text-navy-300 text-center py-8">Nenhuma conta a pagar</p>';
+            
+            receivableBills.innerHTML = receivable.map(bill => `
+                <div class="p-4 border border-navy-200 dark:border-navy-700 rounded-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-semibold text-navy-800 dark:text-white">${bill.description}</h4>
+                            <p class="text-sm text-navy-600 dark:text-navy-300">Vencimento: ${new Date(bill.dueDate).toLocaleDateString('pt-BR')}</p>
+                            <p class="text-sm text-navy-600 dark:text-navy-300">Método: ${bill.paymentMethod.toUpperCase()}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-green-600">${formatCurrency(bill.amount)}</p>
+                            <div class="flex gap-2 mt-2">
+                                ${bill.status === 'pending' ? `
+                                    <button onclick="receiveBill(${bill.id})" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">
+                                        Receber
+                                    </button>
+                                ` : `
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs rounded">
+                                        Recebido
+                                    </span>
+                                `}
+                                <button onclick="deleteBill(${bill.id})" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
+                                    Excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-navy-600 dark:text-navy-300 text-center py-8">Nenhuma conta a receber</p>';
+        }
+
+        // Atualizar exibição de contas a pagar
+        function updateAccountsPayableDisplay() {
+            const tbody = document.getElementById('accountsPayableTable');
+            const filter = document.getElementById('accountsFilter').value;
+            
+            let accounts = db.data.accounts;
+            if (filter !== 'all') {
+                if (filter === 'pending') {
+                    const today = new Date().toISOString().split('T')[0];
+                    accounts = accounts.filter(a => a.nextDue <= today);
+                } else if (filter === 'paid') {
+                    // Para este exemplo, consideramos "pagas" as que têm próximo vencimento futuro
+                    const today = new Date().toISOString().split('T')[0];
+                    accounts = accounts.filter(a => a.nextDue > today);
+                } else {
+                    accounts = accounts.filter(a => a.expenseType === filter);
+                }
+            }
+
+            tbody.innerHTML = accounts.map(account => {
+                const today = new Date();
+                const dueDate = new Date(account.nextDue);
+                const isPending = dueDate <= today;
+                const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                
+                const frequencyLabels = {
+                    daily: 'Diário',
+                    weekly: 'Semanal', 
+                    monthly: 'Mensal',
+                    yearly: 'Anual'
+                };
+
+                const categoryIcons = {
+                    housing: '🏠',
+                    utilities: '⚡',
+                    transport: '🚗',
+                    food: '🍽️',
+                    health: '🏥',
+                    education: '📚',
+                    entertainment: '🎬',
+                    shopping: '🛍️',
+                    services: '🔧',
+                    other: '📋'
+                };
+
+                return `
+                    <tr class="border-b border-navy-100 dark:border-navy-700 hover:bg-navy-50 dark:hover:bg-navy-700 transition-colors">
+                        <td class="py-4">
+                            <div class="flex items-center">
+                                <span class="text-lg mr-2">${categoryIcons[account.category] || '📋'}</span>
+                                <div>
+                                    <p class="font-semibold text-navy-800 dark:text-white">${account.description}</p>
+                                    ${account.notes ? `<p class="text-xs text-navy-500 dark:text-navy-400">${account.notes}</p>` : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4">
+                            <span class="px-2 py-1 rounded-full text-xs ${account.expenseType === 'fixed' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'}">
+                                ${account.expenseType === 'fixed' ? 'Fixo' : 'Variável'}
+                            </span>
+                        </td>
+                        <td class="py-4 font-semibold text-navy-800 dark:text-white">
+                            ${formatCurrency(account.amount)}
+                        </td>
+                        <td class="py-4 text-navy-600 dark:text-navy-300">
+                            ${frequencyLabels[account.frequency]}
+                            <br>
+                            <span class="text-xs">${account.dayType === 'business' ? 'Dias úteis' : 'Dias corridos'}</span>
+                        </td>
+                        <td class="py-4">
+                            <div class="text-sm">
+                                <p class="font-semibold ${isPending ? 'text-red-600' : 'text-navy-800 dark:text-white'}">${new Date(account.nextDue).toLocaleDateString('pt-BR')}</p>
+                                <p class="text-xs text-navy-500 dark:text-navy-400">
+                                    ${isPending ? 'Vencida' : daysUntilDue === 0 ? 'Hoje' : `${daysUntilDue} dias`}
+                                </p>
+                            </div>
+                        </td>
+                        <td class="py-4">
+                            <span class="px-2 py-1 rounded-full text-xs ${isPending ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}">
+                                ${isPending ? 'Vencida' : 'Pendente'}
+                            </span>
+                        </td>
+                        <td class="py-4 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="payAccount(${account.id})" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors">
+                                    Pagar
+                                </button>
+                                <button onclick="deleteAccount(${account.id})" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
+                                    Excluir
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="7" class="text-center py-8 text-navy-600 dark:text-navy-300">Nenhuma conta cadastrada</td></tr>';
+
+            // Atualizar resumos
+            updateAccountsSummary();
+        }
+
+        function updateAccountsSummary() {
+            const accounts = db.data.accounts;
+            const today = new Date().toISOString().split('T')[0];
+            
+            const fixedAccounts = accounts.filter(a => a.expenseType === 'fixed');
+            const variableAccounts = accounts.filter(a => a.expenseType === 'variable');
+            const pendingAccounts = accounts.filter(a => a.nextDue <= today);
+            
+            // Calcular totais mensais
+            const totalFixed = fixedAccounts.reduce((sum, account) => {
+                let monthlyAmount = account.amount;
+                switch (account.frequency) {
+                    case 'daily': monthlyAmount *= 30; break;
+                    case 'weekly': monthlyAmount *= 4.33; break;
+                    case 'yearly': monthlyAmount /= 12; break;
+                }
+                return sum + monthlyAmount;
+            }, 0);
+
+            const totalVariable = variableAccounts.reduce((sum, account) => {
+                let monthlyAmount = account.amount;
+                switch (account.frequency) {
+                    case 'daily': monthlyAmount *= 30; break;
+                    case 'weekly': monthlyAmount *= 4.33; break;
+                    case 'yearly': monthlyAmount /= 12; break;
+                }
+                return sum + monthlyAmount;
+            }, 0);
+
+            const totalPending = pendingAccounts.reduce((sum, account) => sum + account.amount, 0);
+
+            document.getElementById('totalFixedAccounts').textContent = formatCurrency(totalFixed);
+            document.getElementById('totalVariableAccounts').textContent = formatCurrency(totalVariable);
+            document.getElementById('totalPendingAccounts').textContent = formatCurrency(totalPending);
+        }
+
+        // Atualizar exibição de investimentos
+        function updateInvestmentsDisplay() {
+            const container = document.getElementById('investmentsList');
+            
+            container.innerHTML = db.data.investments.map(investment => {
+                const profit = investment.currentValue - investment.amount;
+                const profitPercent = ((profit / investment.amount) * 100).toFixed(2);
+                
+                return `
+                    <div class="p-4 border border-navy-200 dark:border-navy-700 rounded-lg">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="font-semibold text-navy-800 dark:text-white">${investment.description}</h4>
+                            <button onclick="deleteInvestment(${investment.id})" class="text-red-600 hover:text-red-800 transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9z" clip-rule="evenodd"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-navy-600 dark:text-navy-300">Investido:</span>
+                                <span class="font-semibold">${formatCurrency(investment.amount)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-navy-600 dark:text-navy-300">Atual:</span>
+                                <span class="font-semibold">${formatCurrency(investment.currentValue)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-navy-600 dark:text-navy-300">Rendimento:</span>
+                                <span class="font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                    ${formatCurrency(profit)} (${profitPercent}%)
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-navy-600 dark:text-navy-300">Data:</span>
+                                <span class="text-sm">${new Date(investment.date).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-navy-600 dark:text-navy-300 text-center py-8 col-span-full">Nenhum investimento cadastrado</p>';
+        }
+
+        // Atualizar relatórios
+        function updateReports() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            const monthlyTransactions = db.data.transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+            });
+            
+            const monthlyRevenue = monthlyTransactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            
+            const monthlyExpenses = monthlyTransactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            
+            const fixedExpenses = monthlyTransactions
+                .filter(t => t.type === 'expense' && t.category === 'fixed')
+                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            
+            const variableExpenses = monthlyTransactions
+                .filter(t => t.type === 'expense' && t.category === 'variable')
+                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            
+            const monthlyResult = monthlyRevenue - monthlyExpenses;
+            
+            document.getElementById('monthlyRevenue').textContent = formatCurrency(monthlyRevenue);
+            document.getElementById('monthlyExpenses').textContent = formatCurrency(monthlyExpenses);
+            document.getElementById('fixedExpenses').textContent = formatCurrency(fixedExpenses);
+            document.getElementById('variableExpenses').textContent = formatCurrency(variableExpenses);
+            
+            const monthlyResultElement = document.getElementById('monthlyResult');
+            monthlyResultElement.textContent = formatCurrency(monthlyResult);
+            monthlyResultElement.className = `font-bold ${monthlyResult >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            
+            // Atualizar barra de progresso de gastos
+            const expenseProgress = document.getElementById('expenseProgress');
+            const totalExpenses = fixedExpenses + variableExpenses;
+            const progressPercent = totalExpenses > 0 ? Math.min((totalExpenses / monthlyRevenue) * 100, 100) : 0;
+            expenseProgress.style.width = `${progressPercent}%`;
+        }
+
+        // Funções de ação
+        function deleteTransaction(id) {
+            if (confirm('Tem certeza que deseja excluir esta transação?')) {
+                db.deleteItem('transactions', id);
+                updateTransactionsTable();
+                updateDashboard();
+            }
+        }
+
+        function payBill(id) {
+            db.updateBillStatus(id, 'paid');
+            updateBillsDisplay();
+            updateDashboard();
+        }
+
+        function receiveBill(id) {
+            db.updateBillStatus(id, 'paid');
+            updateBillsDisplay();
+            updateDashboard();
+        }
+
+        function deleteBill(id) {
+            if (confirm('Tem certeza que deseja excluir esta conta?')) {
+                db.deleteItem('bills', id);
+                updateBillsDisplay();
+            }
+        }
+
+        function deleteInvestment(id) {
+            if (confirm('Tem certeza que deseja excluir este investimento?')) {
+                db.deleteItem('investments', id);
+                updateInvestmentsDisplay();
+                updateDashboard();
+            }
+        }
+
+        function payAccount(id) {
+            if (confirm('Confirma o pagamento desta conta?')) {
+                db.payAccount(id);
+                updateAccountsPayableDisplay();
+                updateDashboard();
+            }
+        }
+
+        function deleteAccount(id) {
+            if (confirm('Tem certeza que deseja excluir esta conta?')) {
+                db.deleteItem('accounts', id);
+                updateAccountsPayableDisplay();
+                updateDashboard();
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            updateDashboard();
+            updateTransactionsTable();
+            
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const section = item.getAttribute('data-section');
+                    showSection(section);
+                });
+            });
+            
+            // Transaction filter
+            document.getElementById('transactionFilter').addEventListener('change', updateTransactionsTable);
+            
+            // Accounts filter
+            document.getElementById('accountsFilter').addEventListener('change', updateAccountsPayableDisplay);
+            
+            // Forms
+            document.getElementById('transactionForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const transaction = {
+                    type: document.getElementById('transactionType').value,
+                    description: document.getElementById('transactionDescription').value,
+                    amount: parseFloat(document.getElementById('transactionAmount').value),
+                    category: document.getElementById('transactionCategory').value,
+                    date: document.getElementById('transactionDate').value
+                };
+                
+                db.addTransaction(transaction);
+                closeModal('transactionModal');
+                this.reset();
+                updateDashboard();
+                updateTransactionsTable();
+            });
+            
+            document.getElementById('billForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const bill = {
+                    type: document.getElementById('billType').value,
+                    description: document.getElementById('billDescription').value,
+                    amount: parseFloat(document.getElementById('billAmount').value),
+                    dueDate: document.getElementById('billDueDate').value,
+                    paymentMethod: document.getElementById('billPaymentMethod').value
+                };
+                
+                db.addBill(bill);
+                closeModal('billModal');
+                this.reset();
+                updateBillsDisplay();
+            });
+            
+            document.getElementById('accountForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const account = {
+                    description: document.getElementById('accountDescription').value,
+                    expenseType: document.getElementById('accountExpenseType').value,
+                    amount: parseFloat(document.getElementById('accountAmount').value),
+                    frequency: document.getElementById('accountFrequency').value,
+                    dayType: document.getElementById('accountDayType').value,
+                    firstDue: document.getElementById('accountFirstDue').value,
+                    category: document.getElementById('accountCategory').value,
+                    notes: document.getElementById('accountNotes').value
+                };
+                
+                db.addAccount(account);
+                closeModal('accountModal');
+                this.reset();
+                updateAccountsPayableDisplay();
+                updateDashboard();
+            });
+
+            document.getElementById('investmentForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const investment = {
+                    type: document.getElementById('investmentType').value,
+                    description: document.getElementById('investmentDescription').value,
+                    amount: parseFloat(document.getElementById('investmentAmount').value),
+                    currentValue: parseFloat(document.getElementById('investmentCurrentValue').value),
+                    date: document.getElementById('investmentDate').value
+                };
+                
+                db.addInvestment(investment);
+                closeModal('investmentModal');
+                this.reset();
+                updateDashboard();
+                updateInvestmentsDisplay();
+            });
+            
+            // Close modals on outside click
+            document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal(this.id);
+                    }
+                });
+            });
+        });
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/env.js"></script>
+<script>
+  // cliente compartilhado em toda página
+  window.supabase = supabase.createClient(
+    window.SUPABASE_URL,
+    window.SUPABASE_ANON_KEY
+  );
+
+  // ajudinha para avisar se algo estiver faltando
+  if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+    alert('⚠️ Configure a URL e a Publishable key no env.js');
+  }
+</script>
+
+<!-- seu(s) script(s) da página por último -->
+<script src="/script.js"></script>
+
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98eb9334d1c5877d',t:'MTc2MDQ5MjA3Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

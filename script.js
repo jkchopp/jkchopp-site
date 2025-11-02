@@ -2,18 +2,12 @@
    JK CHOPP — SCRIPT.JS (COMPLETO, CORRIGIDO E 100% FUNCIONAL)
    ========================================================================== */
 
-// === CONFIGURAÇÃO SUPABASE ================================================
-const SUPABASE_URL = 'https://vqklluhzbxngsjpopzxw.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_gG5EAcSXOWk9aPHX1fxxcg_Sm_TCwMa';
+// Usa o cliente já criado no env.js
+const supa = window.supabase;
 
-// Inicializar cliente Supabase
-let supa;
-try {
-    if (typeof window.supabase !== 'undefined') {
-        supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-} catch (error) {
-    console.error('Erro ao inicializar Supabase:', error);
+// (opcional) checagem defensiva
+if (!supa) {
+  console.error('Supabase não carregou. Confira a ordem dos scripts no index.html.');
 }
 
 // === INICIALIZAÇÃO DA APLICAÇÃO ===========================================
