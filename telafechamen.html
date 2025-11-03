@@ -82,9 +82,10 @@
     <section class="card">
       <div class="row space-between">
         <h3>Relatório de Repasse</h3>
-        <div class="row">
-          <button class="btn" id="btnPrint">⬇️ Baixar PDF</button>
-        </div>
+<div class="row">
+  <button class="btn" id="btnPrint">⬇️ Baixar PDF</button>
+  <button class="btn success" id="btnSalvar">💾 Salvar no banco</button>
+</div>
       </div>
       <div class="toolbar">
         <div class="row">
@@ -103,7 +104,7 @@
 
     <section class="card">
       <div class="row space-between">
-        <h4>Fechamento de Duas Semanas – Vendas</h4>
+        <h4>Fechamento – Vendas</h4>
         <button id="addVenda" class="btn">+ Adicionar linha</button>
       </div>
       <div class="table-wrap">
@@ -196,11 +197,10 @@
     </section>
   </div>
 
+  <!-- Supabase (ANTES do script grande) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./env.js"></script>
-<script>
-  const supa = window.supabase; // cliente já criado no env.js
-</script>
+<script>const supa = window.supabase;</script>
 
   <script>
     // ===== Helpers
@@ -741,6 +741,35 @@
     renderVendas(); bindVendas();
     renderDespesas(); bindDespesas();
     renderTotais();
+    <!-- === Salvar no Supabase (tabela: fechamentos) === -->
+<script>
+async function salvarNoBanco() {
+  // Monte o payload com os dados da tela
+  const payload = {
+    header: ST.header,      // { dataIni, dataFim, ... } se você já preenche ST.header
+    clientes: ST.clientes,  // array das linhas de vendas
+    despesas: ST.despesas,  // array das despesas
+    created_at: new Date().toISOString()
+  };
+
+  try {
+    const { data, error } = await supa
+      .from('fechamentos')
+      .insert(payload)
+      .select();
+
+    if (error) throw error;
+    alert('✅ Fechamento salvo no banco!');
+    console.log('Supabase retorno:', data);
+  } catch (err) {
+    console.error(err);
+    alert('❌ Erro ao salvar: ' + err.message);
+  }
+}
+
+// Liga o botão "💾 Salvar no banco"
+document.getElementById('btnSalvar')?.addEventListener('click', salvarNoBanco);
+</script>
   </script>
 </body>
 </html>

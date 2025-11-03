@@ -12,6 +12,14 @@ if (!supa) {
 
 // === INICIALIZAÇÃO DA APLICAÇÃO ===========================================
 document.addEventListener('DOMContentLoaded', () => {
+const nav = document.getElementById('sidebarNav');
+if (nav && !nav.querySelector('a[href="./telafechamen.html"]')) {
+  const a = document.createElement('a');
+  a.href = './telafechamen.html';
+  a.className = 'menu-item';
+  a.textContent = '📄 Fechamento';
+  nav.appendChild(a);
+}
     initializeApp();
 });
 
