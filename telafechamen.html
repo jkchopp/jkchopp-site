@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Relatório de Repasse</title>
+  <!-- no <head> -->
+<title>Fechamento / Relatório de Repasse • JK Chopp</title>
   <style>
     :root{
       --bg:#0f172a;      /* slate-900 */
@@ -80,11 +81,14 @@
 <body>
   <div class="page stack" id="app">
     <section class="card">
-      <div class="row space-between">
-        <h3>Relatório de Repasse</h3>
-<div class="row">
-  <button class="btn" id="btnPrint">⬇️ Baixar PDF</button>
-  <button class="btn success" id="btnSalvar">💾 Salvar no banco</button>
+      <!-- no header da página -->
+<div class="row space-between" style="margin-bottom:12px">
+  <a class="btn" href="./index.html">⬅️ Voltar</a>
+  <h2>Fechamento / Relatório de Repasse</h2>
+  <div class="row" style="gap:8px">
+    <button class="btn success" id="btnSalvar">💾 Salvar no banco</button>
+    <button class="btn" id="btnPrint">⬇️ Baixar PDF</button>
+  </div>
 </div>
       </div>
       <div class="toolbar">
@@ -494,7 +498,8 @@
       `).join('');
 
       return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Relatório de Repasse</title>
+<html><head><meta charset="utf-8"><!-- no <head> -->
+<title>Fechamento / Relatório de Repasse • JK Chopp</title>
 <style>
   @page { 
     size: A4; 

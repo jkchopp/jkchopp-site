@@ -61,7 +61,7 @@
       justify-content: center;
       font-size: 18px;
     }
-    
+
     /* Garantir que os modais funcionem em todos os navegadores */
     dialog {
       border: 1px solid var(--bd-soft);
@@ -147,404 +147,32 @@
       }
     }
 
-    /* Estilos para o novo sistema de pedidos */
-    .novo-pedido-agendamento {
-      max-width: 100%;
-      margin: 0 auto;
-    }
-
-    .pedido-header {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
-      border: 1px solid var(--bd-soft);
-    }
-
-    .form-section {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 16px;
-      border: 1px solid var(--bd-soft);
-    }
-
-    .form-section.hidden {
+    /* Estilos para templates ocultos */
+    .templates {
       display: none;
     }
 
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--bd-soft);
+    /* Animações de transição entre telas */
+    .screen-transition {
+      animation: fadeIn 0.3s ease-in-out;
     }
 
-    .section-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background: var(--brand);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .form-grid .span-2 {
-      grid-column: span 2;
-    }
-
-    /* Toggle Switch */
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 44px;
-      height: 24px;
-    }
-
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .toggle-switch .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: var(--input);
-      transition: .2s;
-      border-radius: 24px;
-    }
-
-    .toggle-switch .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .2s;
-      border-radius: 50%;
-    }
-
-    .toggle-switch input:checked + .slider {
-      background-color: var(--brand);
-    }
-
-    .toggle-switch input:checked + .slider:before {
-      transform: translateX(20px);
-    }
-
-    /* Selected Items */
-    .selected-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      background: var(--bg);
-      border-radius: 8px;
-      border: 1px solid var(--bd-soft);
-      margin-bottom: 8px;
-    }
-
-    .selected-item-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .item-total {
-      font-weight: 600;
-      color: var(--brand);
-    }
-
-    .auto-badge {
-      background: var(--info);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 500;
-    }
-
-    .equipment-icon {
-      font-size: 16px;
-    }
-
-    /* Payment Methods */
-    .payment-methods-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .payment-method {
-      display: block;
-      cursor: pointer;
-    }
-
-    .payment-method input {
-      display: none;
-    }
-
-    .payment-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px;
-      border: 2px solid var(--bd-soft);
-      border-radius: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .payment-method input:checked + .payment-content {
-      border-color: var(--brand);
-      background: rgba(245, 158, 11, 0.1);
-    }
-
-    .payment-icon {
-      font-size: 24px;
-    }
-
-    .payment-name {
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-
-    .payment-desc {
-      font-size: 12px;
+    /* Estados vazios */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
       color: var(--muted);
     }
 
-    /* Payment Details */
-    .payment-details {
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid var(--success);
-      border-radius: 8px;
-      padding: 16px;
-      margin: 16px 0;
-    }
-
-    .payment-details h5 {
-      margin: 0 0 12px 0;
-      color: var(--success);
-    }
-
-    .details-grid {
-      display: grid;
-      gap: 8px;
-    }
-
-    .details-grid > div {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 4px 0;
-      border-bottom: 1px solid var(--bd-soft);
-    }
-
-    .details-grid > div:last-child {
-      border-bottom: none;
-    }
-
-    /* Fees */
-    .fees-grid {
-      display: grid;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .fee-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      border: 1px solid var(--bd-soft);
-      border-radius: 8px;
-    }
-
-    .fee-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-    }
-
-    .fee-input {
-      width: 120px;
-      text-align: right;
-    }
-
-    /* Payment Summary */
-    .payment-summary {
-      background: var(--panel);
-      border-radius: 8px;
-      padding: 20px;
-      margin: 20px 0;
-      border: 1px solid var(--bd-soft);
-    }
-
-    .payment-summary h5 {
-      margin: 0 0 16px 0;
-    }
-
-    .summary-grid {
-      display: grid;
-      gap: 8px;
-    }
-
-    .summary-grid > div {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--bd-soft);
-    }
-
-    .summary-grid .total {
-      border-top: 2px solid var(--bd-soft);
-      border-bottom: none;
-      font-weight: 600;
-      font-size: 18px;
-      color: var(--brand);
-      margin-top: 8px;
-      padding-top: 12px;
-    }
-
-    /* Notices */
-    .notice {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 16px;
-      border-radius: 8px;
-      margin: 16px 0;
-    }
-
-    .notice.warning {
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid var(--warning);
-    }
-
-    .notice-icon {
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-
-    .notice h5 {
-      margin: 0 0 4px 0;
-      color: var(--warning);
-    }
-
-    .notice p {
-      margin: 0;
-      font-size: 14px;
-      color: var(--text);
-    }
-
-    /* Auto Barrels */
-    .auto-barrels {
-      background: var(--panel);
-      border-radius: 8px;
-      padding: 16px;
-      border: 1px solid var(--bd-soft);
-    }
-
-    .auto-barrel-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      background: var(--bg);
-      border-radius: 6px;
-      margin-bottom: 8px;
-    }
-
-    .auto-barrel-item:last-child {
-      margin-bottom: 0;
-    }
-
-    /* Equipment List */
-    .equipment-list {
-      background: var(--panel);
-      border-radius: 8px;
-      padding: 16px;
-      border: 1px solid var(--bd-soft);
-      min-height: 60px;
-    }
-
-    /* Status Badges */
-    .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .status.agendado { background: #fef3c7; color: #92400e; }
-    .status.aguardando { background: #dbeafe; color: #1e40af; }
-    .status.confirmado { background: #dcfce7; color: #166534; }
-    .status.concluido { background: #dcfce7; color: #166534; }
-    .status.cancelado { background: #fee2e2; color: #991b1b; }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .form-grid .span-2 {
-        grid-column: span 1;
-      }
-      
-      .payment-methods-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-      
-      .selected-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-      
-      .selected-item-actions {
-        align-self: flex-end;
-      }
-      
-      .fee-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-      
-      .fee-input {
-        width: 100%;
-      }
+    .empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
     }
   </style>
 </head>
@@ -576,15 +204,16 @@
     </header>
 
     <main class="wrap">
-      <section id="content">
+      <section id="content" class="screen-transition">
         <!-- Conteúdo dinâmico será injetado aqui via JavaScript -->
       </section>
     </main>
 
     <footer>
       <div class="wrap footer">
-        <span>• Sistema Completo</span>
+        <span>• Sistema Completo Integrado</span>
         <span>Desenvolvido para JK CHOPP 🍺</span>
+        <span id="statusConexao" class="status-online">● Conectado</span>
       </div>
     </footer>
   </div>
@@ -596,15 +225,27 @@
         <div class="logo">JK</div>
         <div class="title">
           <h2>JK CHOPP</h2>
-          <small>Sistema Interno</small>
+          <small>Sistema Integrado</small>
         </div>
       </div>
       <button class="btn ghost icon" id="btnCloseMenu" aria-label="Fechar menu">✕</button>
     </div>
 
     <nav class="sidebar-nav" id="sidebarNav">
-  <a href="./telafechamen.html" class="menu-item">📄 Fechamento</a>
-</nav>
+      <button class="menu-item active" data-id="home">🏠 Início</button>
+      <button class="menu-item" data-id="pessoas">👥 Cadastro de Pessoas</button>
+      <button class="menu-item" data-id="produtos">🧰 Produtos/Equipamentos</button>
+      <button class="menu-item" data-id="estoque">📦 Estoque</button>
+      <button class="menu-item" data-id="pedidos">📋 Pedidos</button>
+      <button class="menu-item" data-id="financeiro">💰 Financeiro</button>
+      <button class="menu-item" data-id="contratos">📄 Contratos</button>
+      <button class="menu-item" data-id="agendamentos">📅 Agenda</button>
+      <div class="menu-divider"></div>
+      <button class="menu-item" data-id="relatorios">📊 Relatórios</button>
+      <button class="menu-item" data-id="rel_repasse">💸 Repasse Financeiro</button>
+      <div class="menu-divider"></div>
+      <button class="menu-item" data-id="configuracoes">⚙️ Configurações</button>
+    </nav>
 
     <div class="sidebar-footer">
       <div class="user-info">
@@ -614,20 +255,76 @@
           <small id="userEmail">admin@jkchopp.com</small>
         </div>
       </div>
-      <button class="btn ghost" id="btnLogout">🚪 Sair</button>
+      <div class="connection-status">
+        <small id="dbStatus">🟢 Supabase Conectado</small>
+      </div>
     </div>
   </aside>
 
-  <!-- MODAL NOVO PEDIDO (AGENDAMENTO) -->
+  <!-- MODAIS -->
+  <!-- Modal Novo Pedido -->
   <dialog id="modalNovoPedido">
     <div class="modal-header">
-      <h2 id="modalPedidoTitle">📋 Novo Pedido - Agendamento de Entrega</h2>
+      <h2 id="modalPedidoTitle">📋 Novo Pedido</h2>
       <button class="btn ghost icon close" aria-label="Fechar">✕</button>
     </div>
 
-    <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
-      <div id="novoPedidoContent">
-        <!-- Conteúdo do novo pedido será injetado aqui -->
+    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+      <div class="stack">
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <select id="ped_cliente" class="input" required>
+            <option value="">Selecione um cliente...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Produto</label>
+          <select id="ped_produto" class="input">
+            <option value="">Selecione um produto...</option>
+          </select>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Quantidade</label>
+            <input id="ped_quantidade" type="number" class="input" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Valor Unitário</label>
+            <input id="ped_valor_unitario" type="text" class="input" placeholder="0,00">
+          </div>
+        </div>
+
+        <button class="btn" id="btnAddItem">➕ Adicionar Item</button>
+
+        <h4>Itens do Pedido</h4>
+        <div class="table-wrap">
+          <table id="tblItensPedido">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Quantidade</th>
+                <th>Valor Unit.</th>
+                <th>Total</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                <td><strong id="ped_total">R$ 0,00</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <textarea id="ped_observacoes" class="input" rows="3" placeholder="Observações do pedido..."></textarea>
+        </div>
       </div>
     </div>
 
@@ -637,7 +334,7 @@
     </div>
   </dialog>
 
-  <!-- MODAL DETALHES DO PEDIDO -->
+  <!-- Modal Detalhes Pedido -->
   <dialog id="modalDetalhesPedido">
     <div class="modal-header">
       <h2>Detalhes do Pedido <span id="ped_det_codigo"></span></h2>
@@ -692,7 +389,7 @@
     </div>
   </dialog>
 
-  <!-- MODAL PERFIL -->
+  <!-- Modal Perfil -->
   <dialog id="modalPerfil">
     <div class="modal-header">
       <h2>👤 Perfil do Usuário</h2>
@@ -735,7 +432,7 @@
     </div>
   </dialog>
 
-  <!-- MODAL CONFIRMAÇÃO -->
+  <!-- Modal Confirmação -->
   <dialog id="modalConfirm">
     <div class="modal-header">
       <h2>Confirmação</h2>
@@ -752,24 +449,434 @@
     </div>
   </dialog>
 
+  <!-- TEMPLATES PARA TODAS AS TELAS -->
+  <div class="templates">
+    
+    <!-- Template Home -->
+    <template id="template-home">
+      <div class="grid-home">
+        <section class="card card-stats">
+          <h3>📊 Visão Geral do Sistema</h3>
+          <div class="stats">
+            <div class="stat">
+              <span class="stat-value" id="homeClientesCount">0</span>
+              <span class="stat-label">Clientes Cadastrados</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="homeProdutosCount">0</span>
+              <span class="stat-label">Produtos/Equipamentos</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="homePedidosCount">0</span>
+              <span class="stat-label">Pedidos Ativos</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="homeFinanceiroTotal">R$ 0,00</span>
+              <span class="stat-label">Saldo Financeiro</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>📅 Próximos Agendamentos</h3>
+          <div class="toolbar">
+            <div class="row">
+              <input id="home_ag_titulo" class="input" placeholder="Título do evento" />
+              <input id="home_ag_data" class="input" type="date" />
+              <input id="home_ag_hora" class="input" type="time" />
+              <button class="btn success" id="homeAddAgenda">➕ Adicionar</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table-compact">
+              <thead><tr><th>Data</th><th>Hora</th><th>Título</th><th>Ações</th></tr></thead>
+              <tbody id="home_ag_tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>🚀 Ações Rápidas</h3>
+          <div class="flex" style="flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+            <button class="btn primary" id="goNovoPedido">📋 Novo Pedido</button>
+            <button class="btn" id="goPessoas">👥 Pessoas</button>
+            <button class="btn" id="goProdutos">🧰 Produtos</button>
+            <button class="btn" id="goEstoque">📦 Estoque</button>
+            <button class="btn" id="goFinanceiro">💰 Financeiro</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>📈 Estatísticas do Dia</h3>
+          <div class="stats">
+            <div class="stat">
+              <span class="stat-value" id="homeHojeMov">0</span>
+              <span class="stat-label">Movimentações Hoje</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="homeHojePedidos">0</span>
+              <span class="stat-label">Pedidos Hoje</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </template>
+
+    <!-- Template Pessoas -->
+    <template id="template-pessoas">
+      <div class="grid">
+        <aside class="card">
+          <h3>👥 Cadastro de Pessoas</h3>
+          <p class="muted">Cadastro unificado de clientes, fornecedores, funcionários e vendedores</p>
+
+          <div class="stack">
+            <input type="hidden" id="pessoa_id" />
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Tipo de Pessoa *</label>
+                <select id="pessoa_tipo" class="input" required>
+                  <option value="">Selecione...</option>
+                  <option value="PF">Pessoa Física</option>
+                  <option value="PJ">Pessoa Jurídica</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Categoria *</label>
+                <select id="pessoa_categoria" class="input" required>
+                  <option value="">Selecione...</option>
+                  <option value="cliente">Cliente</option>
+                  <option value="fornecedor">Fornecedor</option>
+                  <option value="funcionario">Funcionário</option>
+                  <option value="vendedor">Vendedor</option>
+                  <option value="outros">Outros</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Campos dinâmicos serão preenchidos via JavaScript -->
+            <div id="pessoa_form_dinamico"></div>
+
+            <textarea class="input" id="pessoa_observacoes" placeholder="Observações..." rows="3"></textarea>
+
+            <div class="flex">
+              <button class="btn success" id="btnSalvarPessoa">💾 Salvar Pessoa</button>
+              <button class="btn" id="btnLimparPessoa">🧹 Limpar</button>
+            </div>
+          </div>
+        </aside>
+
+        <section class="card">
+          <div class="toolbar">
+            <div class="row">
+              <input class="input" id="buscaPessoas" placeholder="Buscar pessoas..." />
+              <select id="filtroCategoriaPessoa" class="input">
+                <option value="">Todas as categorias</option>
+                <option value="cliente">Clientes</option>
+                <option value="fornecedor">Fornecedores</option>
+                <option value="funcionario">Funcionários</option>
+                <option value="vendedor">Vendedores</option>
+                <option value="outros">Outros</option>
+              </select>
+              <span class="muted" id="infoPessoas">0 pessoa(s)</span>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table id="tblPessoas">
+              <thead>
+                <tr>
+                  <th>Nome/Razão Social</th>
+                  <th>Tipo</th>
+                  <th>Categoria</th>
+                  <th>Contato</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </template>
+
+    <!-- Template Produtos -->
+    <template id="template-produtos">
+      <div class="grid">
+        <aside class="card">
+          <h3>🧰 Cadastro de Produto/Equipamento</h3>
+          <p class="muted">Cadastro de produtos, equipamentos e serviços</p>
+
+          <div class="stack">
+            <input type="hidden" id="prod_id" />
+            
+            <input class="input" id="prod_nome" placeholder="Nome do produto" />
+            <input class="input" id="prod_codigo" placeholder="Código interno (opcional)" />
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Tipo</label>
+                <select id="prod_tipo" class="input">
+                  <option value="equipamento">Equipamento</option>
+                  <option value="produto">Produto</option>
+                  <option value="servico">Serviço</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Categoria</label>
+                <select id="prod_categoria" class="input">
+                  <option value="chopeira">Chopeira</option>
+                  <option value="barril">Barril</option>
+                  <option value="cilindro">Cilindro CO₂</option>
+                  <option value="acessorio">Acessório</option>
+                  <option value="manutencao">Manutenção</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Preço de Venda</label>
+                <input class="input" id="prod_preco" placeholder="0,00" type="text" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Preço de Custo</label>
+                <input class="input" id="prod_custo" placeholder="0,00" type="text" />
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Estoque Atual</label>
+                <input class="input" id="prod_estoque" type="number" value="0" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Estoque Mínimo</label>
+                <input class="input" id="prod_estoque_min" type="number" value="0" />
+              </div>
+            </div>
+
+            <div class="flex">
+              <label class="pill"><input type="checkbox" id="prod_controla_estoque" checked /> Controlar estoque</label>
+              <label class="pill"><input type="checkbox" id="prod_ativo" checked /> Ativo</label>
+            </div>
+
+            <textarea class="input" id="prod_descricao" placeholder="Descrição do produto..." rows="3"></textarea>
+
+            <div class="flex">
+              <button class="btn success" id="btnSalvarProduto">💾 Salvar Produto</button>
+              <button class="btn" id="btnLimparProduto">🧹 Limpar</button>
+            </div>
+          </div>
+        </aside>
+
+        <section class="card">
+          <div class="toolbar">
+            <div class="row">
+              <input class="input" id="buscaProdutos" placeholder="Buscar produtos..." />
+              <span class="muted" id="infoProdutos">0 produto(s)</span>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table id="tblProdutos">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Código</th>
+                  <th>Tipo</th>
+                  <th>Preço</th>
+                  <th>Estoque</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </template>
+
+    <!-- Templates para outras telas (estoque, pedidos, financeiro, etc.) -->
+    <!-- Serão carregados dinamicamente do script.js -->
+
+  </div>
+
   <!-- SCRIPTS -->
   <!-- 1) Biblioteca do Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- 2) Suas chaves + createClient -->
+  <!-- 2) Configuração Supabase -->
   <script src="./env.js"></script>
 
-  <!-- 3) Seu app (traz de volta a interface e navegação) -->
+  <!-- 3) Sistema Principal Integrado -->
+  <script>
+    // Sistema de Navegação Unificado
+    class JKSistema {
+      constructor() {
+        this.telaAtual = 'home';
+        this.supabase = window.supabase;
+        this.init();
+      }
+
+      async init() {
+        await this.testarConexaoSupabase();
+        this.configurarNavegação();
+        this.carregarTela('home');
+        this.configurarEventosGlobais();
+      }
+
+      async testarConexaoSupabase() {
+        try {
+          const { data, error } = await this.supabase.from('pessoas').select('count').limit(1);
+          document.getElementById('dbStatus').textContent = '🟢 Supabase Conectado';
+          document.getElementById('statusConexao').textContent = '● Conectado';
+        } catch (error) {
+          document.getElementById('dbStatus').textContent = '🔴 Supabase Offline';
+          document.getElementById('statusConexao').textContent = '● Offline';
+          console.warn('Supabase offline, usando localStorage');
+        }
+      }
+
+      configurarNavegação() {
+        // Navegação do menu
+        document.getElementById('sidebarNav').addEventListener('click', (e) => {
+          if (e.target.classList.contains('menu-item')) {
+            const telaId = e.target.dataset.id;
+            this.carregarTela(telaId);
+            this.fecharMenu();
+          }
+        });
+
+        // Ações rápidas da home
+        document.addEventListener('click', (e) => {
+          if (e.target.id === 'goNovoPedido') this.carregarTela('pedidos');
+          if (e.target.id === 'goPessoas') this.carregarTela('pessoas');
+          if (e.target.id === 'goProdutos') this.carregarTela('produtos');
+          if (e.target.id === 'goEstoque') this.carregarTela('estoque');
+          if (e.target.id === 'goFinanceiro') this.carregarTela('financeiro');
+        });
+      }
+
+      carregarTela(telaId) {
+        this.telaAtual = telaId;
+        const content = document.getElementById('content');
+        
+        // Atualizar menu ativo
+        document.querySelectorAll('.menu-item').forEach(item => {
+          item.classList.remove('active');
+          if (item.dataset.id === telaId) {
+            item.classList.add('active');
+          }
+        });
+
+        // Carregar template
+        const template = document.getElementById(`template-${telaId}`);
+        if (template) {
+          content.innerHTML = template.innerHTML;
+          this.inicializarTela(telaId);
+        } else {
+          content.innerHTML = `
+            <div class="card">
+              <div class="empty-state">
+                <div class="empty-icon">🚧</div>
+                <h3>Tela em Desenvolvimento</h3>
+                <p>A tela "${telaId}" está sendo implementada.</p>
+              </div>
+            </div>
+          `;
+        }
+
+        // Adicionar classe de transição
+        content.classList.add('screen-transition');
+        setTimeout(() => content.classList.remove('screen-transition'), 300);
+      }
+
+      inicializarTela(telaId) {
+        // Inicializar eventos específicos de cada tela
+        switch(telaId) {
+          case 'home':
+            this.inicializarHome();
+            break;
+          case 'pessoas':
+            this.inicializarPessoas();
+            break;
+          case 'produtos':
+            this.inicializarProdutos();
+            break;
+          case 'pedidos':
+            this.inicializarPedidos();
+            break;
+          // Adicionar outros casos conforme necessário
+        }
+      }
+
+      inicializarHome() {
+        // Implementar lógica da home
+        console.log('Inicializando home...');
+      }
+
+      inicializarPessoas() {
+        // Implementar lógica de pessoas
+        console.log('Inicializando pessoas...');
+      }
+
+      inicializarProdutos() {
+        // Implementar lógica de produtos
+        console.log('Inicializando produtos...');
+      }
+
+      inicializarPedidos() {
+        // Implementar lógica de pedidos
+        console.log('Inicializando pedidos...');
+      }
+
+      configurarEventosGlobais() {
+        // Menu mobile
+        document.getElementById('btnMenu').addEventListener('click', () => this.abrirMenu());
+        document.getElementById('btnCloseMenu').addEventListener('click', () => this.fecharMenu());
+
+        // Tema
+        document.getElementById('btnTheme').addEventListener('click', () => this.alternarTema());
+
+        // Overlay para fechar menu
+        document.addEventListener('click', (e) => {
+          if (e.target.classList.contains('app')) {
+            this.fecharMenu();
+          }
+        });
+      }
+
+      abrirMenu() {
+        document.getElementById('sidebar').classList.add('open');
+      }
+
+      fecharMenu() {
+        document.getElementById('sidebar').classList.remove('open');
+      }
+
+      alternarTema() {
+        const current = document.body.getAttribute("data-theme") || "dark";
+        const next = current === "light" ? "dark" : "light";
+        document.body.setAttribute("data-theme", next);
+        localStorage.setItem("jk_theme", next);
+      }
+    }
+
+    // Inicializar sistema quando DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', () => {
+      window.jkSistema = new JKSistema();
+    });
+
+    // Exportar funções globais para compatibilidade
+    window.carregarTela = (telaId) => window.jkSistema?.carregarTela(telaId);
+  </script>
+
+  <!-- 4) Script principal (compatibilidade) -->
   <script src="./script.js"></script>
 
-  <!-- 4) (opcional) teste rápido da conexão -->
-  <!--
-  <script>
-  (async () => {
-    const { data, error } = await supabase.from('pessoas').select('id').limit(1);
-    if (error) console.error(error); else console.log('OK', data);
-  })();
-  </script>
-  -->
 </body>
 </html>

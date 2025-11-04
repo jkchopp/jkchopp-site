@@ -31,6 +31,12 @@
         }
     </style>
   <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/env.js"></script>
+<script>
+  // cliente já criado no env.js → window.supabase
+  const supa = window.supabase;
+</script>
  </head>
  <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
   <div class="container mx-auto px-4 py-8 max-w-4xl">
@@ -382,16 +388,85 @@
             document.getElementById('categoria').addEventListener('change', atualizarCampos);
 
             // Submit do formulário
-            document.getElementById('cadastroForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
+            // Submit do formulário (versão Supabase)
+document.getElementById('cadastroForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  if (!validarFormulario()) return;
 
-                if (!validarFormulario()) return;
+  const submitBtn = document.getElementById('submitBtn');
+  const submitText = document.getElementById('submitText');
+  const loadingSpinner = document.getElementById('loadingSpinner');
 
-                if (recordCount >= 999) {
-                    showToast('Limite máximo de 999 cadastros atingido. Remova alguns registros primeiro.', 'error');
-                    return;
-                }
+  // loading on
+  if (submitBtn && submitText && loadingSpinner) {
+    submitBtn.disabled = true;
+    submitText.textContent = 'Cadastrando...';
+    loadingSpinner.classList.remove('hidden');
+  }
 
+  try {
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    // Se tiver radio de tipo de cliente
+    const tipoClienteRadio = document.querySelector('input[name="tipoCliente"]:checked');
+    if (tipoClienteRadio) data.tipoCliente = tipoClienteRadio.value;
+
+    // Mapeia campos → colunas da tabela "pessoas"
+    const payload = {
+      tipo_pessoa:   data.tipoPessoa || null,       // 'PF' | 'PJ'
+      categoria:     data.categoria || null,        // cliente | fornecedor | ...
+      tipo_cliente:  data.tipoCliente || null,      // ponto_fixo | evento
+      // PF
+      nome:          data.nome || null,
+      cpf:           data.cpf || null,
+      rg:            data.rg || null,
+      data_nasc:     data.dataNascimento || null,
+      // PJ
+      razao_social:  data.razaoSocial || null,
+      nome_fantasia: data.nomeFantasia || null,
+      cnpj:          data.cnpj || null,
+      ie:            data.inscricaoEstadual || null,
+      data_fundacao: data.dataFundacao || null,
+      // Contato
+      email:         data.email || null,
+      telefone:      data.telefone || null,
+      celular:       data.celular || null,
+      // Endereço
+      cep:           data.cep || null,
+      endereco:      data.endereco || null,
+      numero:        data.numero || null,
+      complemento:   data.complemento || null,
+      bairro:        data.bairro || null,
+      cidade:        data.cidade || null,
+      estado:        data.estado || null,
+      // Financeiro
+      chave_pix:     data.chavePix || null,
+      // Observações
+      observacoes:   data.observacoes || null
+    };
+
+    const { error } = await supa.from('pessoas').insert(payload);
+    if (error) {
+      showToast('Erro ao cadastrar: ' + error.message, 'error');
+      return;
+    }
+
+    showToast(window.elementSdk?.config?.success_message || defaultConfig.success_message);
+    e.target.reset();
+    atualizarCampos();          // reoculta grupos PF/PJ conforme selects
+    await loadPessoasFromDB();  // recarrega a lista da tabela
+  } catch (err) {
+    showToast('Erro inesperado ao cadastrar.', 'error');
+  } finally {
+    // loading off
+    if (submitBtn && submitText && loadingSpinner) {
+      submitBtn.disabled = false;
+      submitText.textContent = 'Cadastrar';
+      loadingSpinner.classList.add('hidden');
+    }
+  }
+});
                 const submitBtn = document.getElementById('submitBtn');
                 const submitText = document.getElementById('submitText');
                 const loadingSpinner = document.getElementById('loadingSpinner');
